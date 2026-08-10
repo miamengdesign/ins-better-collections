@@ -1,9 +1,10 @@
 .tracker {
   display: flex;
   align-items: center;
-  gap: 0.9cqw;
-  font-size: 24px;
+  gap: 20px;
+  font-size: 16px;
   font-weight: 400;
+  text-align: left;
 }
 
 .step {
@@ -15,23 +16,48 @@
   color: var(--color-white);
 }
 
+/* Line + arrowhead (not a plain rule) between steps. */
 .connector {
-  width: 3.2cqw;
-  height: 1px;
-  background: var(--color-step-inactive);
+  display: flex;
+  align-items: center;
+  width: 32px;
   flex-shrink: 0;
 }
 
-.connector.solid {
+.connector::before {
+  content: '';
+  flex: 1;
+  height: 1px;
+}
+
+.connector::after {
+  content: '';
+  width: 0;
+  height: 0;
+  margin-left: -1px;
+  border-top: 3px solid transparent;
+  border-bottom: 3px solid transparent;
+  border-left: 5px solid;
+}
+
+.connector.solid::before {
   background: var(--color-white);
 }
 
-.connector.dotted {
+.connector.solid::after {
+  border-left-color: var(--color-white);
+}
+
+.connector.dotted::before {
   background: repeating-linear-gradient(
     to right,
     var(--color-step-inactive) 0,
-    var(--color-step-inactive) 4px,
-    transparent 4px,
-    transparent 8px
+    var(--color-step-inactive) 3px,
+    transparent 3px,
+    transparent 6px
   );
+}
+
+.connector.dotted::after {
+  border-left-color: var(--color-step-inactive);
 }

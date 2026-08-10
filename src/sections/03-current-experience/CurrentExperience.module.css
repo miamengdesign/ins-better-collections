@@ -15,18 +15,20 @@
 .title {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 24px;
+  font-size: 16px;
   color: var(--color-white);
+  text-align: left;
 }
 
 .bullet {
   display: flex;
   align-items: flex-start;
   gap: 0.6cqw;
-  font-size: 32px;
+  font-size: 24px;
   font-weight: 500;
   color: var(--color-white);
   max-width: 60cqw;
+  text-align: left;
 }
 
 .bullet::before {
