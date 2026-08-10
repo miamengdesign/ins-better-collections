@@ -1,30 +1,21 @@
-/* `container-type: inline-size` only so the shared type-scale and frame-margin
-   tokens, which are `cqw`-based, resolve against the same width the Stage
-   sections use. Vertical placement is in `vh`: each block is one screen tall. */
-.section {
-  container-type: inline-size;
-  color: var(--color-white);
+/* Each screen is a `Stage`, so its background and content sit on the shared,
+   uniformly-scaled 1728x1117 canvas. The GradientStage fills that canvas; the
+   content layer is anchored to the top of the canvas at the reference's own
+   offsets. Both are `cqh`/`cqw`, so this section scales identically to every
+   other Stage section — no `vh`-vs-`cqw` mixing. */
+.bg {
+  z-index: 0;
 }
 
-/* Each of the two screens the `07 Wrapup` references show is its own
-   explicit-height (not min-height) block in ordinary document flow — no pinning,
-   no internal scroll containers. Each block carries its own GradientStage rather
-   than one background spanning both, so each resolves against a parent with a
-   definite height. Content is anchored to the top of the block at the reference's
-   own offsets instead of being centred. */
-.block {
-  position: relative;
-  height: 100vh;
-  height: 100dvh;
-  overflow: hidden;
+.content {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  padding: 5.9248vh var(--frame-margin) 4.66vh;
+  padding: 5.9248cqh var(--frame-margin) 4.66cqh;
   box-sizing: border-box;
-}
-
-.bg {
-  z-index: -1;
+  color: var(--color-white);
 }
 
 .eyebrow {
@@ -36,7 +27,7 @@
 }
 
 .paragraph {
-  margin-top: 15.3867vh;
+  margin-top: 15.3867cqh;
   font-family: var(--font-display);
   font-weight: 300;
   font-size: var(--fs-60);
@@ -44,16 +35,16 @@
   color: var(--color-panel);
 }
 
-/* The lists sit where they do in `07 Wrapup 3`; the footer takes the block's
+/* The lists sit where they do in `07 Wrapup 3`; the footer takes the canvas's
    remaining height so it lands on the bottom margin of the same screen. */
-.finalBlock {
-  padding-top: 25.0055vh;
+.finalContent {
+  padding-top: 25.0055cqh;
 }
 
 .lists {
   display: flex;
   flex-direction: column;
-  gap: 10.363vh;
+  gap: 10.363cqh;
 }
 
 /* Both lists run on a single 40px-of-1117 baseline pitch, which at this size is

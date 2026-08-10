@@ -1,16 +1,23 @@
 /*
- * Fixed full-viewport presentation stage: always fills the screen edge-to-edge on
- * BOTH axes (no letterbox bars), exactly one screen tall, never taller, never
- * internally scrollable — scrolling past a stage means moving to the next section,
- * not revealing more of this one.
+ * Fixed full-viewport presentation stage: exactly one screen tall, never taller,
+ * never internally scrollable — scrolling past a stage means moving to the next
+ * section, not revealing more of this one.
  *
- * `.canvas` is the 1728x1117 Figma frame stretched independently on each axis to
- * exactly match the viewport (width scale != height scale unless the viewport
- * happens to share the Figma frame's aspect ratio). `container-type: size` exposes
- * BOTH `cqw` (width-based) and `cqh` (height-based) units to children: horizontal
- * measurements (widths, left offsets, font sizes) use `cqw` so they always track
- * full screen width; vertical measurements (top offsets, vertical padding/gaps)
- * use `cqh` so they always track full screen height and never overflow it.
+ * `.canvas` is the 1728x1117 Figma frame reproduced at a SINGLE uniform scale: it
+ * is the largest 1728x1117 box that fits inside the viewport (a `contain` fit), so
+ * both axes are scaled by the same factor and the frame's proportions are never
+ * distorted. Because the canvas keeps the frame's aspect ratio, `container-type:
+ * size` exposes `cqw` and `cqh` units that are locked to that one scale (`cqh` is
+ * always `cqw * 1117 / 1728`): horizontal measurements (widths, left offsets, font
+ * sizes) and vertical measurements (top offsets, vertical padding/gaps) therefore
+ * grow and shrink together, so every element that shares a Figma size shares one
+ * rendered scale factor. When the viewport's aspect ratio differs from the frame's,
+ * the leftover space becomes letterbox margin around the canvas rather than a
+ * stretched (distorted) frame — full frame visibility and correct proportions are
+ * preserved over filling every edge.
+ *
+ * `.stage` is itself a `size` container purely so `.canvas` can size itself against
+ * the viewport box; children never read the stage's units, only the canvas's.
  */
 .stage {
   position: relative;
@@ -18,12 +25,17 @@
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
+  container-type: size;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  position: relative;
+  flex: none;
+  /* Largest 1728x1117 box that fits the stage: one uniform scale on both axes. */
+  width: min(100cqw, 100cqh * var(--frame-w) / var(--frame-h));
+  height: min(100cqh, 100cqw * var(--frame-h) / var(--frame-w));
   container-type: size;
 }

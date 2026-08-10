@@ -44,13 +44,21 @@
   --font-display: 'Instagram Sans', 'Poppins', 'Inter', system-ui, sans-serif;
   --font-body: 'Instagram Sans', 'Poppins', 'Inter', system-ui, sans-serif;
 
+  /* The single Figma frame every section is authored against. The Stage canvas is
+     fitted to the viewport at one uniform scale derived from these dimensions, so
+     `cqw` and `cqh` on that canvas are locked together (`cqh = cqw * 1117 / 1728`)
+     and never scale at different rates — see components/Stage.module.css. */
+  --frame-w: 1728;
+  --frame-h: 1117;
+
   /* Type scale. Each token is named for the size the text is authored at in the
      1728x1117 Figma frame and is expressed as that size relative to the frame
      width (size / 1728 * 100cqw), so every text on the site renders at its exact
      Figma size when a section is at frame scale, and all size ratios between
      texts hold at every viewport. Texts sharing a Figma size share a token, so
-     they can never drift apart. `cqw` (never a per-axis transform) keeps glyph
-     scaling uniform — text is never stretched. */
+     they can never drift apart. Because the Stage canvas is uniformly scaled,
+     `cqw`-based type tracks the same single scale as the `cqw`/`cqh` layout around
+     it, and glyphs are never stretched — text scales, never distorts. */
   --fs-16: 0.9259cqw;
   --fs-20: 1.1574cqw;
   --fs-24: 1.3889cqw;
