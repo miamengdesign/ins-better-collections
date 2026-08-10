@@ -145,17 +145,10 @@
 }
 
 /* No drop shadow: the frame sits the mockup flat on the panel. Scoped under
-   .mockup so it outranks PhoneMockup's own filter regardless of sheet order. */
+   .mockup so it outranks PhoneMockup's own filter regardless of sheet order.
+   `height: auto` keeps the PNG at its native aspect ratio. */
 .mockup .phone {
   width: 100%;
+  height: auto;
   filter: none;
-}
-
-/* Positioned against the mockup, not the canvas, so the 15px gap the frame puts
-   between them survives the cap above. */
-.caption {
-  position: absolute;
-  left: 103.4803%;
-  top: 71.8033%;
-  width: 36.4269%;
 }

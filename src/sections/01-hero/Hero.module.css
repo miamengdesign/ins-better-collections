@@ -8,9 +8,10 @@
   overflow: hidden;
 }
 
-/* object-fit:contain guarantees the full 01 Hero.png is always visible, uncropped,
-   at its correct aspect ratio. Whichever side doesn't touch the viewport edge is
-   filled by the section's white background showing through around the image. */
+/* object-fit:contain guarantees the full `01 Hero bg.png` is always visible,
+   uncropped, at its native aspect ratio — never scaled differently per axis.
+   Whichever side doesn't touch the viewport edge is filled by the section's white
+   background showing through around the image. */
 .bg {
   position: absolute;
   inset: 0;

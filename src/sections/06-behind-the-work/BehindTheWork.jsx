@@ -14,10 +14,10 @@ function BehindTheWork() {
       {/* Painted back-to-front in the Figma frame's own stacking order: pic3, pic1,
           pic2, pic4 — each sheet overlaps the one before it. */}
       <div className={styles.collage} aria-hidden="true">
-        <img className={styles.pic3} src={img('06 Behind 1 pic3.svg')} alt="" />
-        <img className={styles.pic1} src={img('06 Behind 1 pic1.svg')} alt="" />
-        <img className={styles.pic2} src={img('06 Behind 1 pic2.svg')} alt="" />
-        <img className={styles.pic4} src={img('06 Behind 1 pic4.svg')} alt="" />
+        <img className={styles.pic3} src={img('06 Behind asset/06 Behind 1 pic3.png')} alt="" />
+        <img className={styles.pic1} src={img('06 Behind asset/06 Behind 1 pic1.png')} alt="" />
+        <img className={styles.pic2} src={img('06 Behind asset/06 Behind 1 pic2.png')} alt="" />
+        <img className={styles.pic4} src={img('06 Behind asset/06 Behind 1 pic4.png')} alt="" />
       </div>
 
       <div className={styles.text}>

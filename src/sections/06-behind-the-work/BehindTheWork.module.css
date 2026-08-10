@@ -28,15 +28,12 @@
 }
 
 /*
- * Each sheet is placed by mapping its exported SVG straight onto the Figma frame:
- * the offset is where that file's viewBox origin falls in the frame (its rect
- * position in `06 Behind 1.svg` minus the same rect's position inside the pic
- * file) and the width is the viewBox width as a share of the frame's 1728px. The
- * rotation, the drop shadows, and the bleed off the frame edges are all already
- * baked into the exports, so nothing is transformed or cropped here — the files
- * render 1:1 with the frame, which is also what keeps the handwriting sharp: the
- * sheets carry 1904x2500 source rasters and were previously being drawn at ~60%
- * of their intended size, well below the scale the sketches are legible at.
+ * Each sheet is placed by mapping its export straight onto the Figma frame: the
+ * offset is where that file's origin falls in the frame and the width is its width
+ * as a share of the frame's 1728px. The rotation, the drop shadows, and the bleed
+ * off the frame edges are all already baked into the exports, so nothing is
+ * transformed or cropped here — the files render 1:1 with the frame. Only a width
+ * is set on each sheet, so every PNG keeps its native aspect ratio.
  */
 .collage {
   position: absolute;

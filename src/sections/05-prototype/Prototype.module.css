@@ -2,8 +2,8 @@
   position: relative;
 }
 
-/* The light panel from `05 Prototype bg.svg`: 1087 of the frame's 1728px wide,
-   with the frame's 80px radius on its right corners only. */
+/* The light panel, recreated in CSS (there is no background asset): 1087 of the
+   frame's 1728px wide, with the frame's 80px radius on its right corners only. */
 .panel {
   position: absolute;
   left: 0;
@@ -21,11 +21,11 @@
  * wider-than-frame ones, where the height term is what wins. Both files are 431
  * frame units wide, so one expression sizes both.
  *
- * `height` repeats that expression scaled by the asset's 881/431 ratio rather
- * than being left to the image: with a definite height the mockup can be
- * vertically centred in the panel by auto margins. Both terms carry the same
- * ratio, so min() resolves them on the same branch and the aspect ratio holds
- * exactly — nothing is ever stretched.
+ * `height` repeats that expression scaled by the asset's 2.0441 ratio (the PNG is
+ * 1724x3524) rather than being left to the image: with a definite height the
+ * mockup can be vertically centred in the panel by auto margins. Both terms carry
+ * the same ratio, so min() resolves them on the same branch and the aspect ratio
+ * holds exactly — nothing is ever stretched.
  *
  * The frame centres this mockup vertically (118 units of clearance above and
  * below) but not horizontally, hence the fixed left offset.
@@ -51,15 +51,6 @@
   width: 100%;
   height: auto;
   display: block;
-}
-
-/* Positioned against the mockup so the frame's 15px gap holds at any size. Not
-   inside the link — the caption is instructional only. */
-.caption {
-  position: absolute;
-  left: 103.4803%;
-  top: 74.5744%;
-  width: 36.4269%;
 }
 
 .eyebrow {

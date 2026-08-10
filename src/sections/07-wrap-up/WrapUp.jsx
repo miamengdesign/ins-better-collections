@@ -1,9 +1,12 @@
-import { img } from '../../lib/assets'
 import { GITHUB_URL, PROTOTYPE_URL, VERCEL_URL } from '../../config/links'
 import BackToTop from '../../components/BackToTop'
+import GradientStage from '../../components/GradientStage'
 import styles from './WrapUp.module.css'
 
 /**
+ * Semantic HTML/CSS only — this section has no runtime image assets; its
+ * background is the shared CSS GradientStage.
+ *
  * Normal document flow, no pinning/scroll-linked motion — the two blocks below are
  * the two screens the `07 Wrapup` references show as static positions, not
  * animation states: `07 Wrapup 1/2` (heading + closing statement) and
@@ -19,7 +22,7 @@ function WrapUp() {
   return (
     <section className={styles.section} aria-label="Wrap up">
       <div className={styles.block}>
-        <img className={styles.bg} src={img('02 Why Collections bg.svg')} alt="" aria-hidden="true" />
+        <GradientStage className={styles.bg} />
         <h2 className={styles.eyebrow}>Wrap up</h2>
         <p className={styles.paragraph}>
           This redesign does not add an entirely new system.
@@ -31,7 +34,7 @@ function WrapUp() {
       </div>
 
       <div className={`${styles.block} ${styles.finalBlock}`}>
-        <img className={styles.bg} src={img('02 Why Collections bg.svg')} alt="" aria-hidden="true" />
+        <GradientStage className={styles.bg} />
 
         <div className={styles.lists}>
           <div>
