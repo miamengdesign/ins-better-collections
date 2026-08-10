@@ -6,21 +6,19 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: clamp(20px, 3.2vh, 40px);
-  padding: clamp(28px, 5vh, 72px) 4vw;
-  overflow: hidden;
+  padding-top: 7vh;
+  padding-bottom: clamp(24px, 4vh, 56px);
+  gap: clamp(16px, 2.4vh, 32px);
   box-sizing: border-box;
 }
 
-/* Fits the 1728x1117 composition by BOTH width and height (contain-style) so it is
-   never cropped: whichever constraint is tighter determines the final size. */
+/* Width-driven, matching the Figma target of ~95% viewport width with narrow side
+   margins. Capped at the artwork's native 1728px so it's never upscaled/blurred. */
 .frame {
   position: relative;
+  width: min(95vw, 1728px);
   aspect-ratio: 1728 / 1117;
-  width: auto;
-  height: min(72svh, calc(92vw * (1117 / 1728)));
-  max-width: 92vw;
+  flex-shrink: 0;
 }
 
 .bg {
@@ -44,7 +42,7 @@
 /* Sits in normal flex flow below the artwork frame, not absolutely positioned over it,
    so it can never overlap the bottom row of cards regardless of viewport size. */
 .cue {
-  width: clamp(130px, 9vw, 190px);
+  width: clamp(120px, 8vw, 180px);
   height: auto;
   flex-shrink: 0;
 }
