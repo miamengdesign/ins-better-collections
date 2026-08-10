@@ -23,16 +23,18 @@ function Prototype() {
       <GradientStage />
       <div className={styles.panel} />
 
-      <a
-        className={styles.link}
-        href={PROTOTYPE_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Open the interactive Figma prototype in a new tab"
-      >
-        <img className={styles.phone} src={img('05 Prototype pic.svg')} alt="" />
-      </a>
-      <CalloutCard className={styles.caption} src={img('05 Prototype txt.svg')} alt="Tap here to start" />
+      <div className={styles.mockup}>
+        <a
+          className={styles.link}
+          href={PROTOTYPE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Open the interactive Figma prototype in a new tab"
+        >
+          <img className={styles.phone} src={img('05 Prototype pic.svg')} alt="" />
+        </a>
+        <CalloutCard className={styles.caption} src={img('05 Prototype txt.svg')} alt="Tap here to start" />
+      </div>
 
       <p className={styles.eyebrow}>Prototype</p>
       <h2 className={styles.heading}>Click the Mockup, try it by yourself!</h2>
