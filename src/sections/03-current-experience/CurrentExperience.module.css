@@ -2,11 +2,20 @@
   position: relative;
 }
 
-.header {
+/* Header height is content-driven (not a fixed proportion) and the panel fills
+   whatever remains, so the header's padding-bottom is the ONLY thing determining
+   the gap to the panel's top edge — a fixed px value there stays exact at any
+   viewport instead of drifting with cqh-based sizing. */
+.stack {
   position: absolute;
-  inset: 0 0 auto 0;
-  height: 26.32cqh; /* 294/1117 */
-  padding: 3.2cqh 4.1cqw 0;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  flex-shrink: 0;
+  padding: 3.2cqh 4.1cqw 48px;
   display: flex;
   flex-direction: column;
   gap: 1.3cqh;
@@ -37,11 +46,8 @@
 }
 
 .panel {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 26.32cqh;
-  bottom: 0;
+  flex: 1;
+  min-height: 0;
   background: var(--color-panel);
   border-top-left-radius: 4.63cqw;
   border-top-right-radius: 4.63cqw;
@@ -50,6 +56,7 @@
   justify-content: center;
   gap: 4cqw;
   padding: 3cqh 6cqw;
+  overflow: hidden;
 }
 
 .phone {

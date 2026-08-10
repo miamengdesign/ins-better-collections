@@ -17,33 +17,35 @@ function CurrentExperience() {
     <Stage className={styles.section} aria-label="Current Experience">
       <GradientStage />
 
-      <header className={styles.header}>
-        <h2 className={styles.title}>Current Experience</h2>
-        <StepTracker activeSteps={['Discover', 'Save']} dottedAfter="Save" />
-        <p className={styles.bullet}>Users lose a familiar saving action when moving from feed to detail.</p>
-      </header>
+      <div className={styles.stack}>
+        <header className={styles.header}>
+          <h2 className={styles.title}>Current Experience</h2>
+          <StepTracker activeSteps={['Discover', 'Save']} dottedAfter="Save" />
+          <p className={styles.bullet}>Users lose a familiar saving action when moving from feed to detail.</p>
+        </header>
 
-      <div className={styles.panel}>
-        <PhoneMockup
-          className={styles.phone}
-          src={img('03 Current Experience 1 pic1.svg')}
-          alt="Main feed, Reel view"
-        />
-        <PhoneMockup
-          className={styles.phone}
-          src={img('03 Current Experience 1 pic2.svg')}
-          alt="Main feed, Post view"
-        />
-        <CalloutCard
-          className={styles.callout}
-          src={img('03 Current Experience 1 txt.svg')}
-          alt="UI Inconsistency: Main feed posts/reels display like, comment, share, and collection icons, but the collection icon hides in detail view."
-        />
-        <PhoneMockup
-          className={styles.phone3}
-          src={img('03 Current Experience 1 pic3.svg')}
-          alt="Reels detailed view"
-        />
+        <div className={styles.panel}>
+          <PhoneMockup
+            className={styles.phone}
+            src={img('03 Current Experience 1 pic1.svg')}
+            alt="Main feed, Reel view"
+          />
+          <PhoneMockup
+            className={styles.phone}
+            src={img('03 Current Experience 1 pic2.svg')}
+            alt="Main feed, Post view"
+          />
+          <CalloutCard
+            className={styles.callout}
+            src={img('03 Current Experience 1 txt.svg')}
+            alt="UI Inconsistency: Main feed posts/reels display like, comment, share, and collection icons, but the collection icon hides in detail view."
+          />
+          <PhoneMockup
+            className={styles.phone3}
+            src={img('03 Current Experience 1 pic3.svg')}
+            alt="Reels detailed view"
+          />
+        </div>
       </div>
     </Stage>
   )
