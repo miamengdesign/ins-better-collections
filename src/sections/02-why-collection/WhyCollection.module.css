@@ -11,6 +11,6 @@
   text-align: center;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 5cqw;
+  font-size: 7.4cqw; /* measured from the Figma export: ~128px at the 1728px frame */
   color: var(--color-white);
 }
