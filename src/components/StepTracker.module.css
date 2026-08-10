@@ -2,8 +2,8 @@
   display: flex;
   align-items: center;
   gap: 0.9cqw;
-  font-size: 1.05cqw;
-  font-weight: 600;
+  font-size: 24px;
+  font-weight: 400;
 }
 
 .step {
