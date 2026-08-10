@@ -47,6 +47,8 @@ src/
     useScrollProgress.js
     useReducedMotion.js
     useOneShotInView.js
+  config/
+    links.js                     — centralized external-link constants (see §2)
 ```
 
 `App.jsx` is a thin shell: it renders `<Hero/> <WhyCollection/> <CurrentExperience/> <Solutions/> <Prototype/> <BehindTheWork/> <WrapUp/> <BackToTop/>` and nothing else. It holds no shared scroll state — each section computes its own progress locally (see §8).
@@ -64,6 +66,7 @@ src/
 | `CalloutCard` | 03 only | Thin wrapper around a `txt*.svg` annotation asset (renders it, positions it, wires its independent fade/slide-in). |
 | `BackToTop` | global (rendered once in `App.jsx`, fixed/footer-positioned near section 07) | The rolling-arrow control; owns its own CSS loop animation and the smooth-scroll-to-Hero click handler. |
 | `ScrollCue` | 01 only | The breathing-opacity "Scroll down to continue" hint. Small enough to stay local to Hero rather than shared, but listed here since it's a self-contained animated unit. |
+| `config/links.js` | 05 only (currently) | Not a component — a plain constants module. Holds `PROTOTYPE_URL` (the Figma prototype link) as the single source of truth. `Prototype.jsx` imports it; the URL string is never inlined/duplicated in a component or hardcoded a second time anywhere. Any future section needing an external link constant is added here, not re-declared locally. |
 | `useScrollProgress(ref, opts)` | `PinnedStage`, and any section needing scroll-linked values without full pinning (e.g. Hero's exit) | Returns a `0–1` number derived from the element's position in the viewport. Pure function of scroll position — no internal animation state, which is what makes every scroll-linked transition reversible for free (see §8). |
 | `useReducedMotion()` | every animated component | Wraps `matchMedia('(prefers-reduced-motion: reduce)')`; components branch their animation logic on this, not on ad hoc checks scattered per file. |
 | `useOneShotInView(ref, {threshold, delay})` | 06 only | IntersectionObserver + a delay timer + a latch (`hasPlayed`) that never resets. The one deliberately non-reversible, imperative piece of motion logic in the site — isolated to its own hook so it's obviously the exception, not the pattern. |
@@ -78,7 +81,7 @@ src/
 - **02 Why Collection**: `02 Why Collections bg.svg` only. All five copy lines are HTML (see §5).
 - **03 Current Experience**: `03 Current Experience {1,2,3} pic*.svg` (6 phone mockups total) + `03 Current Experience {1,2,3} txt*.svg` (5 callout cards total). The shell/header background is HTML+CSS informed by `03 Current Experience 1 bg.svg`, not the asset itself (see §5).
 - **04 Solutions**: `04 Solution bg.svg` (shared) + `04 Solution {1,2,3} pic.svg` + `04 Solution {1,2,3} txt.svg` (small caption+icon assets).
-- **05 Prototype**: `05 Prototype bg.svg` + `05 Prototype pic.svg` (the clickable mockup) + `05 Prototype txt.svg`.
+- **05 Prototype**: `05 Prototype bg.svg` + `05 Prototype pic.svg` (the clickable mockup, wrapped in an `<a>` pointing at `PROTOTYPE_URL` from `config/links.js`) + `05 Prototype txt.svg` (instructional-only, not itself a link).
 - **06 Behind the Work**: `06 Behind 1 pic{1,2,3,4}.svg` (reused for both the initial state and, under a CSS dark/blur overlay, the second state).
 - **07 Wrap Up**: the shared gradient via `GradientStage` (reusing `02 Why Collections bg.svg`) as page background only.
 - **Global**: `⇡ Back to top.svg` is reference-only for type styling (see §5); the rendered control is HTML.
@@ -125,13 +128,28 @@ The chosen approach avoids that fusion:
 - The physical handoff illusion (exit-down/enter-right, push-and-settle) comes from **standard adjacent-sticky-section overlap**: when one `height: {N}vh` track's `position: sticky` inner viewport approaches the end of its own track, it naturally begins scrolling away *while* the next section's sticky viewport is simultaneously becoming pinned, just below it, in the same viewport. Each section only needs to author its own exit keyframes in the last ~15–20% of its own local progress, and the next section its own entrance keyframes in the first ~15–20% of its local progress — the visual overlap emerges from normal document/scroll geometry, not from any cross-component coordination code.
 - Because every transition is expressed as `transform`/`opacity` = *pure function of that section's own local scroll progress* (never an imperative "play this animation once" trigger), scrolling backward reverses everything automatically — there is no state machine to un-wind, just the same function evaluated at a smaller progress value. This is the single governing rule for every scroll-*driven* transition in the site (01 exit, 02, 03, 03→04 handoff, 04, 04→05 handoff, 05 entrance). **06 is the sole exception**, by design (see §7).
 
-## 9. Responsive strategy (desktop-primary)
+## 9. Responsive strategy (desktop-primary) — finalized
 
-The Figma frames are authored at `1728×1117` and the pinned/cinematic sections (02–05) assume a wide viewport — side-by-side panels, floating phone mockups with annotation callouts, and typography sized for a large canvas. Since this build's primary use case is a desktop interview presentation:
+The Figma frames are authored at `1728×1117` and the pinned/cinematic sections (02–05) assume a wide viewport — side-by-side panels, floating phone mockups with annotation callouts, and typography sized for a large canvas. Desktop is the primary interview-presentation context; the three-tier strategy below is final, not a proposal. No mechanism introduces a new/separate mobile design — every breakpoint renders the same content, assets, copy, and order, only the presentation mechanics adapt.
 
-- **Desktop (≈1024px and up)**: fluid scaling of the 1728px-frame layout down to the viewport width (`clamp()`/`vw`-based sizing derived from the original frame proportions), preserving the exact composition from the references at any desktop width.
-- **Below ≈1024px**: the pinned/cinematic mechanics (02–05, and Hero's sticky exit) are proposed to degrade to normal document flow — same assets, same copy, same order, stacked vertically, with pinning/scroll-hijacking disabled — rather than attempting to force a wide, multi-panel, scroll-scrubbed narrative into a phone-width viewport. This is a mechanism change, not a redesign: no new content, layout, or decoration is introduced, only the removal of pinning below the breakpoint.
-- This mobile-degradation strategy is a **proposal, not a decision** — flagging it explicitly since the brief names desktop as the primary presentation context and doesn't specify mobile behavior. Confirm before implementation.
+**Desktop — `≥ 1024px`**
+- Full Figma layout at fluid scale (`clamp()`/`vw`-based sizing derived from the 1728px-frame proportions).
+- Full pinned/sticky interactions: `PinnedStage` active for 02, 03, 04, 05; Hero's sticky exit active.
+- All physical section transitions active exactly as specified in `ANIMATION_SPEC.md` (03→04 exit/enter handoff, 04→05 push-and-settle).
+
+**Tablet — `768px – 1023px`**
+- Preserve the same experience where practical: pinning, crossfades, and both handoff transitions **stay active** — this tier does not fall back to normal document flow.
+- Spacing and mockup sizing scale down proportionally within the same fluid `clamp()`/`vw` system already used for desktop (no separate tablet layout to author).
+- Pinned scroll-track heights (the `{N}vh` distances in `PinnedStage`) may be tuned shorter than desktop's, since less side-by-side room slightly changes reading pace — a tuning parameter, not a mechanism change.
+- Easing/timing/keyframe values are unchanged from `ANIMATION_SPEC.md`.
+
+**Mobile — `< 768px`**
+- Prioritize readability over preserving the pinned/scroll-hijacking mechanics: `PinnedStage` is disabled for 02, 03, 04, 05, and Hero's sticky exit is disabled. All five render in normal document flow instead, in the same top-to-bottom order, with the same assets and copy — effectively the same treatment already used for Section 07 at every breakpoint.
+- The 03→04 exit/enter handoff and the 04→05 physical push transition have no normal-flow equivalent and are not attempted in a simplified form — they are simply absent, since the sections that would participate are already in normal flow at this tier.
+- Content that depended on a pinned state for legibility (e.g. 03's three crossfading evidence states, 04's three crossfading solution states) instead renders as three stacked, always-visible groups in reading order, each carrying its own header context (title/step-tracker state, or solution number/heading) inline rather than relying on a spatially-stable shared header — no content is cut, only the crossfade-through-one-viewport mechanism is removed.
+- Section 06's one-shot IntersectionObserver + timer reveal is layout-independent and stays active unchanged at this tier.
+- Section 07 is already normal flow at every breakpoint and is unaffected.
+- Per the global "no generic fade-in everywhere" principle in `ANIMATION_SPEC.md`, the normal-flow sections at this tier do not gain a substitute scroll-triggered animation to replace the removed pinned motion — content simply appears in flow, static, exactly as Section 07 already does.
 
 ## 10. Accessibility considerations
 

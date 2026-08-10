@@ -134,9 +134,16 @@ This is the one transition where two panels are simultaneously visible and treat
 Visually quiet — no section-internal states to scroll through beyond the entrance handoff in §04→05.
 
 - Left: light panel with `05 Prototype pic.svg`. Right: dark gradient panel with "Prototype" eyebrow + "Click the Mockup, try it by yourself!" heading (HTML).
-- **Mockup interactivity** — the mockup image is wrapped in a real `<button>` (or `<a>` if it should read as pure navigation):
+- **Link source of truth**: the Figma prototype URL is stored once, as `PROTOTYPE_URL`, in `src/config/links.js`:
+  ```js
+  export const PROTOTYPE_URL =
+    'https://www.figma.com/proto/Fk7uatF6NZBenD9BwYl6y4/TT-Prototype?node-id=2054-8108&p=f&viewport=-805%2C-839%2C0.54&t=VGFwMyGygk3wcdKE-1&scaling=scale-down&content-scaling=fixed&starting-point-node-id=2054%3A8108&page-id=2054%3A6564'
+  ```
+  `Prototype.jsx` imports this constant; the URL string is not duplicated or re-typed anywhere else in the codebase.
+- **Mockup interactivity** — the mockup image (`05 Prototype pic.svg`) is the *only* clickable target in this section, wrapped in a real `<a href={PROTOTYPE_URL}>`:
   - **Hover**: `cursor: pointer`; `transform: scale(1.015)` (extremely subtle — not the same magnitude as a card-hover pattern); `box-shadow`/elevation increases slightly. Transition ~150–200ms `ease-out`.
-  - **Click**: opens the Figma prototype URL in a new tab (`target="_blank" rel="noopener noreferrer"`). *Open item*: the actual Figma prototype URL is not yet provided — needed before this is wired up in code.
+  - **Click**: opens `PROTOTYPE_URL` in a new tab — `target="_blank" rel="noopener noreferrer"` (the `rel` attributes are required, not optional, since a `target="_blank"` link without them can let the opened page control the originating tab).
+- **"Tap here to start"** (`05 Prototype txt.svg`) remains **instructional text only** — it is not itself wrapped in a link and has no independent click handler; it sits beside the mockup to point at the one interactive element, and is otherwise inert.
 - **No additional CTA button** is added beyond the mockup itself being the click target, per direction.
 
 **Reduced motion**: hover scale/elevation removed or reduced to a negligible amount (e.g. box-shadow change only, no transform) — click behavior unaffected.
@@ -183,6 +190,26 @@ No scroll listeners of any kind drive this section's layout or content — it is
 - **Click**: smooth-scrolls the page back to the **Hero** section specifically (not merely to `scrollTop: 0` in a generic sense — the scroll target is Hero's element), via `element.scrollIntoView({ behavior: 'smooth' })` or an equivalent scroll-to-element utility.
 
 **Reduced motion**: arrow conveyor loop stops, rendered as a single static `⇡`. Quick-link hover weight change and the smooth-scroll click both stay (neither is the kind of motion `prefers-reduced-motion` targets — smooth-scroll specifically should still respect the OS preference by falling back to instant `scrollIntoView({ behavior: 'auto' })`).
+
+---
+
+## Responsive motion behavior (finalized breakpoints)
+
+Breakpoint mechanics are defined in `ARCHITECTURE.md` §9; this is how each section's motion above maps onto them. No section gains a new/different animation design per breakpoint — only whether the scroll-driven mechanism is active changes.
+
+| Section | Desktop `≥1024px` | Tablet `768–1023px` | Mobile `<768px` |
+|---|---|---|---|
+| 01 Hero | Full spec above (breathing cue + sticky scroll-exit) | Unchanged | Breathing cue unchanged (opacity-only, cheap at any size); sticky scroll-exit **disabled** — Hero sits in normal flow and is simply scrolled past |
+| 02 Why Collection | Full continuous-interpolation relay | Unchanged, track height may be tuned shorter | `PinnedStage` **disabled** — heading and all four statements render stacked, static, in normal flow, in reading order (no rise/shrink/fade motion, no relay) |
+| 03 Current Experience | Full pinned 3-state crossfade, stable header | Unchanged, track height may be tuned shorter | `PinnedStage` **disabled** — the three states render as three stacked static groups in order, each carrying its own header line (title/active-steps/bullet) inline rather than one shared stable header |
+| 03→04 transition | Full exit-down/enter-right handoff with spring/overshoot | Unchanged | **Not applicable** — both sections are in normal flow; no handoff motion |
+| 04 Solutions | Full pinned 3-state crossfade, stationary dark panel | Unchanged, track height may be tuned shorter | `PinnedStage` **disabled** — three stacked static groups (number/heading/badge/explanation + mockup), same content, no crossfade |
+| 04→05 transition | Full physical push (both panels driven by one shared progress value) | Unchanged | **Not applicable** — no handoff motion in normal flow |
+| 05 Prototype | Full hover scale/elevation + click-through | Unchanged | Hover states harmless but largely moot on touch; click-through behavior unchanged (tap opens `PROTOTYPE_URL` in a new tab) |
+| 06 Behind the Work | Full one-shot IntersectionObserver + 2s dwell reveal | Unchanged | Unchanged — layout-independent, not tied to pinning |
+| 07 Wrap Up | Normal flow, hover weight change, rolling arrow, smooth-scroll-to-Hero | Unchanged | Unchanged — already normal flow at every breakpoint |
+
+At the mobile tier, sections that lose their pinned crossfade do **not** receive a substitute scroll-triggered fade-in/slide-in to compensate — per the "no generic fade-in everywhere" principle below, content simply appears in normal document flow, static, the same way Section 07 already behaves at every breakpoint.
 
 ---
 
