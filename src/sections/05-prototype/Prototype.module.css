@@ -2,30 +2,85 @@
   position: relative;
 }
 
-.left {
+/* The light panel from `05 Prototype bg.svg`: 1087 of the frame's 1728px wide,
+   with the frame's 80px radius on its right corners only. */
+.panel {
   position: absolute;
   left: 0;
   top: 0;
   bottom: 0;
   width: 62.9cqw;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1.4cqw;
+  background: var(--panel-fill);
+  border-top-right-radius: var(--panel-radius);
+  border-bottom-right-radius: var(--panel-radius);
+}
+
+/*
+ * The mockup carries the identical width expression to the Solutions mockup, so
+ * the two phones render at exactly the same size at every viewport — including
+ * wider-than-frame ones, where the height term is what wins. Both files are 431
+ * frame units wide, so one expression sizes both.
+ *
+ * `height` repeats that expression scaled by the asset's 881/431 ratio rather
+ * than being left to the image: with a definite height the mockup can be
+ * vertically centred in the panel by auto margins. Both terms carry the same
+ * ratio, so min() resolves them on the same branch and the aspect ratio holds
+ * exactly — nothing is ever stretched.
+ *
+ * The frame centres this mockup vertically (118 units of clearance above and
+ * below) but not horizontally, hence the fixed left offset.
+ */
+.mockup {
+  position: absolute;
+  left: 15.8565cqw;
+  top: 0;
+  bottom: 0;
+  margin-block: auto;
+  width: min(24.9421cqw, 38.582cqh);
+  height: min(50.984cqw, 78.8646cqh);
 }
 
 .link {
   display: block;
-  width: 17cqw;
+  width: 100%;
+  height: 100%;
 }
 
+/* No drop shadow: as in Section 04, the frame sits the mockup flat on the panel. */
 .phone {
   width: 100%;
   height: auto;
   display: block;
-  filter: drop-shadow(0 1.2cqw 2.4cqw rgba(0, 0, 0, 0.18));
 }
 
+/* Positioned against the mockup so the frame's 15px gap holds at any size. Not
+   inside the link — the caption is instructional only. */
 .caption {
-  width: 9cqw;
+  position: absolute;
+  left: 103.4803%;
+  top: 74.5744%;
+  width: 36.4269%;
+}
+
+.eyebrow {
+  position: absolute;
+  left: 67.5347cqw;
+  top: var(--frame-margin);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--fs-24);
+  line-height: 1.2;
+  color: var(--color-step-inactive);
+}
+
+.heading {
+  position: absolute;
+  left: 67.5347cqw;
+  top: 60.4128cqh;
+  max-width: 16cqw;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--fs-32);
+  line-height: 1.19;
+  color: var(--color-white);
 }

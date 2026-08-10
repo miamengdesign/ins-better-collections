@@ -37,16 +37,20 @@ function Solutions() {
       </div>
 
       <div className={styles.right}>
-        <PhoneMockup
-          className={styles.phone}
-          src={img('04 Solution 1 pic.svg')}
-          alt="Reel detail view with a Collection save option"
-        />
-        <CalloutCard
-          className={styles.caption}
-          src={img('04 Solution 1 txt.svg')}
-          alt="Tap Collection to save a Reel"
-        />
+        {/* `04 Solution 1 pic.svg` carries the "Save a Reel from detailed view"
+            caption beneath the phone; the callout beside it is a separate asset. */}
+        <div className={styles.mockup}>
+          <PhoneMockup
+            className={styles.phone}
+            src={img('04 Solution 1 pic.svg')}
+            alt="Reel detail view with a Collection save option"
+          />
+          <CalloutCard
+            className={styles.caption}
+            src={img('04 Solution 1 txt.svg')}
+            alt="Tap Collection to save a Reel"
+          />
+        </div>
       </div>
     </Stage>
   )

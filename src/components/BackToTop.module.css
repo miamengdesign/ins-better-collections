@@ -1,11 +1,12 @@
 .button {
   display: inline-flex;
-  align-items: center;
-  gap: 0.5vw;
+  align-items: baseline;
+  gap: 0.9cqw;
   color: var(--color-white);
   font-family: var(--font-body);
-  font-size: 32px; /* measured from Figma — same tier as the rest of the Wrap Up footer */
+  font-size: var(--fs-24); /* set one tier above the footer lines it sits between */
   font-weight: 500;
+  line-height: 1.2;
 }
 
 .arrow {

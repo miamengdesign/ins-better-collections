@@ -1,13 +1,14 @@
 .tracker {
   display: flex;
   align-items: center;
-  gap: 48px;
-  margin: 8px 0 0;
+  gap: 3.2986cqw;
+  margin: 1.5312cqw 0 0;
   padding: 0;
   list-style: none;
-  font-family: 'Instagram Sans', var(--font-display);
-  font-size: 16px;
+  font-family: var(--font-display);
+  font-size: var(--fs-24);
   font-weight: 400;
+  line-height: 1.2;
   text-align: left;
 }
 
@@ -24,7 +25,7 @@
 .connector {
   display: flex;
   align-items: center;
-  width: 116px;
+  width: 6.7708cqw;
   flex-shrink: 0;
 }
 
@@ -39,9 +40,9 @@
   width: 0;
   height: 0;
   margin-left: -1px;
-  border-top: 3px solid transparent;
-  border-bottom: 3px solid transparent;
-  border-left: 5px solid;
+  border-top: 0.4259cqw solid transparent;
+  border-bottom: 0.4259cqw solid transparent;
+  border-left: 0.5787cqw solid;
 }
 
 .connector.solid::before {
