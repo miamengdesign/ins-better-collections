@@ -1,22 +1,19 @@
 import Stage from '../../components/Stage'
 import GradientStage from '../../components/GradientStage'
 import PhoneMockup from '../../components/PhoneMockup'
-import CalloutCard from '../../components/CalloutCard'
 import { img } from '../../lib/assets'
 import styles from './Solutions.module.css'
 
 /**
- * Static first state (Solution 01). States 02/03 and the pinned crossfade between
- * them — plus the 03->04 and 04->05 handoffs — are implemented in a later pass;
- * see ANIMATION_SPEC.md §04.
+ * Static first state (Solution 01). Solutions 02/03 (`04 Solution {2,3} pic.png`)
+ * and the pinned crossfade between them — plus the 03->04 and 04->05 handoffs —
+ * are implemented in a later pass; see ANIMATION_SPEC.md §04.
  *
- * Copy is real HTML at fixed px sizes (not cqw/cqh-scaled) so it never stretches
- * with the canvas — `04 Solution bg.svg`'s baked-in text was dropped for this
- * reason (its non-uniform per-axis stretch, needed to keep the panel-split
- * background pixel-aligned with the phone, was visibly distorting the glyphs).
- * The white/dark panel split is recreated in CSS instead (`.right`'s background +
- * rounded corners), and the shared plain gradient (no baked text) is used for the
- * full-bleed backdrop.
+ * There is one runtime PNG per solution state and no separate background or
+ * caption asset: the annotation beside the phone and the caption beneath it are
+ * both baked into `04 Solution 1 pic.png`, so neither is repeated as HTML. The
+ * white/dark panel split is CSS (`.right`), the backdrop is the shared
+ * GradientStage, and the left column is real HTML text.
  */
 function Solutions() {
   return (
@@ -37,18 +34,11 @@ function Solutions() {
       </div>
 
       <div className={styles.right}>
-        {/* `04 Solution 1 pic.svg` carries the "Save a Reel from detailed view"
-            caption beneath the phone; the callout beside it is a separate asset. */}
         <div className={styles.mockup}>
           <PhoneMockup
             className={styles.phone}
-            src={img('04 Solution 1 pic.svg')}
+            src={img('04 Solution asset/04 Solution 1 pic.png')}
             alt="Reel detail view with a Collection save option"
-          />
-          <CalloutCard
-            className={styles.caption}
-            src={img('04 Solution 1 txt.svg')}
-            alt="Tap Collection to save a Reel"
           />
         </div>
       </div>

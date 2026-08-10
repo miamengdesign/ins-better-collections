@@ -1,8 +1,12 @@
-import FillBackground from './FillBackground'
+import styles from './GradientStage.module.css'
 
-/** The one shared rainbow-gradient + scrim + blur asset, reused byte-identically across 02/03/07. */
-function GradientStage() {
-  return <FillBackground name="02 Why Collections bg.svg" />
+/**
+ * The one shared brand gradient + scrim, reused across 02/03/04/05/07 so the
+ * background is identical everywhere it appears. Pure CSS: there is no runtime
+ * gradient image in `/public/images` (see docs/ASSET_MANIFEST.md).
+ */
+function GradientStage({ className = '' }) {
+  return <div className={`${styles.gradient} ${className}`} aria-hidden="true" />
 }
 
 export default GradientStage

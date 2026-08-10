@@ -1,0 +1,20 @@
+/*
+ * Brand gradient (#7638FA -> #D300C5 -> #FF0069 -> #FF7A00 -> #FFD600) under a
+ * 70% black scrim. Direction is read off the reference frames: purple sits in the
+ * top-right corner and yellow in the bottom-left, which across the 1728x1117
+ * frame is a 237deg axis.
+ */
+.gradient {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
+    linear-gradient(
+      237deg,
+      #7638fa 0%,
+      #d300c5 27.69%,
+      #ff0069 46.35%,
+      #ff7a00 68.97%,
+      #ffd600 96.1%
+    );
+}
