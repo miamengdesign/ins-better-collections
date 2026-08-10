@@ -1,0 +1,68 @@
+.tracker {
+  display: flex;
+  align-items: center;
+  gap: 3.2986cqw;
+  margin: 1.5312cqw 0 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-display);
+  font-size: var(--fs-24);
+  font-weight: 400;
+  line-height: 1.2;
+  text-align: left;
+}
+
+.step {
+  color: var(--color-step-inactive);
+  white-space: nowrap;
+}
+
+.step.active {
+  color: var(--color-white);
+}
+
+/* Line + arrowhead (not a plain rule) between steps. */
+.connector {
+  display: flex;
+  align-items: center;
+  width: 6.7708cqw;
+  flex-shrink: 0;
+}
+
+.connector::before {
+  content: '';
+  flex: 1;
+  height: 1px;
+}
+
+.connector::after {
+  content: '';
+  width: 0;
+  height: 0;
+  margin-left: -1px;
+  border-top: 0.4259cqw solid transparent;
+  border-bottom: 0.4259cqw solid transparent;
+  border-left: 0.5787cqw solid;
+}
+
+.connector.solid::before {
+  background: var(--color-white);
+}
+
+.connector.solid::after {
+  border-left-color: var(--color-white);
+}
+
+.connector.dotted::before {
+  background: repeating-linear-gradient(
+    to right,
+    var(--color-step-inactive) 0,
+    var(--color-step-inactive) 3px,
+    transparent 3px,
+    transparent 6px
+  );
+}
+
+.connector.dotted::after {
+  border-left-color: var(--color-step-inactive);
+}

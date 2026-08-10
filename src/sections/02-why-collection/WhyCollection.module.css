@@ -1,0 +1,16 @@
+.section {
+  position: relative;
+}
+
+.heading {
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  transform: translate(-50%, -50%);
+  width: 80cqw;
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 7.4cqw; /* measured from the Figma export: ~128px at the 1728px frame */
+  color: var(--color-white);
+}

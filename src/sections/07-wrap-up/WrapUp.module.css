@@ -1,0 +1,111 @@
+/* `container-type: inline-size` only so the shared type-scale and frame-margin
+   tokens, which are `cqw`-based, resolve against the same width the Stage
+   sections use. Vertical placement is in `vh`: each block is one screen tall. */
+.section {
+  container-type: inline-size;
+  color: var(--color-white);
+}
+
+/* Each of the two screens the `07 Wrapup` references show is its own
+   explicit-height (not min-height) block in ordinary document flow — no pinning,
+   no internal scroll containers. Each block carries its own GradientStage rather
+   than one background spanning both, so each resolves against a parent with a
+   definite height. Content is anchored to the top of the block at the reference's
+   own offsets instead of being centred. */
+.block {
+  position: relative;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 5.9248vh var(--frame-margin) 4.66vh;
+  box-sizing: border-box;
+}
+
+.bg {
+  z-index: -1;
+}
+
+.eyebrow {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--fs-24);
+  line-height: 1.2;
+  color: var(--color-step-inactive);
+}
+
+.paragraph {
+  margin-top: 15.3867vh;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: var(--fs-60);
+  line-height: 1.25;
+  color: var(--color-panel);
+}
+
+/* The lists sit where they do in `07 Wrapup 3`; the footer takes the block's
+   remaining height so it lands on the bottom margin of the same screen. */
+.finalBlock {
+  padding-top: 25.0055vh;
+}
+
+.lists {
+  display: flex;
+  flex-direction: column;
+  gap: 10.363vh;
+}
+
+/* Both lists run on a single 40px-of-1117 baseline pitch, which at this size is
+   exactly a line-height of 2. */
+.listTitle {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: var(--fs-20);
+  line-height: 2;
+  color: var(--color-panel);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--fs-20);
+  line-height: 2;
+  color: var(--color-panel);
+  opacity: 0.85;
+}
+
+.quickLink a {
+  text-decoration: underline;
+  transition: font-weight 150ms ease-out;
+}
+
+.quickLink a:hover,
+.quickLink a:focus-visible {
+  font-weight: 700;
+}
+
+/* Shared baseline across the three items, as in the reference — the centre
+   "Back to top" control is set larger than the two flanking lines. */
+.footer {
+  margin-top: auto;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1cqw;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: var(--fs-16);
+  line-height: 1.2;
+  color: var(--color-panel);
+}
+
+@media (max-width: 640px) {
+  .footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

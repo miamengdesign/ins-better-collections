@@ -1,0 +1,15 @@
+.button {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.9cqw;
+  color: var(--color-white);
+  font-family: var(--font-body);
+  font-size: var(--fs-24); /* set one tier above the footer lines it sits between */
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.arrow {
+  font-size: 1.1em;
+  line-height: 1;
+}

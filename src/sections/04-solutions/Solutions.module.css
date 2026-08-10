@@ -1,0 +1,154 @@
+.section {
+  position: relative;
+}
+
+/* Real HTML text, sized from the shared --fs-* scale so each line renders at the
+   size it is authored at in Figma and stays in proportion with the artwork and
+   with the same-tier text in every other section. Scaling is `cqw`-based (never a
+   per-axis transform), so glyphs are never stretched even though the canvas
+   itself stretches independently per axis — see Stage.module.css. */
+.left {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 37.1cqw;
+  padding: var(--frame-margin) var(--frame-margin) 6.4525cqw;
+  display: flex;
+  flex-direction: column;
+  color: var(--color-white);
+  box-sizing: border-box;
+}
+
+.eyebrow {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--fs-24);
+  line-height: 1.2;
+  color: var(--color-step-inactive); /* #DBDBDB — measured from the Figma export, not plain white */
+}
+
+.heading {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: var(--fs-32);
+  line-height: 1.2;
+  margin-top: 2.4624cqw;
+  color: var(--color-panel); /* #F7F9F9 — measured from the Figma export, not pure white */
+}
+
+.badgeGroup {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1545cqw;
+}
+
+/* Medium, not Bold: measured against the reference, Bold renders ~7% more ink
+   than the badge carries there. Same weight as .heading, which is what gives the
+   two lines their matching semibold tone. */
+.badge {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: var(--fs-32);
+  line-height: 1.2;
+  color: var(--color-white); /* only the checkmark emoji itself is green, not the label */
+}
+
+/* 451x202 of the frame with a 10px radius. Body copy is Regular and only the
+   emphasised phrases are Bold. The 430px content width is what reproduces the
+   reference's five line breaks. */
+.explanation {
+  position: relative;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--fs-32);
+  line-height: 1.19;
+  width: 26.0995cqw;
+  padding: 0.4126cqw 0.6076cqw 0.2587cqw;
+  border-radius: 0.5787cqw;
+  background:
+    linear-gradient(
+      85.9deg,
+      rgba(118, 56, 250, 0.1) 0%,
+      rgba(211, 0, 197, 0.1) 27.69%,
+      rgba(255, 0, 105, 0.1) 46.35%,
+      rgba(255, 122, 0, 0.1) 68.97%,
+      rgba(255, 214, 0, 0.1) 96.1%
+    ),
+    rgba(255, 255, 255, 0.05);
+  color: var(--color-white);
+  box-sizing: border-box;
+}
+
+/* The stroke is the brand gradient, not a flat colour — drawn as a masked ring so
+   it can follow the rounded corners, which border-image cannot do. */
+.explanation::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: max(1px, 0.0579cqw);
+  background: linear-gradient(
+    85.9deg,
+    #7638fa 0%,
+    #d300c5 27.69%,
+    #ff0069 46.35%,
+    #ff7a00 68.97%,
+    #ffd600 96.1%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.explanation strong {
+  font-weight: 700;
+}
+
+.right {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 62.9cqw;
+  background: var(--panel-fill);
+  border-top-left-radius: var(--panel-radius);
+  border-bottom-left-radius: var(--panel-radius);
+}
+
+/*
+ * The mockup is exactly centred in this panel in the frame (328px of clearance
+ * on each side), so it is centred here rather than pinned to an x offset.
+ *
+ * Its size is the frame's 431-of-1728 width, but capped by the same footprint
+ * expressed against the frame's height. The canvas stretches independently per
+ * axis while the mockup has to keep its aspect ratio, so on a viewport wider than
+ * the frame a purely width-driven mockup grows taller than its share of the
+ * screen — at 1512x832 it would stand 96% of the viewport tall against the
+ * frame's 79%. The cap is inert at the frame's own aspect ratio, where both
+ * terms resolve to 431px, and only ever makes the mockup smaller.
+ */
+.mockup {
+  position: absolute;
+  top: 10.5641cqh;
+  left: 0;
+  right: 0;
+  margin-inline: auto;
+  width: min(24.9421cqw, 38.582cqh);
+}
+
+/* No drop shadow: the frame sits the mockup flat on the panel. Scoped under
+   .mockup so it outranks PhoneMockup's own filter regardless of sheet order.
+   `height: auto` keeps the PNG at its native aspect ratio. */
+.mockup .phone {
+  width: 100%;
+  height: auto;
+  filter: none;
+}

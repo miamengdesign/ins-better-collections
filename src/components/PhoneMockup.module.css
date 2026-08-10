@@ -1,0 +1,6 @@
+.image {
+  width: 100%;
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 1.2cqw 2.4cqw rgba(0, 0, 0, 0.18));
+}

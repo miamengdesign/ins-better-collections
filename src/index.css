@@ -1,111 +1,148 @@
+/* Instagram Sans — the site's one typeface, used everywhere via the
+   --font-display/--font-body tokens below. */
+@font-face {
+  font-family: 'Instagram Sans';
+  src: url('/fonts/Instagram%20Sans%20Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Instagram Sans';
+  src: url('/fonts/Instagram%20Sans.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Instagram Sans';
+  src: url('/fonts/Instagram%20Sans%20Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Instagram Sans';
+  src: url('/fonts/Instagram%20Sans%20Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Instagram Sans Headline';
+  src: url('/fonts/Instagram%20Sans%20Headline.otf') format('opentype');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  --font-display: 'Instagram Sans', 'Poppins', 'Inter', system-ui, sans-serif;
+  --font-body: 'Instagram Sans', 'Poppins', 'Inter', system-ui, sans-serif;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  /* Type scale. Each token is named for the size the text is authored at in the
+     1728x1117 Figma frame and is expressed as that size relative to the frame
+     width (size / 1728 * 100cqw), so every text on the site renders at its exact
+     Figma size when a section is at frame scale, and all size ratios between
+     texts hold at every viewport. Texts sharing a Figma size share a token, so
+     they can never drift apart. `cqw` (never a per-axis transform) keeps glyph
+     scaling uniform — text is never stretched. */
+  --fs-16: 0.9259cqw;
+  --fs-20: 1.1574cqw;
+  --fs-24: 1.3889cqw;
+  --fs-32: 1.8519cqw;
+  --fs-60: 3.4722cqw;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
+  /* The 80px content margin every Figma frame is laid out against, and the 80px
+     corner radius of the light panels. */
+  --frame-margin: 4.6296cqw;
+  --panel-radius: 4.6296cqw;
+
+  /* The light panels in Sections 03, 04 and 05 are one element in the frames:
+     white at 93% over the section's gradient, not an opaque near-white, so the
+     colour underneath carries through and tints them. Must stay layered over a
+     GradientStage to read correctly. */
+  --panel-fill: rgba(255, 255, 255, 0.93);
+
+  --color-bg: #ffffff;
+  --color-ink: #08060d;
+  --color-panel: #f7f9f9;
+  --color-step-inactive: #dbdbdb;
+  --color-white: #ffffff;
+
+  color-scheme: light;
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  text-rendering: optimizeLegibility;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}
-
-body {
-  margin: 0;
-}
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
+* {
   box-sizing: border-box;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
-
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
+html,
+body {
   margin: 0;
+  padding: 0;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  overflow-x: hidden;
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+#root {
+  display: flex;
+  flex-direction: column;
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+figure {
+  margin: 0;
+  padding: 0;
+}
+
+ul {
+  list-style: none;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

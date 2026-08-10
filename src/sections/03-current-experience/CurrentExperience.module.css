@@ -1,0 +1,98 @@
+.section {
+  position: relative;
+}
+
+/* Header height is content-driven and the panel fills whatever remains. Every
+   header measurement — the margins, the gaps between the three rows, and the
+   type — is in `cqw`, so the whole block scales as one with the artwork and the
+   top margin stays exactly equal to the left margin (both --frame-margin, the
+   80px margin the Figma frame is laid out against) at any viewport. */
+.stack {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  flex-shrink: 0;
+  padding: var(--frame-margin) var(--frame-margin) 2.3872cqw;
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--fs-24);
+  line-height: 1.2;
+  color: var(--color-step-inactive);
+  text-align: left;
+}
+
+.bullet {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.95cqw;
+  margin-top: 2.9103cqw;
+  padding-left: 1.1308cqw;
+  font-family: var(--font-display);
+  font-size: var(--fs-32);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--color-white);
+  max-width: 60cqw;
+  text-align: left;
+}
+
+.bullet::before {
+  content: '•';
+  line-height: inherit;
+}
+
+.panel {
+  flex: 1;
+  min-height: 0;
+  background: var(--panel-fill);
+  border-top-left-radius: var(--panel-radius);
+  border-top-right-radius: var(--panel-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4cqw;
+  padding: 3cqh 6cqw;
+  overflow: hidden;
+}
+
+.phone {
+  width: 13.5cqw;
+  flex-shrink: 0;
+}
+
+.phone3 {
+  width: 13.5cqw;
+  flex-shrink: 0;
+}
+
+.callout {
+  width: 20cqw;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.calloutWide {
+  width: 28cqw;
+  align-self: flex-end;
+  margin-bottom: 2cqw;
+}
+
+.calloutSm {
+  width: 18cqw;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1cqw;
+}
