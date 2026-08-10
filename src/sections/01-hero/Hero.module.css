@@ -1,48 +1,21 @@
+/* Exactly 100vh (not min-height) + overflow:hidden so this section can never scroll
+   internally and never grows taller than the viewport, per direction. */
 .hero {
   position: relative;
   width: 100%;
-  min-height: 100vh;
+  height: 100vh;
   background: #ffffff;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-top: 7vh;
-  padding-bottom: clamp(24px, 4vh, 56px);
-  gap: clamp(16px, 2.4vh, 32px);
-  box-sizing: border-box;
+  overflow: hidden;
 }
 
-/* Width-driven, matching the Figma target of ~95% viewport width with narrow side
-   margins. Capped at the artwork's native 1728px so it's never upscaled/blurred. */
-.frame {
-  position: relative;
-  width: min(95vw, 1728px);
-  aspect-ratio: 1728 / 1117;
-  flex-shrink: 0;
-}
-
+/* object-fit:contain guarantees the full 01 Hero.png is always visible, uncropped,
+   at its correct aspect ratio. Whichever side doesn't touch the viewport edge is
+   filled by the section's white background showing through around the image. */
 .bg {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  display: block;
-}
-
-/* The artwork is fetched and inlined (rather than <img src>) purely so this rule can
-   reach it: the "Instagram" wordmark's compound vector paths anti-alias into a visible
-   gray seam at default rendering, verified present in the raw asset itself, not
-   introduced by any filter/shadow/duplicate layer. crispEdges removes the seam without
-   visibly affecting the rounded cards/gradients elsewhere in the composition. */
-.bg svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-  shape-rendering: crispEdges;
-}
-
-/* Sits in normal flex flow below the artwork frame, not absolutely positioned over it,
-   so it can never overlap the bottom row of cards regardless of viewport size. */
-.cue {
-  width: clamp(120px, 8vw, 180px);
-  height: auto;
-  flex-shrink: 0;
+  object-fit: contain;
+  object-position: center;
 }
