@@ -1,0 +1,37 @@
+.tracker {
+  display: flex;
+  align-items: center;
+  gap: 0.9cqw;
+  font-size: 1.05cqw;
+  font-weight: 600;
+}
+
+.step {
+  color: var(--color-step-inactive);
+  white-space: nowrap;
+}
+
+.step.active {
+  color: var(--color-white);
+}
+
+.connector {
+  width: 3.2cqw;
+  height: 1px;
+  background: var(--color-step-inactive);
+  flex-shrink: 0;
+}
+
+.connector.solid {
+  background: var(--color-white);
+}
+
+.connector.dotted {
+  background: repeating-linear-gradient(
+    to right,
+    var(--color-step-inactive) 0,
+    var(--color-step-inactive) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}

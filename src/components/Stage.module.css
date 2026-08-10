@@ -1,0 +1,17 @@
+/*
+ * Locks the 1728x1117 Figma frame's proportions and exposes its width as `cqw`
+ * container-query units, so any child sized/positioned in cqw scales fluidly
+ * and stays pixel-faithful to the Figma export at any viewport width.
+ */
+.stage {
+  container-type: inline-size;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.canvas {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1728 / 1117;
+}

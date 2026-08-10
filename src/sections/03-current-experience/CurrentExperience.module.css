@@ -1,0 +1,83 @@
+.section {
+  position: relative;
+}
+
+.header {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 17.01cqw; /* 294/1728 */
+  padding: 3.2cqw 4.1cqw 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.3cqw;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.6cqw;
+  color: var(--color-white);
+}
+
+.bullet {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6cqw;
+  font-size: 1.05cqw;
+  color: var(--color-white);
+  max-width: 60cqw;
+}
+
+.bullet::before {
+  content: '•';
+  line-height: 1;
+}
+
+.panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 17.01cqw;
+  bottom: 0;
+  background: var(--color-panel);
+  border-top-left-radius: 4.63cqw;
+  border-top-right-radius: 4.63cqw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4cqw;
+  padding: 3cqw 6cqw;
+}
+
+.phone {
+  width: 13.5cqw;
+  flex-shrink: 0;
+}
+
+.phone3 {
+  width: 13.5cqw;
+  flex-shrink: 0;
+}
+
+.callout {
+  width: 20cqw;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.calloutWide {
+  width: 28cqw;
+  align-self: flex-end;
+  margin-bottom: 2cqw;
+}
+
+.calloutSm {
+  width: 18cqw;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1cqw;
+}

@@ -1,0 +1,14 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5vw;
+  color: var(--color-white);
+  font-family: var(--font-body);
+  font-size: clamp(0.85rem, 0.9vw, 1.05rem);
+  font-weight: 500;
+}
+
+.arrow {
+  font-size: 1.1em;
+  line-height: 1;
+}
