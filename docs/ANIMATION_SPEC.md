@@ -8,10 +8,10 @@ Exact interaction/motion behavior for each section. This formalizes the interact
 
 ## 01 · Hero
 
-**Static content**: the entire `01 Hero bg.svg` visual is motionless. No individual element inside it (cards, title, badges) animates independently.
+**Static content**: the entire `01 Hero asset/01 Hero bg.png` artwork is motionless. It is one complete flattened image — no individual element inside it (cards, title, badges) animates independently, and it is never rebuilt from separate pieces.
 
 **"Scroll down to continue" cue**
-- CSS `@keyframes` opacity breathing loop, applied to the `⇣ Scroll down to continue.png` image only.
+- CSS `@keyframes` opacity breathing loop, applied to the scroll-cue element only. *Asset note:* there is **no** separate `⇣ Scroll down to continue.png` in `public/images` — the cue is either baked into the Hero artwork or, if a live breathing cue is wanted, it is a small **HTML/CSS overlay element** (not a shipped image). The breathing motion below is unchanged either way.
 - Cycle: `opacity: 1 → 0.35 → 1`.
 - Duration: **~4s per cycle**, `ease-in-out`, `infinite`.
 - No transform, no scale — opacity only.
@@ -28,11 +28,11 @@ Exact interaction/motion behavior for each section. This formalizes the interact
 
 ## 02 · Why Collection — cinematic scroll-driven typography
 
-**This is the one continuous-interpolation scrollytelling section on the site.** No IntersectionObserver fade-ins, no swapping of the numbered SVG snapshots (`02 Why Collections 1–5.svg` are reference-only per `ASSET_MANIFEST.md`) — every value below is computed each frame from local scroll progress `p ∈ [0,1]` inside one `PinnedStage`.
+**This is the one continuous-interpolation scrollytelling section on the site.** No IntersectionObserver fade-ins, no swapping of the numbered snapshots (the `references/png|svg/02 Why Collections 1–4` and `…6` files are reference-only per `ASSET_MANIFEST.md`, and Section 02 has **no runtime image assets** at all) — every value below is computed each frame from local scroll progress `p ∈ [0,1]` inside one `PinnedStage`.
 
 **Content states** (5 total): Heading (`Why Collection?`), Statement 1, Statement 2, Statement 3, Statement 4 (the four narrative lines from the brief, in order).
 
-**Relay model**: at any given `p`, at most two narrative statements are visible at once — the current one (large/bright) and the immediately-preceding one (small/dimmed, still finishing its exit upward). The heading is the one exception: after its own demotion, it does **not** continue fading away — it settles permanently into the small upper-left label position (matching `02 Why Collections bg2.svg`) and stays there, unchanging, for the rest of the section.
+**Relay model**: at any given `p`, at most two narrative statements are visible at once — the current one (large/bright) and the immediately-preceding one (small/dimmed, still finishing its exit upward). The heading is the one exception: after its own demotion, it does **not** continue fading away — it settles permanently into the small upper-left label position (matching the small-label state shown in the `references/.../02 Why Collections` snapshots) and stays there, unchanging, for the rest of the section.
 
 **Default progress allocation** (tunable, but this is the concrete default to build against):
 
@@ -101,9 +101,11 @@ One pinned stage, three states (mirrors 03's mechanism):
 
 | State | Left column | Right panel contents |
 |---|---|---|
-| Solution 01 | "Solution 01" / "Reels Detail Enhancement" / "Interface Consistency" + explanation | `04 Solution 1 pic.svg` + `04 Solution 1 txt.svg` |
-| Solution 02 | "Solution 02" / "New Collection Enhancement" / "Multi-User Collaboration" + explanation | `04 Solution 2 pic.svg` + `04 Solution 2 txt.svg` |
-| Solution 03 | "Solution 03" / "Manage Collection Enhancement" / "Collaboration Consistency" + explanation | `04 Solution 3 pic.svg` + `04 Solution 3 txt.svg` |
+| Solution 01 | "Solution 01" / "Reels Detail Enhancement" / "Interface Consistency" + explanation | `04 Solution 1 pic.png` |
+| Solution 02 | "Solution 02" / "New Collection Enhancement" / "Multi-User Collaboration" + explanation | `04 Solution 2 pic.png` |
+| Solution 03 | "Solution 03" / "Manage Collection Enhancement" / "Collaboration Consistency" + explanation | `04 Solution 3 pic.png` |
+
+*Asset note:* the right panel is a single runtime PNG per state (`04 Solution asset/04 Solution N pic.png`); there is **no** separate `txt` caption asset — any caption is baked into the `pic.png`, and the left-column copy (eyebrow/heading/badge/explanation) is HTML.
 
 - Local `p` split into three thirds, same restrained-crossfade mechanism as §03 (opacity + small `translateY`/`translateX` drift on the right panel's mockup, no bounce).
 - Left column text content swaps via opacity crossfade only (text shouldn't slide — it's reading content, not evidence).
@@ -133,17 +135,17 @@ This is the one transition where two panels are simultaneously visible and treat
 
 Visually quiet — no section-internal states to scroll through beyond the entrance handoff in §04→05.
 
-- Left: light panel with `05 Prototype pic.svg`. Right: dark gradient panel with "Prototype" eyebrow + "Click the Mockup, try it by yourself!" heading (HTML).
+- Left: light panel with `05 Prototype asset/05 Prototype pic.png`. Right: dark gradient panel with "Prototype" eyebrow + "Click the Mockup, try it by yourself!" heading (HTML).
 - **Link source of truth**: the Figma prototype URL is stored once, as `PROTOTYPE_URL`, in `src/config/links.js`:
   ```js
   export const PROTOTYPE_URL =
     'https://www.figma.com/proto/Fk7uatF6NZBenD9BwYl6y4/TT-Prototype?node-id=2054-8108&p=f&viewport=-805%2C-839%2C0.54&t=VGFwMyGygk3wcdKE-1&scaling=scale-down&content-scaling=fixed&starting-point-node-id=2054%3A8108&page-id=2054%3A6564'
   ```
   `Prototype.jsx` imports this constant; the URL string is not duplicated or re-typed anywhere else in the codebase.
-- **Mockup interactivity** — the mockup image (`05 Prototype pic.svg`) is the *only* clickable target in this section, wrapped in a real `<a href={PROTOTYPE_URL}>`:
+- **Mockup interactivity** — the mockup image (`05 Prototype pic.png`) is the *only* clickable target in this section, wrapped in a real `<a href={PROTOTYPE_URL}>`:
   - **Hover**: `cursor: pointer`; `transform: scale(1.015)` (extremely subtle — not the same magnitude as a card-hover pattern); `box-shadow`/elevation increases slightly. Transition ~150–200ms `ease-out`.
   - **Click**: opens `PROTOTYPE_URL` in a new tab — `target="_blank" rel="noopener noreferrer"` (the `rel` attributes are required, not optional, since a `target="_blank"` link without them can let the opened page control the originating tab).
-- **"Tap here to start"** (`05 Prototype txt.svg`) remains **instructional text only** — it is not itself wrapped in a link and has no independent click handler; it sits beside the mockup to point at the one interactive element, and is otherwise inert.
+- **"Tap here to start"** remains **instructional text only** — it is not itself wrapped in a link and has no independent click handler; it sits beside the mockup to point at the one interactive element, and is otherwise inert. *Asset note:* there is **no** `05 Prototype txt.svg` runtime asset — this caption is HTML (or already baked into `05 Prototype pic.png`, in which case it is not duplicated as HTML).
 - **No additional CTA button** is added beyond the mockup itself being the click target, per direction.
 
 **Reduced motion**: hover scale/elevation removed or reduced to a negligible amount (e.g. box-shadow change only, no transform) — click behavior unaffected.
@@ -158,7 +160,7 @@ The one section whose motion is *triggered*, not a function of continuous scroll
 1. `IntersectionObserver` watches the section root; fires when "meaningfully visible" (e.g. `threshold: 0.5`).
 2. On first firing only, start a `2s` timer.
 3. When the timer elapses, play the transition **once**:
-   - Same underlying `06 Behind 1 pic1–4.svg` composition stays in place (no new assets, no re-layout).
+   - Same underlying `06 Behind asset/06 Behind 1 pic1–4.png` composition stays in place (no new assets, no re-layout).
    - Dark project-gradient overlay fades in over the collage: `opacity 0 → ~0.85`, `~800ms–1000ms ease-in-out`.
    - Sketch contrast reduces slightly in the same window (CSS `filter: contrast(...)`/`brightness(...)` tween, subtle — the sketches should stay legible, just recede).
    - Centered text ("Before narrowing the scope, I mapped issues across discovery, creation, sharing, and organization.") fades in: `opacity 0 → 1`, slightly staggered after the overlay begins (~150–200ms delay) so it reads as "overlay arrives, then text appears on it," not simultaneous.

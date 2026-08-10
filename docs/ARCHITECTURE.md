@@ -1,8 +1,8 @@
 # Architecture — Instagram Collection Redesign Case-Study Site
 
-Implementation architecture for assembling the seven sections from the assets catalogued in `docs/ASSET_MANIFEST.md`. This document describes structure and mechanism only — no layout, copy, or visual design decisions are made here; everything defers to the Figma exports and reference mockups.
+Implementation architecture for assembling the seven sections from the assets catalogued in `docs/ASSET_MANIFEST.md`. This document describes structure and mechanism only — no layout, copy, or visual design decisions are made here; everything defers to the runtime assets in `/public/images` and the reference mockups in `/references`.
 
-No application code has been written yet. This is the plan to build against.
+**Current status:** the React/Vite app and all seven section scaffolds already exist and are wired up. `src/App.jsx` mounts the seven section components in order; each section renders a **static first state** with its real markup and (where applicable) its runtime PNG assets in place. The **scroll-driven / timer-driven motion** described in `docs/ANIMATION_SPEC.md` is deliberately **deferred to a later pass** — the DOM structure is authored so that pass needs no restructuring. Where this document lists a motion primitive that does not yet exist in `src/` (e.g. `PinnedStage`, `ScrollCue`, the `hooks/` folder), it is called out as **planned**, not present. The intended motion behavior is unchanged from `ANIMATION_SPEC.md`.
 
 ---
 
@@ -10,48 +10,42 @@ No application code has been written yet. This is the plan to build against.
 
 One top-level component per section, mounted once, in document order, by `App.jsx`. Each section is a self-contained folder: its own component, its own local styles, and (where needed) its own local scroll-progress hook instance. Nothing about a section's internals is imported by another section.
 
+Current tree (✅ = exists in `src/` today; ⏳ = planned, not yet created, added in the motion pass):
+
 ```
 src/
-  App.jsx                        — mounts the 7 sections in order + <BackToTop/>
+  main.jsx                       ✅ Vite entry — mounts <App/> in <StrictMode>
+  App.jsx                        ✅ mounts the 7 sections in order (see below)
+  index.css                      ✅ @font-face (Instagram Sans) + global tokens
   sections/
-    01-hero/
-      Hero.jsx
-      Hero.module.css
-    02-why-collection/
-      WhyCollection.jsx
-      WhyCollection.module.css
-    03-current-experience/
-      CurrentExperience.jsx
-      CurrentExperience.module.css
-    04-solutions/
-      Solutions.jsx
-      Solutions.module.css
-    05-prototype/
-      Prototype.jsx
-      Prototype.module.css
-    06-behind-the-work/
-      BehindTheWork.jsx
-      BehindTheWork.module.css
-    07-wrap-up/
-      WrapUp.jsx
-      WrapUp.module.css
+    01-hero/            Hero.jsx ✅            Hero.module.css ✅
+    02-why-collection/  WhyCollection.jsx ✅   WhyCollection.module.css ✅
+    03-current-experience/ CurrentExperience.jsx ✅ CurrentExperience.module.css ✅
+    04-solutions/       Solutions.jsx ✅       Solutions.module.css ✅
+    05-prototype/       Prototype.jsx ✅       Prototype.module.css ✅
+    06-behind-the-work/ BehindTheWork.jsx ✅   BehindTheWork.module.css ✅
+    07-wrap-up/         WrapUp.jsx ✅          WrapUp.module.css ✅
   components/                    — shared primitives, see §2
-    PinnedStage.jsx
-    GradientStage.jsx
-    StepTracker.jsx
-    PhoneMockup.jsx
-    CalloutCard.jsx
-    BackToTop.jsx
-    ScrollCue.jsx
-  hooks/
-    useScrollProgress.js
-    useReducedMotion.js
-    useOneShotInView.js
+    Stage.jsx           ✅ aspect-locked 1728×1117 frame (static scaffold)
+    GradientStage.jsx   ✅ shared gradient/background treatment
+    FillBackground.jsx  ✅ helper used by GradientStage
+    StepTracker.jsx     ✅ Discover→…→Manage tracker (03)
+    PhoneMockup.jsx     ✅ presentational wrapper around a phone-mockup image
+    CalloutCard.jsx     ✅ presentational wrapper around a callout image
+    BackToTop.jsx       ✅ back-to-top control (rendered inside WrapUp, see §2)
+    PinnedStage.jsx     ⏳ planned — pinned scroll-track primitive (§7)
+    ScrollCue.jsx       ⏳ planned — Hero breathing cue (§2)
+  lib/
+    assets.js           ✅ img() path helper for /public assets
   config/
-    links.js                     — centralized external-link constants (see §2)
+    links.js            ✅ centralized external-link constants (see §2)
+  hooks/                ⏳ planned — created in the motion pass
+    useScrollProgress.js  ⏳
+    useReducedMotion.js   ⏳
+    useOneShotInView.js   ⏳
 ```
 
-`App.jsx` is a thin shell: it renders `<Hero/> <WhyCollection/> <CurrentExperience/> <Solutions/> <Prototype/> <BehindTheWork/> <WrapUp/> <BackToTop/>` and nothing else. It holds no shared scroll state — each section computes its own progress locally (see §8).
+`App.jsx` is a thin shell: it renders `<Hero/> <WhyCollection/> <CurrentExperience/> <Solutions/> <Prototype/> <BehindTheWork/> <WrapUp/>` in order and nothing else. `<BackToTop/>` is currently rendered **inside `WrapUp.jsx`'s footer** (not directly by `App.jsx`). `App.jsx` holds no shared scroll state — each section is intended to compute its own progress locally once the motion pass lands (see §8).
 
 ---
 
@@ -59,36 +53,39 @@ src/
 
 | Primitive | Used by | Responsibility |
 |---|---|---|
-| `PinnedStage` | 02, 03, 04, 05 | The `height:{N}vh` scroll-track + inner `position: sticky; top:0; height:100vh` wrapper. Exposes local scroll progress `0–1` to its children via a render prop. This is the *only* place scroll-hijacking/pinning mechanics live — sections consume it, they don't reimplement it. |
-| `GradientStage` | 02, 03 (header strip), 04 (dark panel), 05 (dark panel), 07 (page background) | Renders the shared rainbow-gradient asset (`02 Why Collections bg.svg`) as a full-bleed backdrop. One component, one asset reference, so the gradient is visually and pixel-identical everywhere it appears instead of five copy-pasted backgrounds. |
-| `StepTracker` | 03 only | `Discover → Save → Create → Collaborate → Manage`, taking an `activeSteps` prop (e.g. `['Discover','Save']`) to control bold/grey state and the dotted-vs-solid connector between Save and Create. Factored out because it's stateful, reused across 03's three internal states, and non-trivial enough to warrant its own file even though only one section uses it. |
-| `PhoneMockup` | 03, 04, 05 | Thin wrapper around a `pic*.svg` asset — consistent sizing, drop-shadow, and the enter/exit animation hook-up, so each section doesn't re-derive mockup presentation from scratch. |
-| `CalloutCard` | 03 only | Thin wrapper around a `txt*.svg` annotation asset (renders it, positions it, wires its independent fade/slide-in). |
-| `BackToTop` | global (rendered once in `App.jsx`, fixed/footer-positioned near section 07) | The rolling-arrow control; owns its own CSS loop animation and the smooth-scroll-to-Hero click handler. |
-| `ScrollCue` | 01 only | The breathing-opacity "Scroll down to continue" hint. Small enough to stay local to Hero rather than shared, but listed here since it's a self-contained animated unit. |
-| `config/links.js` | 05 only (currently) | Not a component — a plain constants module. Holds `PROTOTYPE_URL` (the Figma prototype link) as the single source of truth. `Prototype.jsx` imports it; the URL string is never inlined/duplicated in a component or hardcoded a second time anywhere. Any future section needing an external link constant is added here, not re-declared locally. |
-| `useScrollProgress(ref, opts)` | `PinnedStage`, and any section needing scroll-linked values without full pinning (e.g. Hero's exit) | Returns a `0–1` number derived from the element's position in the viewport. Pure function of scroll position — no internal animation state, which is what makes every scroll-linked transition reversible for free (see §8). |
-| `useReducedMotion()` | every animated component | Wraps `matchMedia('(prefers-reduced-motion: reduce)')`; components branch their animation logic on this, not on ad hoc checks scattered per file. |
-| `useOneShotInView(ref, {threshold, delay})` | 06 only | IntersectionObserver + a delay timer + a latch (`hasPlayed`) that never resets. The one deliberately non-reversible, imperative piece of motion logic in the site — isolated to its own hook so it's obviously the exception, not the pattern. |
+| `Stage` ✅ | 01–06 | Aspect-locked `1728×1117` frame with an inner canvas; children position/size themselves in container units. This is the **static scaffold** primitive that exists today; it does **not** yet do scroll-track pinning (that is `PinnedStage`, planned). |
+| `PinnedStage` ⏳ | 02, 03, 04, 05 | *Planned (motion pass).* The `height:{N}vh` scroll-track + inner `position: sticky; top:0; height:100vh` wrapper. Exposes local scroll progress `0–1` to its children via a render prop. This is the *only* place scroll-hijacking/pinning mechanics will live — sections consume it, they don't reimplement it. |
+| `GradientStage` ✅ | 02, 03 (header strip), 04 (dark panel), 05 (dark panel), 07 (page background) | Renders the shared rainbow-gradient/background treatment as a full-bleed backdrop, via `FillBackground`. **Target:** a **CSS gradient treatment** (there is no shipped gradient image in `public/images` anymore). *Cleanup note:* the current implementation still fetches the removed `02 Why Collections bg.svg`; that reference must be replaced with the CSS treatment in the code pass (see §11). |
+| `FillBackground` ✅ | via `GradientStage` | Helper that renders a full-bleed background into its host element. Currently fetches an SVG by name; to be repointed to the CSS gradient treatment (see §11). |
+| `StepTracker` ✅ | 03 only | `Discover → Save → Create → Collaborate → Manage`, taking an `activeSteps` prop (e.g. `['Discover','Save']`) to control bold/grey state and the dotted-vs-solid connector between Save and Create. Factored out because it's stateful, reused across 03's three internal states, and non-trivial enough to warrant its own file even though only one section uses it. |
+| `PhoneMockup` ✅ | 03, 04, 05 | Thin `<img>` wrapper around a phone-mockup **PNG** asset — consistent sizing, drop-shadow, and (later) the enter/exit animation hook-up, so each section doesn't re-derive mockup presentation from scratch. |
+| `CalloutCard` ✅ | 03 (and 04/05 currently) | Thin `<img>` wrapper around a callout/annotation **PNG** asset (renders it, positions it, and later wires its independent fade/slide-in). |
+| `BackToTop` ✅ | rendered inside `WrapUp.jsx`'s footer (section 07) | The back-to-top control; a real `<button>` with the "Back to top" text and an arrow glyph element. Owns the smooth-scroll-to-Hero click handler today; the arrow's continuous upward-rolling loop is added in the motion pass. |
+| `ScrollCue` ⏳ | 01 only | *Planned (motion pass).* The breathing-opacity Hero cue. Note: there is **no** separate scroll-cue image asset — any cue is an HTML/CSS element (or already baked into the Hero artwork). |
+| `config/links.js` ✅ | 05 + 07 | Not a component — a plain constants module. Holds `PROTOTYPE_URL` (the Figma prototype link) as the single source of truth, plus `GITHUB_URL` and `VERCEL_URL` (Quick Links, §07). Imported where needed; the URL strings are never inlined/duplicated. |
+| `lib/assets.js` ✅ | all sections | `img(name, folder='images')` — builds an encoded `/public` path for an asset by name. |
+| `useScrollProgress(ref, opts)` ⏳ | `PinnedStage`, and any section needing scroll-linked values without full pinning (e.g. Hero's exit) | *Planned (motion pass).* Returns a `0–1` number derived from the element's position in the viewport. Pure function of scroll position — no internal animation state, which is what makes every scroll-linked transition reversible for free (see §8). |
+| `useReducedMotion()` ⏳ | every animated component | *Planned (motion pass).* Wraps `matchMedia('(prefers-reduced-motion: reduce)')`; components branch their animation logic on this, not on ad hoc checks scattered per file. |
+| `useOneShotInView(ref, {threshold, delay})` ⏳ | 06 only | *Planned (motion pass).* IntersectionObserver + a delay timer + a latch (`hasPlayed`) that never resets. The one deliberately non-reversible, imperative piece of motion logic in the site — isolated to its own hook so it's obviously the exception, not the pattern. |
 
 ---
 
 ## 3. Runtime assets per section
 
-(Full detail and reasoning in `docs/ASSET_MANIFEST.md`; this is the consumption summary.)
+(Full detail and reasoning in `docs/ASSET_MANIFEST.md`; this is the consumption summary. Every runtime asset is a **PNG** under `/public/images/<Section> asset/` — there are no runtime SVGs.)
 
-- **01 Hero**: `01 Hero bg.svg` (single static full-screen visual) + `⇣ Scroll down to continue.png`.
-- **02 Why Collection**: `02 Why Collections bg.svg` only. All five copy lines are HTML (see §5).
-- **03 Current Experience**: `03 Current Experience {1,2,3} pic*.svg` (6 phone mockups total) + `03 Current Experience {1,2,3} txt*.svg` (5 callout cards total). The shell/header background is HTML+CSS informed by `03 Current Experience 1 bg.svg`, not the asset itself (see §5).
-- **04 Solutions**: `04 Solution bg.svg` (shared) + `04 Solution {1,2,3} pic.svg` + `04 Solution {1,2,3} txt.svg` (small caption+icon assets).
-- **05 Prototype**: `05 Prototype bg.svg` + `05 Prototype pic.svg` (the clickable mockup, wrapped in an `<a>` pointing at `PROTOTYPE_URL` from `config/links.js`) + `05 Prototype txt.svg` (instructional-only, not itself a link).
-- **06 Behind the Work**: `06 Behind 1 pic{1,2,3,4}.svg` (reused for both the initial state and, under a CSS dark/blur overlay, the second state).
-- **07 Wrap Up**: the shared gradient via `GradientStage` (reusing `02 Why Collections bg.svg`) as page background only.
-- **Global**: `⇡ Back to top.svg` is reference-only for type styling (see §5); the rendered control is HTML.
+- **01 Hero**: `01 Hero asset/01 Hero bg.png` — the **one complete Hero artwork**, rendered as a single image at its native aspect ratio (6912 × 4468). Do not rebuild the Hero from separate pieces. No separate scroll-cue asset.
+- **02 Why Collection**: **no runtime image assets.** HTML/CSS only, over the CSS gradient/background treatment. All five copy lines are HTML (see §5).
+- **03 Current Experience**: state-based PNGs from `03 Current Experience asset/` — **State 1:** `03 Current Experience 1 pic1.png`, `…1 pic2.png`, `…1 pic3.png` + `…1 txt.png` (callout). **State 2:** `…2 group1.png`, `…2 group2.png` (two grouped composites). **State 3:** `…3 pic.png` (single combined PNG). The title/step-tracker/bullet chrome is HTML+CSS (see §5).
+- **04 Solutions**: one PNG per state from `04 Solution asset/` — `04 Solution 1 pic.png`, `04 Solution 2 pic.png`, `04 Solution 3 pic.png`. No separate bg/txt assets; the panel/gradient split and the left-column copy are HTML/CSS (see §5).
+- **05 Prototype**: `05 Prototype asset/05 Prototype pic.png` — the clickable mockup, wrapped in an `<a>` pointing at `PROTOTYPE_URL` from `config/links.js`. No separate `txt` asset; the eyebrow/heading/caption are HTML (see §5).
+- **06 Behind the Work**: `06 Behind asset/06 Behind 1 pic{1,2,3,4}.png` — four separate collage PNGs, reused for both the initial state and, under a CSS dark/blur overlay, the second state.
+- **07 Wrap Up**: **no runtime image assets.** Semantic HTML/CSS over the CSS gradient/background treatment (see §5).
+- **Global**: the back-to-top control is HTML (no image asset). The gradient/background is a CSS treatment, not a shipped image.
 
-## 4. Reference-only full-frame SVGs (not rendered)
+## 4. Reference-only mockups (not rendered)
 
-`01 Hero.svg`, `01 Hero.png`, all `02 Why Collections 1–5.svg`, `02 Why Collections bg2.svg`, `02 Why Collections bg.png`, `03 Current Experience 1 bg.svg` (text/state portion only — see §5), all three `03 Current Experience {1,2,3}.svg` composites, all three `04 Solution {1,2,3}.svg` composites, `05 Prototype.svg`, `06 Behind 1.svg`, `06 Behind 2.svg`, and all three `07 Wrapup 1–3.svg`. These stay in `/public/images` for design QA/diffing against the live build but are never imported by a component.
+The full-frame flattened mockups live in **`/references/png`** and **`/references/svg`** (18 files each), **not** in `/public/images`. They are used for design QA / diffing against the live build and to read copy/layout when authoring HTML — they are **never** imported by a component and **never** rendered as a runtime screen. Files: `01 Hero`, `02 Why Collections {1,2,3,4,6}`, `03 Current Experience {1,2,3}`, `04 Solution {1,2,3}`, `05 Prototype`, `06 Behind {1,2}`, `07 Wrapup {1,2,3}` (each present as both `.png` and `.svg`).
 
 ## 5. Text that must be semantic HTML
 
@@ -101,6 +98,8 @@ No exported asset exists for this content (or it must carry interactive/dynamic 
 - **06**: "Behind the Work" heading and both paragraphs (initial + revealed).
 - **07**: heading, closing paragraph, "Tools:" list, "Quick Link:" list (real `<a>` elements), and the footer line.
 - **Global**: "Back to top" control text and its arrow glyph/element.
+
+**Conversely**, text that is already **baked into a runtime PNG** must **not** be re-typed as HTML on top of it: the 03 callout/annotation copy (`…1 txt.png`, and whatever is inside the `2 group*.png` / `3 pic.png` composites), the 04 phone-caption beneath each `pic.png`, the 05 "Tap here to start" caption if it is part of `05 Prototype pic.png`, and all baked copy inside the Hero artwork. See the "Do not duplicate baked-in text" rule in `docs/ASSET_MANIFEST.md`.
 
 ## 6. Sections using normal document flow
 
@@ -124,7 +123,7 @@ Two of the specified transitions — **03 → 04** and **04 → 05** — describ
 The chosen approach avoids that fusion:
 
 - Each of 03, 04, and 05 remains its **own component with its own `PinnedStage` and its own local scroll-progress instance**. Editing section 04's copy or timing cannot break section 03 or 05's code, because neither reads the others' state.
-- The "dark gradient stays stationary" requirement is satisfied by every section independently rendering the **same shared `GradientStage` primitive** — visually seamless because it's the same asset at the same position with no motion applied, not because it's one shared DOM node. A gradient with zero motion is trivially "stationary" across a section boundary.
+- The "dark gradient stays stationary" requirement is satisfied by every section independently rendering the **same shared `GradientStage` primitive** — visually seamless because it's the same gradient treatment at the same position with no motion applied, not because it's one shared DOM node. A gradient with zero motion is trivially "stationary" across a section boundary.
 - The physical handoff illusion (exit-down/enter-right, push-and-settle) comes from **standard adjacent-sticky-section overlap**: when one `height: {N}vh` track's `position: sticky` inner viewport approaches the end of its own track, it naturally begins scrolling away *while* the next section's sticky viewport is simultaneously becoming pinned, just below it, in the same viewport. Each section only needs to author its own exit keyframes in the last ~15–20% of its own local progress, and the next section its own entrance keyframes in the first ~15–20% of its local progress — the visual overlap emerges from normal document/scroll geometry, not from any cross-component coordination code.
 - Because every transition is expressed as `transform`/`opacity` = *pure function of that section's own local scroll progress* (never an imperative "play this animation once" trigger), scrolling backward reverses everything automatically — there is no state machine to un-wind, just the same function evaluated at a smaller progress value. This is the single governing rule for every scroll-*driven* transition in the site (01 exit, 02, 03, 03→04 handoff, 04, 04→05 handoff, 05 entrance). **06 is the sole exception**, by design (see §7).
 
@@ -161,6 +160,14 @@ The Figma frames are authored at `1728×1117` and the pinned/cinematic sections 
 
 ---
 
-## Known cleanup item (not part of this task)
+## 11. Known cleanup items for the code pass
 
-The current `src/App.jsx`, `App.css`, and `index.css` are the unmodified `create-vite` template (fixed `1126px` `#root` width, centered text, demo counter button, Vite/React boilerplate markup). None of it is used by the architecture above. Flagging for when application code work begins — no action taken now.
+The Vite/React boilerplate is gone — `src/App.jsx` mounts the seven sections, `src/index.css` holds the `@font-face` (Instagram Sans) declarations + global tokens, and there is no `App.css`. Outstanding items to reconcile the **code** with this document and `docs/ASSET_MANIFEST.md` (docs are now the target; these are stale references still in the code):
+
+- **Stale asset paths (all currently broken against `/public/images`):**
+  - `Hero.jsx` renders `img('01 Hero.png', 'references')` (a `/references/…` path — reference-only, and not served from `/public`); it must render `01 Hero asset/01 Hero bg.png` from the runtime tree.
+  - `GradientStage`/`FillBackground` fetch the removed `02 Why Collections bg.svg`; replace with the CSS gradient/background treatment.
+  - `CurrentExperience.jsx`, `Solutions.jsx`, `Prototype.jsx`, `BehindTheWork.jsx`, and `WrapUp.jsx` reference flat `/images/*.svg` names that no longer exist; repoint them to the nested runtime PNGs (and add the currently-unused State 2/3 assets for 03 and the Solution 2/3 assets for 04).
+- **Motion not yet built:** every scroll-driven / timer-driven behavior in `docs/ANIMATION_SPEC.md` is deferred; the `PinnedStage`/`ScrollCue` primitives and the `hooks/` folder do not exist yet.
+
+No application code is changed by this documentation update.
