@@ -1,0 +1,29 @@
+/*
+ * Fixed full-viewport presentation stage: always fills the screen edge-to-edge on
+ * BOTH axes (no letterbox bars), exactly one screen tall, never taller, never
+ * internally scrollable — scrolling past a stage means moving to the next section,
+ * not revealing more of this one.
+ *
+ * `.canvas` is the 1728x1117 Figma frame stretched independently on each axis to
+ * exactly match the viewport (width scale != height scale unless the viewport
+ * happens to share the Figma frame's aspect ratio). `container-type: size` exposes
+ * BOTH `cqw` (width-based) and `cqh` (height-based) units to children: horizontal
+ * measurements (widths, left offsets, font sizes) use `cqw` so they always track
+ * full screen width; vertical measurements (top offsets, vertical padding/gaps)
+ * use `cqh` so they always track full screen height and never overflow it.
+ */
+.stage {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  container-type: size;
+}

@@ -1,0 +1,94 @@
+.section {
+  position: relative;
+}
+
+/* Header height is content-driven (not a fixed proportion) and the panel fills
+   whatever remains, so the header's padding-bottom is the ONLY thing determining
+   the gap to the panel's top edge — a fixed px value there stays exact at any
+   viewport instead of drifting with cqh-based sizing. */
+.stack {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  flex-shrink: 0;
+  padding: 3.2cqh 4.1cqw 48px;
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  font-family: 'Instagram Sans', var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--color-white);
+  text-align: left;
+}
+
+.bullet {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6cqw;
+  margin-top: 50px;
+  font-family: 'Instagram Sans', var(--font-display);
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--color-white);
+  max-width: 60cqw;
+  text-align: left;
+}
+
+.bullet::before {
+  content: '•';
+  line-height: 1;
+}
+
+.panel {
+  flex: 1;
+  min-height: 0;
+  background: var(--color-panel);
+  border-top-left-radius: 4.63cqw;
+  border-top-right-radius: 4.63cqw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4cqw;
+  padding: 3cqh 6cqw;
+  overflow: hidden;
+}
+
+.phone {
+  width: 13.5cqw;
+  flex-shrink: 0;
+}
+
+.phone3 {
+  width: 13.5cqw;
+  flex-shrink: 0;
+}
+
+.callout {
+  width: 20cqw;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.calloutWide {
+  width: 28cqw;
+  align-self: flex-end;
+  margin-bottom: 2cqw;
+}
+
+.calloutSm {
+  width: 18cqw;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1cqw;
+}

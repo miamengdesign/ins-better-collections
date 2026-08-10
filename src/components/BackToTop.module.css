@@ -1,0 +1,14 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5vw;
+  color: var(--color-white);
+  font-family: var(--font-body);
+  font-size: 32px; /* measured from Figma — same tier as the rest of the Wrap Up footer */
+  font-weight: 500;
+}
+
+.arrow {
+  font-size: 1.1em;
+  line-height: 1;
+}

@@ -1,0 +1,91 @@
+.section {
+  position: relative;
+}
+
+/* Real HTML text at fixed px sizes — deliberately NOT cqw/cqh-scaled — so it never
+   stretches/deforms when the canvas scales independently per axis (see
+   Stage.module.css). Sizes measured from the Figma reference export. */
+.left {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 37.1cqw;
+  padding: 64px 48px;
+  display: flex;
+  flex-direction: column;
+  color: var(--color-white);
+  box-sizing: border-box;
+}
+
+.eyebrow {
+  font-family: 'Instagram Sans', var(--font-display);
+  font-weight: 600;
+  font-size: 24px;
+  color: var(--color-step-inactive); /* #DBDBDB — measured from the Figma export, not plain white */
+}
+
+.heading {
+  font-family: 'Instagram Sans', var(--font-display);
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1.2;
+  margin-top: 16px;
+  color: var(--color-panel); /* #F7F9F9 — measured from the Figma export, not pure white */
+}
+
+.badgeGroup {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Instagram Sans', var(--font-display);
+  font-weight: 700;
+  font-size: 32px;
+  color: var(--color-white); /* only the checkmark emoji itself is green, not the label */
+}
+
+.explanation {
+  font-family: 'Instagram Sans', var(--font-display);
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 1.4;
+  padding: 20px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: var(--color-white);
+}
+
+.explanation strong {
+  font-weight: 700;
+}
+
+.right {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 62.9cqw;
+  background: var(--color-panel);
+  border-top-left-radius: 4.63cqw;
+  border-bottom-left-radius: 4.63cqw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.4cqw;
+}
+
+.phone {
+  width: 19cqw;
+}
+
+.caption {
+  width: 9cqw;
+}
