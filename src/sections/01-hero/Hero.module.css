@@ -2,23 +2,49 @@
   position: relative;
   width: 100%;
   min-height: 100vh;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(20px, 3.2vh, 40px);
+  padding: clamp(28px, 5vh, 72px) 4vw;
   overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Fits the 1728x1117 composition by BOTH width and height (contain-style) so it is
+   never cropped: whichever constraint is tighter determines the final size. */
+.frame {
+  position: relative;
+  aspect-ratio: 1728 / 1117;
+  width: auto;
+  height: min(72svh, calc(92vw * (1117 / 1728)));
+  max-width: 92vw;
 }
 
 .bg {
-  position: absolute;
-  inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: center;
+  display: block;
 }
 
+/* The artwork is fetched and inlined (rather than <img src>) purely so this rule can
+   reach it: the "Instagram" wordmark's compound vector paths anti-alias into a visible
+   gray seam at default rendering, verified present in the raw asset itself, not
+   introduced by any filter/shadow/duplicate layer. crispEdges removes the seam without
+   visibly affecting the rounded cards/gradients elsewhere in the composition. */
+.bg svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  shape-rendering: crispEdges;
+}
+
+/* Sits in normal flex flow below the artwork frame, not absolutely positioned over it,
+   so it can never overlap the bottom row of cards regardless of viewport size. */
 .cue {
-  position: absolute;
-  left: 50%;
-  bottom: 3.2vh;
-  transform: translateX(-50%);
-  width: clamp(140px, 12vw, 220px);
+  width: clamp(130px, 9vw, 190px);
   height: auto;
+  flex-shrink: 0;
 }
