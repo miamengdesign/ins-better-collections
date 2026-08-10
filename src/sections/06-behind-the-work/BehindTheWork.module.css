@@ -5,26 +5,39 @@
 
 .text {
   position: absolute;
-  left: 4.1cqw;
-  top: 6cqh;
+  left: var(--frame-margin);
+  top: var(--frame-margin);
   z-index: 2;
 }
 
 .eyebrow {
   font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 24px; /* measured from Figma — same tier as Solutions' eyebrow */
-  color: var(--color-ink);
+  font-weight: 700;
+  font-size: var(--fs-24);
+  line-height: 1.2;
+  color: #0c1014;
 }
 
 .paragraph {
-  margin-top: 0.9cqh;
+  margin-top: 2.4624cqw;
   font-family: var(--font-display);
   font-weight: 500;
-  font-size: 24px; /* measured from Figma — same tier as Solutions' body paragraph */
-  color: var(--color-ink);
+  font-size: var(--fs-32);
+  line-height: 1.2;
+  color: #0c1014;
 }
 
+/*
+ * Each sheet is placed by mapping its exported SVG straight onto the Figma frame:
+ * the offset is where that file's viewBox origin falls in the frame (its rect
+ * position in `06 Behind 1.svg` minus the same rect's position inside the pic
+ * file) and the width is the viewBox width as a share of the frame's 1728px. The
+ * rotation, the drop shadows, and the bleed off the frame edges are all already
+ * baked into the exports, so nothing is transformed or cropped here — the files
+ * render 1:1 with the frame, which is also what keeps the handwriting sharp: the
+ * sheets carry 1904x2500 source rasters and were previously being drawn at ~60%
+ * of their intended size, well below the scale the sketches are legible at.
+ */
 .collage {
   position: absolute;
   inset: 0;
@@ -32,28 +45,28 @@
 
 .pic1 {
   position: absolute;
-  left: 0%;
-  top: 32%;
-  width: 30cqw;
+  left: 14.7569cqw;
+  top: 23.4557cqh;
+  width: 50.3472cqw;
 }
 
 .pic2 {
   position: absolute;
-  left: 22%;
-  top: 14%;
-  width: 32cqw;
+  left: 43.4028cqw;
+  top: 7.6991cqh;
+  width: 52.7778cqw;
 }
 
 .pic3 {
   position: absolute;
-  left: 50%;
-  top: 8%;
-  width: 27cqw;
+  left: 0;
+  top: 35.7207cqh;
+  width: 41.1458cqw;
 }
 
 .pic4 {
   position: absolute;
-  left: 73%;
-  top: 22%;
-  width: 25cqw;
+  left: 62.6157cqw;
+  top: 47.8872cqh;
+  width: 37.3843cqw;
 }

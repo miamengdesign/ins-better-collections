@@ -1,15 +1,19 @@
+/* `container-type: inline-size` only so the shared type-scale and frame-margin
+   tokens, which are `cqw`-based, resolve against the same width the Stage
+   sections use. Vertical placement is in `vh`: each block is one screen tall. */
 .section {
+  container-type: inline-size;
   color: var(--color-white);
 }
 
-/* Each major screen is its own explicit-height (not min-height) presentation block,
-   content vertically centered within it, so there's no accidental cumulative
-   whitespace between them and no block grows taller than a viewport under normal
-   content. Still plain document flow — no pinning, no internal scroll containers.
-   Each block carries its own copy of the shared gradient (same asset/pattern used
-   by GradientStage elsewhere) rather than one image spanning all three: an
-   absolutely positioned <img> can't resolve height:100% against a parent whose own
-   height is only implied by auto-height in-flow content. */
+/* Each of the two screens the `07 Wrapup` references show is its own
+   explicit-height (not min-height) block in ordinary document flow — no pinning,
+   no internal scroll containers. Each block carries its own copy of the shared
+   gradient (same asset/pattern used by GradientStage elsewhere) rather than one
+   image spanning both: an absolutely positioned <img> can't resolve height:100%
+   against a parent whose own height is only implied by auto-height in-flow
+   content. Content is anchored to the top of the block at the reference's own
+   offsets instead of being centred. */
 .block {
   position: relative;
   height: 100vh;
@@ -17,8 +21,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  padding: clamp(24px, 3.7vw, 64px) clamp(20px, 2.4vw, 42px);
+  padding: 5.9248vh var(--frame-margin) 4.66vh;
   box-sizing: border-box;
 }
 
@@ -31,48 +34,59 @@
   z-index: -1;
 }
 
-/* Sizes measured from the Figma export (pixel measurement, not clamp()-derived):
-   eyebrow/footer sit in the same larger tier as Solutions' heading (32px);
-   paragraph/listTitle match Solutions' eyebrow/paragraph tier (24px); list items
-   are one tier down (20px). */
 .eyebrow {
   font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 32px;
+  font-weight: 700;
+  font-size: var(--fs-24);
+  line-height: 1.2;
+  color: var(--color-step-inactive);
 }
 
 .paragraph {
-  margin-top: clamp(20px, 2.6vw, 40px);
-  max-width: 46rem;
+  margin-top: 15.3867vh;
   font-family: var(--font-display);
-  font-size: 24px;
-  line-height: 1.4;
+  font-weight: 300;
+  font-size: var(--fs-60);
+  line-height: 1.25;
+  color: var(--color-panel);
+}
+
+/* The lists sit where they do in `07 Wrapup 3`; the footer takes the block's
+   remaining height so it lands on the bottom margin of the same screen. */
+.finalBlock {
+  padding-top: 25.0055vh;
 }
 
 .lists {
   display: flex;
   flex-direction: column;
-  gap: clamp(24px, 3.5vw, 48px);
+  gap: 10.363vh;
 }
 
+/* Both lists run on a single 40px-of-1117 baseline pitch, which at this size is
+   exactly a line-height of 2. */
 .listTitle {
   font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 24px;
-  margin-bottom: 0.6em;
+  font-weight: 500;
+  font-size: var(--fs-20);
+  line-height: 2;
+  color: var(--color-panel);
 }
 
 .list {
   display: flex;
   flex-direction: column;
-  gap: 0.4em;
   font-family: var(--font-display);
   font-style: italic;
-  font-size: 20px;
+  font-weight: 400;
+  font-size: var(--fs-20);
+  line-height: 2;
+  color: var(--color-panel);
   opacity: 0.85;
 }
 
 .quickLink a {
+  text-decoration: underline;
   transition: font-weight 150ms ease-out;
 }
 
@@ -81,19 +95,19 @@
   font-weight: 700;
 }
 
-.footerBlock {
-  justify-content: flex-end;
-}
-
+/* Shared baseline across the three items, as in the reference — the centre
+   "Back to top" control is set larger than the two flanking lines. */
 .footer {
+  margin-top: auto;
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
+  gap: 1cqw;
   font-family: var(--font-display);
-  font-size: 32px;
-  opacity: 0.9;
+  font-weight: 300;
+  font-size: var(--fs-16);
+  line-height: 1.2;
+  color: var(--color-panel);
 }
 
 @media (max-width: 640px) {

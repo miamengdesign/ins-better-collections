@@ -2,10 +2,11 @@
   position: relative;
 }
 
-/* Header height is content-driven (not a fixed proportion) and the panel fills
-   whatever remains, so the header's padding-bottom is the ONLY thing determining
-   the gap to the panel's top edge — a fixed px value there stays exact at any
-   viewport instead of drifting with cqh-based sizing. */
+/* Header height is content-driven and the panel fills whatever remains. Every
+   header measurement — the margins, the gaps between the three rows, and the
+   type — is in `cqw`, so the whole block scales as one with the artwork and the
+   top margin stays exactly equal to the left margin (both --frame-margin, the
+   80px margin the Figma frame is laid out against) at any viewport. */
 .stack {
   position: absolute;
   inset: 0;
@@ -15,27 +16,30 @@
 
 .header {
   flex-shrink: 0;
-  padding: 3.2cqh 4.1cqw 48px;
+  padding: var(--frame-margin) var(--frame-margin) 2.3872cqw;
   display: flex;
   flex-direction: column;
 }
 
 .title {
-  font-family: 'Instagram Sans', var(--font-display);
+  font-family: var(--font-display);
   font-weight: 700;
-  font-size: 16px;
-  color: var(--color-white);
+  font-size: var(--fs-24);
+  line-height: 1.2;
+  color: var(--color-step-inactive);
   text-align: left;
 }
 
 .bullet {
   display: flex;
   align-items: flex-start;
-  gap: 0.6cqw;
-  margin-top: 50px;
-  font-family: 'Instagram Sans', var(--font-display);
-  font-size: 24px;
+  gap: 0.95cqw;
+  margin-top: 2.9103cqw;
+  padding-left: 1.1308cqw;
+  font-family: var(--font-display);
+  font-size: var(--fs-32);
   font-weight: 500;
+  line-height: 1.2;
   color: var(--color-white);
   max-width: 60cqw;
   text-align: left;
@@ -43,15 +47,15 @@
 
 .bullet::before {
   content: '•';
-  line-height: 1;
+  line-height: inherit;
 }
 
 .panel {
   flex: 1;
   min-height: 0;
   background: var(--color-panel);
-  border-top-left-radius: 4.63cqw;
-  border-top-right-radius: 4.63cqw;
+  border-top-left-radius: var(--panel-radius);
+  border-top-right-radius: var(--panel-radius);
   display: flex;
   align-items: center;
   justify-content: center;

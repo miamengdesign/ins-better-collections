@@ -44,6 +44,24 @@
   --font-display: 'Instagram Sans', 'Poppins', 'Inter', system-ui, sans-serif;
   --font-body: 'Instagram Sans', 'Poppins', 'Inter', system-ui, sans-serif;
 
+  /* Type scale. Each token is named for the size the text is authored at in the
+     1728x1117 Figma frame and is expressed as that size relative to the frame
+     width (size / 1728 * 100cqw), so every text on the site renders at its exact
+     Figma size when a section is at frame scale, and all size ratios between
+     texts hold at every viewport. Texts sharing a Figma size share a token, so
+     they can never drift apart. `cqw` (never a per-axis transform) keeps glyph
+     scaling uniform — text is never stretched. */
+  --fs-16: 0.9259cqw;
+  --fs-20: 1.1574cqw;
+  --fs-24: 1.3889cqw;
+  --fs-32: 1.8519cqw;
+  --fs-60: 3.4722cqw;
+
+  /* The 80px content margin every Figma frame is laid out against, and the 80px
+     corner radius of the light panels. */
+  --frame-margin: 4.6296cqw;
+  --panel-radius: 4.6296cqw;
+
   --color-bg: #ffffff;
   --color-ink: #08060d;
   --color-panel: #f7f9f9;

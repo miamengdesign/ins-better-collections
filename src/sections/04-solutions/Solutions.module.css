@@ -2,16 +2,18 @@
   position: relative;
 }
 
-/* Real HTML text at fixed px sizes — deliberately NOT cqw/cqh-scaled — so it never
-   stretches/deforms when the canvas scales independently per axis (see
-   Stage.module.css). Sizes measured from the Figma reference export. */
+/* Real HTML text, sized from the shared --fs-* scale so each line renders at the
+   size it is authored at in Figma and stays in proportion with the artwork and
+   with the same-tier text in every other section. Scaling is `cqw`-based (never a
+   per-axis transform), so glyphs are never stretched even though the canvas
+   itself stretches independently per axis — see Stage.module.css. */
 .left {
   position: absolute;
   left: 0;
   top: 0;
   bottom: 0;
   width: 37.1cqw;
-  padding: 64px 48px;
+  padding: var(--frame-margin) var(--frame-margin) 6.4525cqw;
   display: flex;
   flex-direction: column;
   color: var(--color-white);
@@ -19,18 +21,19 @@
 }
 
 .eyebrow {
-  font-family: 'Instagram Sans', var(--font-display);
-  font-weight: 600;
-  font-size: 24px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--fs-24);
+  line-height: 1.2;
   color: var(--color-step-inactive); /* #DBDBDB — measured from the Figma export, not plain white */
 }
 
 .heading {
-  font-family: 'Instagram Sans', var(--font-display);
-  font-weight: 700;
-  font-size: 32px;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: var(--fs-32);
   line-height: 1.2;
-  margin-top: 16px;
+  margin-top: 2.4624cqw;
   color: var(--color-panel); /* #F7F9F9 — measured from the Figma export, not pure white */
 }
 
@@ -38,35 +41,40 @@
   margin-top: auto;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 1.1545cqw;
 }
 
 .badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-family: 'Instagram Sans', var(--font-display);
+  font-family: var(--font-display);
   font-weight: 700;
-  font-size: 32px;
+  font-size: var(--fs-32);
+  line-height: 1.2;
   color: var(--color-white); /* only the checkmark emoji itself is green, not the label */
 }
 
 .explanation {
-  font-family: 'Instagram Sans', var(--font-display);
+  font-family: var(--font-display);
   font-weight: 500;
-  font-size: 24px;
-  line-height: 1.4;
-  padding: 20px;
-  border-radius: 12px;
+  font-size: var(--fs-32);
+  line-height: 1.19;
+  width: 26.1cqw;
+  padding: 0.3cqw 0.72cqw;
+  border-radius: 0.5497cqw;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.25);
   color: var(--color-white);
+  box-sizing: border-box;
 }
 
 .explanation strong {
   font-weight: 700;
 }
 
+/* The mockup and its caption sit at their exact Figma frame coordinates rather
+   than being centred by flex, so the phone keeps the same 431px-of-1728 footprint
+   it has in the frame — and therefore the same on-screen scale as the Prototype
+   mockup in Section 05, which is authored at the identical size. Offsets are
+   relative to this panel's left edge (x=641 in the frame). */
 .right {
   position: absolute;
   right: 0;
@@ -74,18 +82,20 @@
   bottom: 0;
   width: 62.9cqw;
   background: var(--color-panel);
-  border-top-left-radius: 4.63cqw;
-  border-bottom-left-radius: 4.63cqw;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1.4cqw;
+  border-top-left-radius: var(--panel-radius);
+  border-bottom-left-radius: var(--panel-radius);
 }
 
 .phone {
-  width: 19cqw;
+  position: absolute;
+  left: 18.9815cqw;
+  top: 10.5641cqh;
+  width: 24.9421cqw;
 }
 
 .caption {
-  width: 9cqw;
+  position: absolute;
+  left: 44.7917cqw;
+  top: 69.3823cqh;
+  width: 9.0857cqw;
 }

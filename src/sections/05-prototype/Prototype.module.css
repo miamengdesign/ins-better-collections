@@ -2,21 +2,27 @@
   position: relative;
 }
 
-.left {
+/* The light panel from `05 Prototype bg.svg`: 1087 of the frame's 1728px wide,
+   with the frame's 80px radius on its right corners only. */
+.panel {
   position: absolute;
   left: 0;
   top: 0;
   bottom: 0;
   width: 62.9cqw;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1.4cqw;
+  background: var(--color-panel);
+  border-top-right-radius: var(--panel-radius);
+  border-bottom-right-radius: var(--panel-radius);
 }
 
+/* Same 431px-of-1728 width as the Solutions mockup, so both phones read at one
+   scale across the 04 -> 05 handoff. */
 .link {
+  position: absolute;
+  left: 15.8565cqw;
+  top: 10.5641cqh;
+  width: 24.9421cqw;
   display: block;
-  width: 17cqw;
 }
 
 .phone {
@@ -27,5 +33,31 @@
 }
 
 .caption {
-  width: 9cqw;
+  position: absolute;
+  left: 41.6667cqw;
+  top: 69.3823cqh;
+  width: 9.0857cqw;
+}
+
+.eyebrow {
+  position: absolute;
+  left: 67.5347cqw;
+  top: var(--frame-margin);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--fs-24);
+  line-height: 1.2;
+  color: var(--color-step-inactive);
+}
+
+.heading {
+  position: absolute;
+  left: 67.5347cqw;
+  top: 60.4128cqh;
+  max-width: 16cqw;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--fs-32);
+  line-height: 1.19;
+  color: var(--color-white);
 }
