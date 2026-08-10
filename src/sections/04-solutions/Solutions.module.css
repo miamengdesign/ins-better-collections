@@ -118,7 +118,7 @@
   top: 0;
   bottom: 0;
   width: 62.9cqw;
-  background: var(--color-panel);
+  background: var(--panel-fill);
   border-top-left-radius: var(--panel-radius);
   border-bottom-left-radius: var(--panel-radius);
 }

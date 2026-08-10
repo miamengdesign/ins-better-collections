@@ -53,7 +53,7 @@
 .panel {
   flex: 1;
   min-height: 0;
-  background: var(--color-panel);
+  background: var(--panel-fill);
   border-top-left-radius: var(--panel-radius);
   border-top-right-radius: var(--panel-radius);
   display: flex;

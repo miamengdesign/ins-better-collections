@@ -62,6 +62,12 @@
   --frame-margin: 4.6296cqw;
   --panel-radius: 4.6296cqw;
 
+  /* The light panels in Sections 03, 04 and 05 are one element in the frames:
+     white at 93% over the section's gradient, not an opaque near-white, so the
+     colour underneath carries through and tints them. Must stay layered over a
+     GradientStage to read correctly. */
+  --panel-fill: rgba(255, 255, 255, 0.93);
+
   --color-bg: #ffffff;
   --color-ink: #08060d;
   --color-panel: #f7f9f9;
