@@ -17,9 +17,7 @@ import styles from './CurrentExperience.module.css'
  */
 function CurrentExperience() {
   return (
-    <Stage className={styles.section} aria-label="Current Experience">
-      <GradientStage />
-
+    <Stage className={styles.section} aria-label="Current Experience" background={<GradientStage />}>
       <div className={styles.stack}>
         <header className={styles.header}>
           <h2 className={styles.title}>Current Experience</h2>

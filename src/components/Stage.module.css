@@ -3,6 +3,11 @@
  * never internally scrollable — scrolling past a stage means moving to the next
  * section, not revealing more of this one.
  *
+ * The stage holds two layers. The section's backdrop (the `background` prop) is an
+ * absolutely-positioned, out-of-flow child of `.stage` itself, so it always covers
+ * the full viewport edge-to-edge and no page background is ever visible around a
+ * section. The content sits on `.canvas` on top of it.
+ *
  * `.canvas` is the 1728x1117 Figma frame reproduced at a SINGLE uniform scale: it
  * is the largest 1728x1117 box that fits inside the viewport (a `contain` fit), so
  * both axes are scaled by the same factor and the frame's proportions are never
@@ -12,9 +17,9 @@
  * sizes) and vertical measurements (top offsets, vertical padding/gaps) therefore
  * grow and shrink together, so every element that shares a Figma size shares one
  * rendered scale factor. When the viewport's aspect ratio differs from the frame's,
- * the leftover space becomes letterbox margin around the canvas rather than a
- * stretched (distorted) frame — full frame visibility and correct proportions are
- * preserved over filling every edge.
+ * the leftover space is simply more of the full-bleed backdrop showing around the
+ * canvas, rather than a stretched (distorted) frame — correct proportions are
+ * preserved without ever exposing the page background.
  *
  * `.stage` is itself a `size` container purely so `.canvas` can size itself against
  * the viewport box; children never read the stage's units, only the canvas's.

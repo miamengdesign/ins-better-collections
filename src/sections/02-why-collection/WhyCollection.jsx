@@ -10,8 +10,7 @@ import styles from './WhyCollection.module.css'
  */
 function WhyCollection() {
   return (
-    <Stage className={styles.section} aria-label="Why Collection">
-      <GradientStage />
+    <Stage className={styles.section} aria-label="Why Collection" background={<GradientStage />}>
       <h2 className={styles.heading}>Why Collection?</h2>
     </Stage>
   )

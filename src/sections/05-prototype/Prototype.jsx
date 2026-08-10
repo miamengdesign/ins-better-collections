@@ -15,8 +15,7 @@ import styles from './Prototype.module.css'
  */
 function Prototype() {
   return (
-    <Stage className={styles.section} aria-label="Prototype">
-      <GradientStage />
+    <Stage className={styles.section} aria-label="Prototype" background={<GradientStage />}>
       <div className={styles.panel} />
 
       <div className={styles.mockup}>

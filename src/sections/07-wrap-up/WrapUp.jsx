@@ -25,8 +25,7 @@ import styles from './WrapUp.module.css'
 function WrapUp() {
   return (
     <>
-      <Stage aria-label="Wrap up">
-        <GradientStage className={styles.bg} />
+      <Stage aria-label="Wrap up" background={<GradientStage />}>
         <div className={styles.content}>
           <h2 className={styles.eyebrow}>Wrap up</h2>
           <p className={styles.paragraph}>
@@ -39,8 +38,7 @@ function WrapUp() {
         </div>
       </Stage>
 
-      <Stage aria-label="Wrap up — tools and links">
-        <GradientStage className={styles.bg} />
+      <Stage aria-label="Wrap up — tools and links" background={<GradientStage />}>
         <div className={`${styles.content} ${styles.finalContent}`}>
           <div className={styles.lists}>
             <div>

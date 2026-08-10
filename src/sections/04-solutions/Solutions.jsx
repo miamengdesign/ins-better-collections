@@ -17,9 +17,7 @@ import styles from './Solutions.module.css'
  */
 function Solutions() {
   return (
-    <Stage className={styles.section} aria-label="Solutions">
-      <GradientStage />
-
+    <Stage className={styles.section} aria-label="Solutions" background={<GradientStage />}>
       <div className={styles.left}>
         <p className={styles.eyebrow}>Solution 01</p>
         <h2 className={styles.heading}>Reels Detail Enhancement</h2>

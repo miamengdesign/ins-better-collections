@@ -1,16 +1,12 @@
-/* Each screen is a `Stage`, so its background and content sit on the shared,
-   uniformly-scaled 1728x1117 canvas. The GradientStage fills that canvas; the
-   content layer is anchored to the top of the canvas at the reference's own
-   offsets. Both are `cqh`/`cqw`, so this section scales identically to every
-   other Stage section — no `vh`-vs-`cqw` mixing. */
-.bg {
-  z-index: 0;
-}
-
+/* Each screen is a `Stage` in ordinary document flow (no pinning, no sticky, no
+   scroll listeners): the GradientStage is the Stage's full-viewport backdrop and
+   the content sits on the shared, uniformly-scaled 1728x1117 canvas, anchored to
+   the top of that canvas at the reference's own offsets. Vertical offsets are
+   `cqh` and type is `cqw`, both driven by the one frame scale, so this section
+   scales identically to every other Stage section — no `vh`-vs-`cqw` mixing. */
 .content {
   position: absolute;
   inset: 0;
-  z-index: 1;
   display: flex;
   flex-direction: column;
   padding: 5.9248cqh var(--frame-margin) 4.66cqh;
