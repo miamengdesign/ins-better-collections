@@ -16,34 +16,14 @@
 .header {
   flex-shrink: 0;
   padding: 3.2cqh 4.1cqw 48px;
-  display: flex;
-  flex-direction: column;
 }
 
-.title {
-  font-family: 'Instagram Sans', var(--font-display);
-  font-weight: 700;
-  font-size: 16px;
-  color: var(--color-white);
-  text-align: left;
-}
-
-.bullet {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.6cqw;
-  margin-top: 50px;
-  font-family: 'Instagram Sans', var(--font-display);
-  font-size: 24px;
-  font-weight: 500;
-  color: var(--color-white);
-  max-width: 60cqw;
-  text-align: left;
-}
-
-.bullet::before {
-  content: '•';
-  line-height: 1;
+/* Title + step-tracker + bullet are one flattened export (title/txt PNGs), not
+   separate HTML text — sized by width only so it never distorts. */
+.headerImg {
+  display: block;
+  width: 42cqw;
+  height: auto;
 }
 
 .panel {
@@ -65,8 +45,8 @@
   flex-shrink: 0;
 }
 
-.phone3 {
-  width: 13.5cqw;
+.phoneLarge {
+  width: 16cqw;
   flex-shrink: 0;
 }
 
@@ -76,19 +56,16 @@
   align-self: center;
 }
 
-.calloutWide {
-  width: 28cqw;
-  align-self: flex-end;
-  margin-bottom: 2cqw;
-}
-
-.calloutSm {
-  width: 18cqw;
-}
-
-.group {
+.calloutColumn {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 1cqw;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2cqh;
+  flex-shrink: 0;
+}
+
+.calloutColumn .callout {
+  width: 22cqw;
+  align-self: auto;
 }
