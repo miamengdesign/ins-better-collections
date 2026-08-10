@@ -4,7 +4,7 @@
   gap: 0.5vw;
   color: var(--color-white);
   font-family: var(--font-body);
-  font-size: clamp(0.85rem, 0.9vw, 1.05rem);
+  font-size: 32px; /* measured from Figma — same tier as the rest of the Wrap Up footer */
   font-weight: 500;
 }
 

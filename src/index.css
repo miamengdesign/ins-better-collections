@@ -1,6 +1,5 @@
-/* Instagram Sans — used by Section 03 (Current Experience) only; no other
-   section references this family, so declaring it here has no visual effect
-   elsewhere. */
+/* Instagram Sans — the site's one typeface, used everywhere via the
+   --font-display/--font-body tokens below. */
 @font-face {
   font-family: 'Instagram Sans';
   src: url('/fonts/Instagram%20Sans%20Light.ttf') format('truetype');
@@ -42,8 +41,8 @@
 }
 
 :root {
-  --font-display: 'Poppins', 'Inter', system-ui, sans-serif;
-  --font-body: 'Poppins', 'Inter', system-ui, sans-serif;
+  --font-display: 'Instagram Sans', 'Poppins', 'Inter', system-ui, sans-serif;
+  --font-body: 'Instagram Sans', 'Poppins', 'Inter', system-ui, sans-serif;
 
   --color-bg: #ffffff;
   --color-ink: #08060d;
