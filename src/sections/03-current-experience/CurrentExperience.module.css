@@ -5,11 +5,11 @@
 .header {
   position: absolute;
   inset: 0 0 auto 0;
-  height: 17.01cqw; /* 294/1728 */
-  padding: 3.2cqw 4.1cqw 0;
+  height: 26.32cqh; /* 294/1117 */
+  padding: 3.2cqh 4.1cqw 0;
   display: flex;
   flex-direction: column;
-  gap: 1.3cqw;
+  gap: 1.3cqh;
 }
 
 .title {
@@ -37,7 +37,7 @@
   position: absolute;
   left: 0;
   right: 0;
-  top: 17.01cqw;
+  top: 26.32cqh;
   bottom: 0;
   background: var(--color-panel);
   border-top-left-radius: 4.63cqw;
@@ -46,7 +46,7 @@
   align-items: center;
   justify-content: center;
   gap: 4cqw;
-  padding: 3cqw 6cqw;
+  padding: 3cqh 6cqw;
 }
 
 .phone {

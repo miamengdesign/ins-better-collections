@@ -1,4 +1,5 @@
 import Stage from '../../components/Stage'
+import FillBackground from '../../components/FillBackground'
 import PhoneMockup from '../../components/PhoneMockup'
 import CalloutCard from '../../components/CalloutCard'
 import { img } from '../../lib/assets'
@@ -14,7 +15,7 @@ import styles from './Solutions.module.css'
 function Solutions() {
   return (
     <Stage className={styles.section} aria-label="Solutions">
-      <img className={styles.bg} src={img('04 Solution bg.svg')} alt="" aria-hidden="true" />
+      <FillBackground name="04 Solution bg.svg" />
 
       <div className="sr-only">
         <p>Solution 01</p>

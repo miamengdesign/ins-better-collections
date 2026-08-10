@@ -1,4 +1,5 @@
 import Stage from '../../components/Stage'
+import FillBackground from '../../components/FillBackground'
 import CalloutCard from '../../components/CalloutCard'
 import { img } from '../../lib/assets'
 import { PROTOTYPE_URL } from '../../config/links'
@@ -15,7 +16,7 @@ import styles from './Prototype.module.css'
 function Prototype() {
   return (
     <Stage className={styles.section} aria-label="Prototype">
-      <img className={styles.bg} src={img('05 Prototype bg.svg')} alt="" aria-hidden="true" />
+      <FillBackground name="05 Prototype bg.svg" />
 
       <div className="sr-only">
         <p>Prototype</p>

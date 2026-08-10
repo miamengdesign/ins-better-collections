@@ -6,7 +6,7 @@
 .text {
   position: absolute;
   left: 4.1cqw;
-  top: 6cqw;
+  top: 6cqh;
   z-index: 2;
 }
 
@@ -18,7 +18,7 @@
 }
 
 .paragraph {
-  margin-top: 0.9cqw;
+  margin-top: 0.9cqh;
   font-size: 1.35cqw;
   color: var(--color-ink);
 }
