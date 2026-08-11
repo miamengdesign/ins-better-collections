@@ -1,0 +1,10 @@
+.tail {
+  position: relative;
+  z-index: 0;
+}
+
+.tail[data-visible='false'] {
+  /* Keep mounted for later migration, but inert until cinematic unlocks. */
+  content-visibility: auto;
+  pointer-events: none;
+}

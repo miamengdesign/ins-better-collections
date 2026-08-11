@@ -1,18 +1,14 @@
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import ScrollCue from '../../components/ScrollCue'
-import { HERO_TRACK_VH } from '../../config/layout'
-import { useCinematicPlayhead, useStageActive } from '../../hooks/useCinematicPlayhead'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
-import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { img } from '../../lib/assets'
+import { easeInOutQuint, lerp } from '../../lib/motion'
+import { SCENE_INDEX } from '../../nav/scenes'
+import { useNavigator, useSceneBlend } from '../../nav/useNavigator'
 import styles from './Hero.module.css'
 
 const HERO_WEBP = img('01 Hero asset/01 Hero bg.webp')
 const HERO_PNG = img('01 Hero asset/01 Hero bg.png')
-
-/** Cinematic exit: settled → fully off-screen. */
-const ANCHORS = [0, 1]
-const EXIT_MS = 1200
 
 function HeroArt({ className }) {
   return (
@@ -34,24 +30,33 @@ function HeroArt({ className }) {
 }
 
 /**
- * Full-screen Hero card. A small downward gesture triggers a cinematic exit
- * (card translates up over ~1.2s). Not scrubbed 1:1 to scroll distance.
- * Mobile keeps normal document flow.
+ * Exit progress 0 = fully on screen, 1 = fully above viewport.
+ * Driven by the shared navigator (hero → why-title), not local wheel ownership.
  */
-function Hero() {
-  const trackRef = useRef(null)
-  const isMobile = useMediaQuery('(max-width: 767px)')
-  const reduced = useReducedMotion()
-  const active = useStageActive(trackRef, { enabled: !isMobile, zIndex: 10 })
-  const { progress } = useCinematicPlayhead({
-    anchors: ANCHORS,
-    active,
-    reduced,
-    duration: EXIT_MS,
-    enabled: !isMobile,
-  })
+function heroExitProgress(blend) {
+  const hero = SCENE_INDEX.hero
+  const whyTitle = SCENE_INDEX['why-title']
 
-  // Preload hero artwork as early as the component mounts (in addition to <head>).
+  if (blend.settled) {
+    return blend.sceneIndex <= hero ? 0 : 1
+  }
+
+  if (blend.from === hero && blend.to === whyTitle) {
+    return easeInOutQuint(blend.t)
+  }
+  if (blend.from === whyTitle && blend.to === hero) {
+    return easeInOutQuint(1 - blend.t)
+  }
+  return blend.to > hero || blend.from > hero ? 1 : 0
+}
+
+function Hero() {
+  const isMobile = useMediaQuery('(max-width: 767px)')
+  const blend = useSceneBlend()
+  const { sceneIndex } = useNavigator()
+  const exit = heroExitProgress(blend)
+  const visible = sceneIndex <= SCENE_INDEX['why-title'] || !blend.settled
+
   useEffect(() => {
     const link = document.createElement('link')
     link.rel = 'preload'
@@ -75,18 +80,23 @@ function Hero() {
     )
   }
 
-  const translateY = `${-progress * 100}vh`
+  if (!visible && exit >= 1) {
+    return <section id="hero" className={styles.slot} aria-hidden="true" />
+  }
+
+  const translateY = `${lerp(0, -100, exit)}vh`
 
   return (
     <section
       id="hero"
-      ref={trackRef}
-      className={styles.track}
-      style={{ height: `${HERO_TRACK_VH}vh` }}
+      className={styles.layer}
       aria-label="Hero"
-      data-cinematic="true"
+      style={{
+        transform: `translate3d(0, ${translateY}, 0)`,
+        pointerEvents: exit > 0.98 ? 'none' : 'auto',
+      }}
     >
-      <div className={styles.card} style={{ transform: `translateY(${translateY})` }}>
+      <div className={styles.card}>
         <h1 className="sr-only">Instagram Collection Redesign</h1>
         <HeroArt className={styles.bg} />
         <ScrollCue />

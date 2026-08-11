@@ -1,0 +1,26 @@
+.root {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+}
+
+.locked {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+}
+
+.released {
+  position: relative;
+  z-index: 1;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  container-type: size;
+  overflow: hidden;
+}

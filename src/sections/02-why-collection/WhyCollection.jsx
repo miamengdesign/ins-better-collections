@@ -1,14 +1,14 @@
 import GradientStage from '../../components/GradientStage'
-import PinnedStage from '../../components/PinnedStage'
-import { HERO_EXIT_VH, HERO_TRACK_VH } from '../../config/layout'
+import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import {
-  clamp,
   easeInOutQuint,
   easeOutCubic,
   lerp,
   rangeProgress,
 } from '../../lib/motion'
+import { SCENE_INDEX } from '../../nav/scenes'
+import { useSceneBlend } from '../../nav/useNavigator'
 import styles from './WhyCollection.module.css'
 
 /**
@@ -36,7 +36,6 @@ const STATEMENTS = [
 
 /**
  * Geometry from `references/svg/02 Why Collections {2,3,4}.svg` (1728×1117).
- * Enter from slightly below; previous settles upper-left dimmed — never snaps off.
  */
 const GEO = {
   previousTop: (187.9 / 1117) * 100,
@@ -53,21 +52,18 @@ const GEO = {
   dismissOpacity: 0,
 }
 
-/**
- * Progress anchors for cinematic steps (trigger → timeline, not scrub).
- * Final anchor fades the stage out for the §02→03 handoff.
- */
-const ANCHORS = [0, 0.12, 0.32, 0.52, 0.72, 0.9, 1]
-const DURATIONS = [1000, 1250, 1250, 1250, 1250, 1100]
+const WHY_TITLE = SCENE_INDEX['why-title']
+const WHY_1 = SCENE_INDEX['why-1']
+const WHY_4 = SCENE_INDEX['why-4']
+const CE_1 = SCENE_INDEX['ce-1']
 
-const WINDOWS = [
-  { enter: [0.12, 0.22], activeEnd: 0.32, previousEnd: 0.52, dismissEnd: 0.62 },
-  { enter: [0.32, 0.42], activeEnd: 0.52, previousEnd: 0.72, dismissEnd: 0.82 },
-  { enter: [0.52, 0.62], activeEnd: 0.72, previousEnd: 0.9, dismissEnd: 0.96 },
-  { enter: [0.72, 0.82], activeEnd: 0.9, previousEnd: null, dismissEnd: null },
-]
-
-const PIN_TRACK_VH = 280
+function mix(a, b, t) {
+  return {
+    top: lerp(a.top, b.top, t),
+    font: lerp(a.font, b.font, t),
+    opacity: lerp(a.opacity, b.opacity, t),
+  }
+}
 
 const ACTIVE = {
   top: GEO.activeTop,
@@ -90,49 +86,82 @@ const DISMISS = {
   opacity: GEO.dismissOpacity,
 }
 
-function mix(a, b, t) {
-  return {
-    top: lerp(a.top, b.top, t),
-    font: lerp(a.font, b.font, t),
-    opacity: lerp(a.opacity, b.opacity, t),
-  }
-}
-
-function headingMotion(p, reduced) {
-  if (p <= 0.02) return { t: 0 }
-  if (p >= 0.12) return { t: 1 }
-  const raw = rangeProgress(p, 0.02, 0.12)
-  return { t: reduced ? raw : easeInOutQuint(raw) }
-}
-
-/**
- * Calm continuous styles for one statement. Previous stays visible in the upper
- * dimmed slot while the next takes focus — no sudden disappearance.
- */
-function statementMotion(p, index, reduced) {
-  const window = WINDOWS[index]
-  const [enterStart, enterEnd] = window.enter
-  const { activeEnd, previousEnd, dismissEnd } = window
-
-  if (p < enterStart) {
-    return { ...ENTER, phase: 'pending' }
+/** Map navigator blend → continuous statement index progress in [0..4]. */
+function whyProgress(blend) {
+  // -1 = not in why yet; 0 = title only; 1..4 = statements
+  if (blend.settled) {
+    if (blend.sceneIndex < WHY_TITLE) return -1
+    if (blend.sceneIndex === WHY_TITLE) return 0
+    if (blend.sceneIndex >= CE_1) return 4.999
+    if (blend.sceneIndex >= WHY_1 && blend.sceneIndex <= WHY_4) {
+      return blend.sceneIndex - WHY_TITLE
+    }
+    return -1
   }
 
-  if (p < enterEnd) {
-    const raw = rangeProgress(p, enterStart, enterEnd)
+  const { from, to, t } = blend
+  const e = easeInOutQuint(t)
+
+  // Hero ↔ why-title
+  if (
+    (from < WHY_TITLE && to === WHY_TITLE) ||
+    (from === WHY_TITLE && to < WHY_TITLE)
+  ) {
+    const forward = to === WHY_TITLE
+    return forward ? lerp(-1, 0, e) : lerp(0, -1, e)
+  }
+
+  // why-title ↔ why-1 … why-4 pairwise
+  if (from >= WHY_TITLE && to >= WHY_TITLE && from <= WHY_4 && to <= WHY_4) {
+    const fromP = from === WHY_TITLE ? 0 : from - WHY_TITLE
+    const toP = to === WHY_TITLE ? 0 : to - WHY_TITLE
+    return lerp(fromP, toP, e)
+  }
+
+  // why-4 ↔ ce-1 handoff: keep statement 4 visible then fade via stage opacity
+  if (
+    (from === WHY_4 && to === CE_1) ||
+    (from === CE_1 && to === WHY_4)
+  ) {
+    return 4
+  }
+
+  if (to >= CE_1 || from >= CE_1) return 4.999
+  if (to < WHY_TITLE && from < WHY_TITLE) return -1
+  return 0
+}
+
+function headingTFromProgress(p, reduced) {
+  if (p <= 0) return 0
+  if (p >= 1) return 1
+  // Demote heading while statement 1 enters (0 → 1).
+  const raw = rangeProgress(p, 0, 1)
+  return reduced ? raw : easeInOutQuint(raw)
+}
+
+function statementStyle(p, index, reduced) {
+  // p: 0 = title only; 1 = stmt1 active; 2 = stmt2 active; …
+  const enterAt = index + 0 // stmt0 enters as p goes 0→1
+  const activeAt = index + 1
+  const previousAt = index + 2
+  const dismissAt = index + 3
+
+  if (p <= enterAt) return { ...ENTER, phase: 'pending' }
+
+  if (p < activeAt) {
+    const raw = rangeProgress(p, enterAt, activeAt)
     const t = reduced ? raw : easeOutCubic(raw)
     if (reduced) return { ...ACTIVE, opacity: t, phase: 'entering' }
     return { ...mix(ENTER, ACTIVE, t), phase: 'entering' }
   }
 
-  if (previousEnd == null || p <= activeEnd) {
-    return { ...ACTIVE, phase: 'active' }
-  }
-
-  const next = WINDOWS[index + 1]
-  const handoffEnd = next ? next.enter[1] : activeEnd
-  if (p < handoffEnd) {
-    const raw = rangeProgress(p, activeEnd, handoffEnd)
+  if (p < previousAt) {
+    // Hold active until next statement begins, then move to previous slot.
+    const handoffEnd = previousAt
+    // Active hold occupies first half of the unit interval after activeAt…
+    // Actually when p is between activeAt and previousAt, we're transitioning
+    // to previous as the next statement enters.
+    const raw = rangeProgress(p, activeAt, handoffEnd)
     const t = reduced ? raw : easeInOutQuint(raw)
     if (reduced) {
       return {
@@ -144,15 +173,16 @@ function statementMotion(p, index, reduced) {
     return { ...mix(ACTIVE, PREVIOUS, t), phase: 'to-previous' }
   }
 
-  if (dismissEnd == null || p <= previousEnd) {
+  if (p < dismissAt) {
     return { ...PREVIOUS, phase: 'previous' }
   }
 
-  if (p >= dismissEnd) {
-    return { ...DISMISS, phase: 'gone' }
+  if (index === STATEMENTS.length - 1) {
+    // Final statement stays as previous until handoff fades the stage.
+    return { ...PREVIOUS, phase: 'previous' }
   }
 
-  const raw = rangeProgress(p, previousEnd, dismissEnd)
+  const raw = rangeProgress(p, dismissAt, dismissAt + 1)
   const t = reduced ? raw : easeInOutQuint(raw)
   if (reduced) {
     return {
@@ -164,109 +194,93 @@ function statementMotion(p, index, reduced) {
   return { ...mix(PREVIOUS, DISMISS, t), phase: 'dismissing' }
 }
 
-/** Stage-wide fade for the §02→03 handoff (last cinematic step). */
-function stageExitOpacity(p) {
-  if (p < 0.92) return 1
-  return 1 - rangeProgress(p, 0.92, 1)
-}
-
-function currentStatementIndex(p) {
-  if (p < 0.12) return -1
-  for (let i = WINDOWS.length - 1; i >= 0; i -= 1) {
-    if (p >= WINDOWS[i].enter[0]) return i
+/** Stage opacity during §02→03 handoff (why copy leaves). */
+function stageOpacity(blend) {
+  if (blend.settled) {
+    return blend.sceneIndex >= CE_1 ? 0 : blend.sceneIndex >= WHY_TITLE ? 1 : 0
   }
-  return -1
+  if (blend.from === WHY_4 && blend.to === CE_1) {
+    // Fade why early in the handoff (0–0.28 of timeline).
+    return 1 - easeInOutQuint(rangeProgress(blend.t, 0, 0.28))
+  }
+  if (blend.from === CE_1 && blend.to === WHY_4) {
+    return easeInOutQuint(rangeProgress(blend.t, 0.72, 1))
+  }
+  if (blend.from < WHY_TITLE && blend.to === WHY_TITLE) {
+    return easeInOutQuint(rangeProgress(blend.t, 0.35, 1))
+  }
+  if (blend.from === WHY_TITLE && blend.to < WHY_TITLE) {
+    return 1 - easeInOutQuint(rangeProgress(blend.t, 0, 0.65))
+  }
+  if (blend.to < WHY_TITLE && blend.from < WHY_TITLE) return 0
+  if (blend.to >= CE_1 && blend.from >= CE_1) return 0
+  return 1
 }
 
 function WhyCollection() {
+  const isMobile = useMediaQuery('(max-width: 767px)')
   const reduced = useReducedMotion()
+  const blend = useSceneBlend()
+
+  if (isMobile) {
+    return (
+      <section className={styles.sectionFlow} aria-label="Why Collection">
+        <StackedFallback />
+      </section>
+    )
+  }
+
+  const p = whyProgress(blend)
+  const opacity = stageOpacity(blend)
+  const headingT = headingTFromProgress(Math.max(p, 0), reduced)
+  const show = opacity > 0.001 || (!blend.settled && blend.to >= WHY_TITLE)
+
+  if (!show && blend.settled && blend.sceneIndex < WHY_TITLE) {
+    return null
+  }
 
   return (
-    <PinnedStage
-      className={styles.section}
-      ariaLabel="Why Collection"
-      height={`calc(${HERO_TRACK_VH}vh + ${PIN_TRACK_VH}vh)`}
-      overlapVh={HERO_TRACK_VH}
-      startOffsetVh={HERO_EXIT_VH}
-      cinematic={{
-        anchors: ANCHORS,
-        durations: DURATIONS,
-        duration: 1200,
-        reduced,
-      }}
+    <section
+      className={styles.layer}
+      aria-label="Why Collection"
+      style={{ opacity, pointerEvents: opacity < 0.05 ? 'none' : 'auto' }}
+      aria-hidden={opacity < 0.05}
     >
-      {({ progress, isPinned }) => {
-        if (!isPinned) {
-          return <StackedFallback />
-        }
+      <GradientStage className={styles.gradient} />
 
-        const p = clamp(progress, 0, 1)
-        const heading = headingMotion(p, reduced)
-        const currentIdx = currentStatementIndex(p)
-        const exitOp = stageExitOpacity(p)
+      <h2
+        className={styles.heading}
+        style={{
+          '--heading-t': headingT,
+        }}
+      >
+        Why Collection?
+      </h2>
+
+      {STATEMENTS.map((copy, i) => {
+        const motion =
+          p < 0
+            ? { ...ENTER, phase: 'pending' }
+            : statementStyle(p, i, reduced)
 
         return (
-          <>
-            <GradientStage className={styles.gradient} />
-
-            <h2
-              className={styles.heading}
-              style={{
-                '--heading-t': heading.t,
-                opacity: exitOp,
-              }}
-            >
-              Why Collection?
-            </h2>
-
-            {STATEMENTS.map((copy, i) => {
-              if (reduced) {
-                const isCurrent = i === currentIdx
-                const isPrevious = i === currentIdx - 1
-                const opacity =
-                  (isCurrent ? 1 : isPrevious ? GEO.previousOpacity : 0) * exitOp
-                const top = isPrevious ? GEO.previousTop : GEO.activeTop
-                const font = isPrevious ? GEO.previousFont : GEO.activeFont
-                return (
-                  <p
-                    key={i}
-                    className={styles.statement}
-                    style={{
-                      opacity,
-                      top: `${top}cqh`,
-                      fontSize: `${(font / 1728) * 100}cqw`,
-                      pointerEvents: 'none',
-                    }}
-                    aria-hidden={opacity < 0.05}
-                  >
-                    {copy}
-                  </p>
-                )
-              }
-
-              const motion = statementMotion(p, i, false)
-
-              return (
-                <p
-                  key={i}
-                  className={styles.statement}
-                  style={{
-                    opacity: motion.opacity * exitOp,
-                    top: `${motion.top}cqh`,
-                    fontSize: `${(motion.font / 1728) * 100}cqw`,
-                    pointerEvents: 'none',
-                  }}
-                  aria-hidden={motion.opacity * exitOp < 0.05}
-                  data-phase={motion.phase}
-                >
-                  {copy}
-                </p>
-              )
-            })}
-          </>
+          <p
+            key={i}
+            className={styles.statement}
+            style={{
+              opacity: motion.opacity,
+              top: `${motion.top}cqh`,
+              fontSize: `${(motion.font / 1728) * 100}cqw`,
+              pointerEvents: 'none',
+            }}
+            aria-hidden={motion.opacity < 0.05}
+            data-phase={motion.phase}
+          >
+            {copy}
+          </p>
         )
-      }}
-    </PinnedStage>
+      })}
+    </section>
   )
 }
 

@@ -1,6 +1,7 @@
 import BackToTop from '../../components/BackToTop'
 import GradientStage from '../../components/GradientStage'
 import PinnedStage from '../../components/PinnedStage'
+import Stage from '../../components/Stage'
 import { GITHUB_URL, PROTOTYPE_URL, VERCEL_URL } from '../../config/links'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { useHandoff06to07 } from '../../lib/handoff06to07'
@@ -100,9 +101,17 @@ function layoutAt(p, reduced) {
   }
 }
 
-function WrapUp() {
+function WrapUp({ phase1Static = false } = {}) {
   const reduced = useReducedMotion()
   const from06 = useHandoff06to07()
+
+  if (phase1Static) {
+    return (
+      <Stage className={styles.section} aria-label="Wrap up">
+        <MobileStack />
+      </Stage>
+    )
+  }
 
   return (
     <PinnedStage

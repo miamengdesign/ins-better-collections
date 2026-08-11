@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import GradientStage from '../../components/GradientStage'
 import PinnedStage from '../../components/PinnedStage'
+import Stage from '../../components/Stage'
 import { PROTOTYPE_URL } from '../../config/links'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { img } from '../../lib/assets'
@@ -41,10 +42,18 @@ function exitMotion(p) {
   }
 }
 
-function Prototype() {
+function Prototype({ phase1Static = false } = {}) {
   const reduced = useReducedMotion()
   // Yield wheel capture to Behind the Work once the exit timeline finishes.
   const [zIndex, setZIndex] = useState(4)
+
+  if (phase1Static) {
+    return (
+      <Stage className={styles.section} aria-label="Prototype">
+        <PrototypeFrame p={0.45} reduced={reduced} isPinned={false} setZIndex={() => {}} />
+      </Stage>
+    )
+  }
 
   return (
     <PinnedStage

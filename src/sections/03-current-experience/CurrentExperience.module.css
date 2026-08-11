@@ -2,6 +2,13 @@
   position: relative;
 }
 
+/* Absolute host inside the shared cinematic viewport (phase-1 entrance). */
+.phaseLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+}
+
 /* Header height is content-driven and the panel fills whatever remains. Every
    header measurement — the margins, the gaps between the three rows, and the
    type — is in `cqw`, so the whole block scales as one with the artwork and the

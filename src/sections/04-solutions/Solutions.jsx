@@ -2,6 +2,7 @@ import CardNav from '../../components/CardNav'
 import GradientStage from '../../components/GradientStage'
 import PhoneMockup from '../../components/PhoneMockup'
 import PinnedStage from '../../components/PinnedStage'
+import Stage from '../../components/Stage'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { img } from '../../lib/assets'
 import { useHandoff03to04 } from '../../lib/handoff03to04'
@@ -138,10 +139,18 @@ function panelPushX(p, sharedPushT) {
   return 0
 }
 
-function Solutions() {
+function Solutions({ phase1Static = false } = {}) {
   const reduced = useReducedMotion()
   const handoffT = useHandoff03to04()
   const sharedPushT = useSolutionsPushT()
+
+  if (phase1Static) {
+    return (
+      <Stage className={styles.section} aria-label="Solutions">
+        <StackedFallback />
+      </Stage>
+    )
+  }
 
   return (
     <PinnedStage

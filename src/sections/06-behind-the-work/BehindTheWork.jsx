@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import PinnedStage from '../../components/PinnedStage'
+import Stage from '../../components/Stage'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { img } from '../../lib/assets'
 import { useExit05to06 } from '../../lib/handoff05to06'
@@ -86,7 +87,7 @@ function exitTo07Motion(p) {
   }
 }
 
-function BehindTheWork() {
+function BehindTheWork({ phase1Static = false } = {}) {
   const reduced = useReducedMotion()
   const enterFrom05 = useExit05to06()
   const exitTo07 = useHandoff06to07()
@@ -94,6 +95,14 @@ function BehindTheWork() {
   // z stack: under Prototype while §05 exits → front for State 2 → yield to Wrap Up.
   const zIndex =
     exitTo07 >= 0.999 ? 2 : enterFrom05 >= 0.999 ? 5 : 3
+
+  if (phase1Static) {
+    return (
+      <Stage className={styles.section} aria-label="Behind the Work">
+        <StaticEndState />
+      </Stage>
+    )
+  }
 
   return (
     <PinnedStage
