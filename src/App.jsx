@@ -12,7 +12,7 @@ import WrapUp from './sections/07-wrap-up/WrapUp'
 import { useMediaQuery } from './hooks/useMediaQuery'
 
 /**
- * Phase 1: navigator drives Hero → Why → CE → Solutions → Prototype → Behind State 1.
+ * Phase 1: navigator drives Hero → Why → CE → Solutions → Prototype → Behind 1–2.
  * §07 remains static tail content until a later migration.
  */
 function App() {

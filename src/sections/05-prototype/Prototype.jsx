@@ -25,6 +25,7 @@ import styles from './Prototype.module.css'
 const SOL_3 = SCENE_INDEX['sol-3']
 const PROTO = SCENE_INDEX['proto']
 const BEHIND_1 = SCENE_INDEX['behind-1']
+const BEHIND_2 = SCENE_INDEX['behind-2']
 
 /** 0→1 presence for §04→05 push (sol-3 ↔ proto). */
 function pushPresence(blend) {
@@ -107,16 +108,27 @@ function CinematicPrototype({ reduced }) {
   const blend = useSceneBlend()
   const push = pushPresence(blend)
   const exitT = exit05to06T(blend)
+  const behindInternal =
+    !blend.settled &&
+    blend.from >= BEHIND_1 &&
+    blend.from <= BEHIND_2 &&
+    blend.to >= BEHIND_1 &&
+    blend.to <= BEHIND_2
   const involved =
     (push > 0.001 && exitT < 0.999) ||
-    exitT > 0.001 ||
+    (exitT > 0.001 && !behindInternal) ||
     (!blend.settled &&
       (blend.to === PROTO ||
         blend.from === PROTO ||
-        blend.to === BEHIND_1 ||
-        blend.from === BEHIND_1))
+        // §05↔§06 handoff only (not behind internals)
+        (blend.to === BEHIND_1 && blend.from === PROTO) ||
+        (blend.from === BEHIND_1 && blend.to === PROTO)))
 
-  if (!involved || (exitT >= 0.999 && blend.settled)) {
+  // Stay unmounted on behind-1/2 (settled or internal veil); remount for reverse to proto.
+  if (
+    !involved ||
+    (exitT >= 0.999 && (blend.settled || behindInternal))
+  ) {
     return null
   }
 

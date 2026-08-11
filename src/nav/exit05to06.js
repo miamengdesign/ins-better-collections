@@ -7,6 +7,8 @@ const BEHIND_1 = SCENE_INDEX['behind-1']
  * §05→06 exit playhead 0→1 (reverse via 1−t).
  * Shared by Prototype, Behind the Work, and SharedStageBackground so Phases
  * A–D stay locked to one navigator timeline.
+ *
+ * behind-1 ↔ behind-2 keeps this at 1 (section fully entered; veil is separate).
  */
 export function exit05to06T(blend) {
   if (blend.settled) {

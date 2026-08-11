@@ -17,11 +17,13 @@ import { useSceneBlend } from '../../nav/useNavigator'
 import styles from './BehindTheWork.module.css'
 
 /**
- * §06 Behind the Work — cinematic entrance settles on State 1 only.
- * State 1 → State 2 and §06→07 remain for a later migration.
+ * §06 Behind the Work — entrance to State 1, then dark-cloth veil to State 2.
+ * One physical sketch collage stays mounted; overlays/statement are opacity only.
+ * §06→07 remains for a later migration.
  */
 
 const BEHIND_1 = SCENE_INDEX['behind-1']
+const BEHIND_2 = SCENE_INDEX['behind-2']
 const OVERLAY_MAX = 0.7
 const PIN_TRACK_VH = 160
 const OVERLAP_VH = 120
@@ -93,6 +95,37 @@ function revealFromExit(exitT, reduced) {
   return easeInOutQuint(rangeProgress(exitT, 0.55, 1))
 }
 
+/**
+ * behind-1 → behind-2 veil playhead 0→1 (reverse via 1−t).
+ * Sketches never move; only overlay + statement opacities change.
+ */
+function state2CoverT(blend) {
+  if (blend.settled) {
+    return blend.sceneIndex >= BEHIND_2 ? 1 : 0
+  }
+  if (blend.from === BEHIND_1 && blend.to === BEHIND_2) return blend.t
+  if (blend.from === BEHIND_2 && blend.to === BEHIND_1) return 1 - blend.t
+  if (blend.to >= BEHIND_2 || blend.from >= BEHIND_2) return 1
+  return 0
+}
+
+/**
+ * Phase A  0.00–0.72  multicolor + black overlays build to 70%
+ * Phase B  0.55–1.00  centered statement fades in after veil is established
+ */
+function veilMotion(cover, reduced) {
+  const overlayT = reduced
+    ? rangeProgress(cover, 0, 0.72)
+    : easeInOutQuint(rangeProgress(cover, 0, 0.72))
+  const statementT = reduced
+    ? rangeProgress(cover, 0.55, 1)
+    : easeInOutQuint(rangeProgress(cover, 0.55, 1))
+  return {
+    overlayOpacity: lerp(0, OVERLAY_MAX, overlayT),
+    statementOpacity: statementT,
+  }
+}
+
 function BehindTheWork({ phase1Static = false } = {}) {
   const isMobile = useMediaQuery('(max-width: 767px)')
   const reduced = useReducedMotion()
@@ -124,17 +157,23 @@ function State1Frame() {
 function CinematicBehind({ reduced }) {
   const blend = useSceneBlend()
   const exitT = exit05to06T(blend)
+  const cover = state2CoverT(blend)
   const involved =
     exitT > 0.001 ||
+    cover > 0.001 ||
     (!blend.settled &&
-      (blend.to === BEHIND_1 || blend.from === BEHIND_1)) ||
-    (blend.settled && blend.sceneIndex === BEHIND_1)
+      ((blend.to >= BEHIND_1 && blend.to <= BEHIND_2) ||
+        (blend.from >= BEHIND_1 && blend.from <= BEHIND_2))) ||
+    (blend.settled &&
+      blend.sceneIndex >= BEHIND_1 &&
+      blend.sceneIndex <= BEHIND_2)
 
   if (!involved) {
     return null
   }
 
   const reveal = revealFromExit(exitT, reduced)
+  const veil = veilMotion(cover, reduced)
 
   return (
     <section
@@ -143,8 +182,16 @@ function CinematicBehind({ reduced }) {
       style={{ opacity: Math.max(reveal, 0.001) }}
       aria-hidden={reveal < 0.05}
     >
-      {/* State 1 only — no cloth overlay, no State 2 statement. */}
+      {/* One physical collage — stationary under both states. */}
       <State1Frame />
+      <State2Overlays opacity={veil.overlayOpacity} />
+      <p
+        className={styles.statement}
+        style={{ opacity: veil.statementOpacity }}
+        aria-hidden={veil.statementOpacity < 0.05}
+      >
+        {STATEMENT}
+      </p>
     </section>
   )
 }

@@ -1,7 +1,7 @@
 /**
  * Phase-1 cinematic scene graph
- * (Hero → Why → CE → Solutions 1–3 → Prototype → Behind State 1).
- * §06 State 2 and §06→07 remain for a later migration.
+ * (Hero → Why → CE → Solutions 1–3 → Prototype → Behind 1–2).
+ * §06→07 remains for a later migration.
  */
 
 /** @typedef {{ id: string, label: string, enterMs: number }} SceneDef */
@@ -53,6 +53,11 @@ export const SCENES = [
     id: 'behind-1',
     label: 'Behind the Work — state 1',
     enterMs: 2200, // §05→06 layered exit → collage
+  },
+  {
+    id: 'behind-2',
+    label: 'Behind the Work — state 2',
+    enterMs: 2000, // dark-cloth veil + statement
   },
 ]
 
