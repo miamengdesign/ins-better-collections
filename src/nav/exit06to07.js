@@ -6,6 +6,7 @@ const WRAP_1 = SCENE_INDEX['wrap-1']
 /**
  * §06→07 exit playhead 0→1 (reverse via 1−t).
  * Shared by Behind the Work and Wrap Up so Phases A–D stay locked.
+ * wrap-1 ↔ wrap-2 keeps this at 1 (section fully entered; rise is separate).
  */
 export function exit06to07T(blend) {
   if (blend.settled) {
