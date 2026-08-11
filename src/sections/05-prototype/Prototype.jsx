@@ -50,6 +50,9 @@ function Prototype() {
         // The two gradients are identical, so swapping to opaque at ENTER end
         // is visually a no-op once Solutions has been pushed off.
         const gradientOpacity = !isPinned || p >= ENTER[1] ? 1 : 0
+        // Typography stays put (no slide/scale). It only appears once the panel
+        // has settled so it does not paint over the outgoing Solutions panel.
+        const typeOpacity = !isPinned || p >= ENTER[1] ? 1 : 0
 
         return (
           <>
@@ -78,10 +81,12 @@ function Prototype() {
               </div>
             </div>
 
-            <p className={styles.eyebrow}>Prototype</p>
+            <p className={styles.eyebrow} style={{ opacity: typeOpacity }}>
+              Prototype
+            </p>
             {/* Broken after the comma because that is where the reference breaks it: at
                 20px both halves clear the heading's width, so no wrap can reproduce it. */}
-            <h2 className={styles.heading}>
+            <h2 className={styles.heading} style={{ opacity: typeOpacity }}>
               Click the Mockup,
               <br />
               try it by yourself!
