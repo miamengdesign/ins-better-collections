@@ -32,10 +32,12 @@
   text-align: left;
 }
 
-/* Stacked bullets occupy one stable slot; only opacity crossfades. */
+/* Stacked bullets occupy one stable slot; only opacity crossfades.
+   Pulled slightly upward (tighter margin under the tracker) so the sentence
+   clears the panel with more breathing room once the panel top moves down. */
 .bulletStage {
   position: relative;
-  margin-top: 2.9103cqw;
+  margin-top: 1.6cqw;
   min-height: calc(var(--fs-24) * var(--lh-auto) * 2);
 }
 
@@ -66,7 +68,7 @@
   display: flex;
   align-items: flex-start;
   gap: 0.95cqw;
-  margin-top: 2.9103cqw;
+  margin-top: 1.6cqw;
   padding-left: 1.1308cqw;
   font-family: var(--font-display);
   font-size: var(--fs-24);
@@ -83,19 +85,19 @@
 }
 
 /*
- * Evidence canvas — bottom edge fixed to the viewport bottom; top edge raised
- * toward the bullet (closer than the old flex-driven start) without moving the
- * header text. Width, radius, and 93% fill unchanged. Contents crossfade in
- * stacked `.layer`s; the panel itself only moves on the §03→04 exit tail.
+ * Evidence canvas — bottom edge fixed to the viewport bottom; top edge set to
+ * leave a clear gap under the problem sentence. Width, radius, and 93% fill
+ * unchanged. Contents crossfade in stacked `.layer`s; the panel itself only
+ * moves on the §03→04 exit tail.
  */
 .panel {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  /* Above the SVG’s y=276 (24.7cqh) so the top sits nearer the bullet; header
-     text stays where it is and the bottom edge remains viewport-locked. */
-  top: 21.5cqh;
+  /* Slightly shorter than the previous 21.5cqh top — top edge moves down,
+     bottom stays locked to the viewport. */
+  top: 24cqh;
   z-index: 1;
   background: var(--panel-fill);
   border-top-left-radius: var(--panel-radius);
@@ -153,7 +155,9 @@
 
 .evidenceState2 {
   gap: 3.5cqw;
-  padding: 2.6cqh 4cqw 2cqh;
+  /* Extra top padding nudges both mockups (and their baked-in callouts) down
+     together without changing scale or horizontal placement. */
+  padding: 5cqh 4cqw 2cqh;
   align-items: flex-start;
   justify-content: center;
 }
