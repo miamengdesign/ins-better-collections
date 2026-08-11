@@ -82,6 +82,14 @@
   white-space: nowrap;
 }
 
+/*
+ * Scene 3: editorial <br> before “rather”. nowrap blocks soft-wrap at the
+ * unscaled 48px layout size (visual size comes from scale(0.5)).
+ */
+.statementScene3 {
+  white-space: nowrap;
+}
+
 /* —— Mobile stacked fallback (PinnedStage disabled) —— */
 
 .stacked {

@@ -8,7 +8,8 @@ import styles from './WhyCollection.module.css'
 
 /**
  * Narrative copy — Scene 2 shows indices 0–2 together; Scene 3 is index 3.
- * Highlights match `references/svg/02 Why Collections {2,3}.svg`.
+ * Highlights verified against `references/png|svg/02 Why Collections {2,3}`
+ * (ink-density check: Medium regions only).
  */
 const STATEMENTS = [
   <>
@@ -50,31 +51,37 @@ const GEO = {
 }
 
 /**
- * Scene 2 — three lines together (`02 Why Collections 2.svg`, path min-y / width).
+ * Scene 2 — three lines together (`02 Why Collections 2` PNG/SVG, 1728×1117).
+ * Tops/widths from 4× PNG ink bands → /4.
  */
 const SCENE2_LINES = [
   {
-    top: (451.9 / 1117) * 100,
+    top: (449.75 / 1117) * 100,
     font: 24,
-    widthCqw: ((740.3 - 88.0) / 1728) * 100,
+    widthCqw: (660 / 1728) * 100,
   },
   {
-    top: (562.9 / 1117) * 100,
+    top: (560.75 / 1117) * 100,
     font: 24,
-    widthCqw: ((963.2 - 81.7) / 1728) * 100,
+    widthCqw: (882.5 / 1728) * 100,
   },
   {
-    top: (673.9 / 1117) * 100,
+    top: (671.75 / 1117) * 100,
     font: 24,
-    widthCqw: ((994.7 - 87.0) / 1728) * 100,
+    widthCqw: (915 / 1728) * 100,
   },
 ]
 
-/** Scene 3 — single block (`02 Why Collections 3.svg`). */
+/**
+ * Scene 3 — two-line block (`02 Why Collections 3` PNG/SVG).
+ * Line tops 545.25 / 576.25 (gap 31px → lh 1.2917 = --lh-auto).
+ * Longest line width 633.25px. Soft wrap disabled (nowrap + editorial <br>)
+ * so 48px layout size × scale(0.5) cannot invent extra breaks.
+ */
 const SCENE3 = {
-  top: (547.4 / 1117) * 100,
+  top: (545.25 / 1117) * 100,
   font: 24,
-  widthCqw: ((714.1 - 81.2) / 1728) * 100,
+  widthCqw: (633.25 / 1728) * 100,
 }
 
 const WHY_TITLE = SCENE_INDEX['why-title']
@@ -298,7 +305,7 @@ function contentOpacity(blend) {
 
 function statementClass(index) {
   if (index <= 2) return `${styles.statement} ${styles.statementScene2}`
-  return styles.statement
+  return `${styles.statement} ${styles.statementScene3}`
 }
 
 function WhyCollection() {
