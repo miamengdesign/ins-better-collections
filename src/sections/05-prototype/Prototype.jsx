@@ -36,7 +36,13 @@ function Prototype() {
       </div>
 
       <p className={styles.eyebrow}>Prototype</p>
-      <h2 className={styles.heading}>Click the Mockup, try it by yourself!</h2>
+      {/* Broken after the comma because that is where the reference breaks it: at
+          20px both halves clear the heading's width, so no wrap can reproduce it. */}
+      <h2 className={styles.heading}>
+        Click the Mockup,
+        <br />
+        try it by yourself!
+      </h2>
     </Stage>
   )
 }

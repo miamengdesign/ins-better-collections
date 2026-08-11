@@ -27,7 +27,7 @@ function WrapUp() {
         <p className={styles.paragraph}>
           This redesign does not add an entirely new system.
           <br />
-          It strengthens the existing Collection experience by
+          It <strong>strengthens the existing Collection experience</strong> by
           <br />
           making saving consistent and collaboration flexible over time.
         </p>
@@ -73,7 +73,7 @@ function WrapUp() {
         <footer className={styles.footer}>
           <span>Mia Meng, Product Designer</span>
           <BackToTop />
-          <span>©2026, All Rights Reserved</span>
+          <span className={styles.copyright}>©2026, All Rights Reserved</span>
         </footer>
       </div>
     </section>

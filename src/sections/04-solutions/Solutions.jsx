@@ -25,10 +25,15 @@ function Solutions() {
         <h2 className={styles.heading}>Reels Detail Enhancement</h2>
         <div className={styles.badgeGroup}>
           <span className={styles.badge}>✅ Interface Consistency</span>
+          {/* Broken where the reference breaks it. The card's 430px of content width
+              is a hair wider than this copy needs at 20px, so left to wrap on its own
+              it pulls "the" up onto the first line. */}
           <p className={styles.explanation}>
-            Users can easily find the <strong>Collection option</strong> in the Reel{' '}
-            <strong>detail view</strong>, keeping the experience <strong>consistent</strong> across all
-            content formats.
+            Users can easily find the <strong>Collection option</strong> in
+            <br />
+            the Reel <strong>detail view</strong>, keeping the experience
+            <br />
+            <strong>consistent</strong> across all content formats.
           </p>
         </div>
       </div>

@@ -23,16 +23,16 @@
 .eyebrow {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: var(--fs-24);
-  line-height: 1.2;
+  font-size: var(--fs-16);
+  line-height: var(--lh-auto);
   color: var(--color-step-inactive); /* #DBDBDB — measured from the Figma export, not plain white */
 }
 
 .heading {
   font-family: var(--font-display);
   font-weight: 500;
-  font-size: var(--fs-32);
-  line-height: 1.2;
+  font-size: var(--fs-24);
+  line-height: var(--lh-auto);
   margin-top: 2.4624cqw;
   color: var(--color-panel); /* #F7F9F9 — measured from the Figma export, not pure white */
 }
@@ -44,26 +44,26 @@
   gap: 1.1545cqw;
 }
 
-/* Medium, not Bold: measured against the reference, Bold renders ~7% more ink
-   than the badge carries there. Same weight as .heading, which is what gives the
-   two lines their matching semibold tone. */
+/* Bold: at the reference's own 20px the label's stems measure 2.5 of 20 units,
+   which is Instagram Sans Bold — Medium is visibly lighter than the export. It
+   is the same 20px tier as .explanation below, not the same tier as .heading. */
 .badge {
   font-family: var(--font-display);
-  font-weight: 500;
-  font-size: var(--fs-32);
-  line-height: 1.2;
+  font-weight: 700;
+  font-size: var(--fs-20);
+  line-height: var(--lh-ui);
   color: var(--color-white); /* only the checkmark emoji itself is green, not the label */
 }
 
-/* 451x202 of the frame with a 10px radius. Body copy is Regular and only the
-   emphasised phrases are Bold. The 430px content width is what reproduces the
-   reference's five line breaks. */
+/* 451 of the frame wide with a 10px radius. Body copy is Regular and only the
+   emphasised phrases are Bold. At the reference's 20px the 430px content width
+   sets the copy in the same three lines the export breaks it into. */
 .explanation {
   position: relative;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: var(--fs-32);
-  line-height: 1.19;
+  font-size: var(--fs-20);
+  line-height: var(--lh-ui);
   width: 26.0995cqw;
   padding: 0.4126cqw 0.6076cqw 0.2587cqw;
   border-radius: 0.5787cqw;

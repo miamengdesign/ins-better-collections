@@ -30,18 +30,24 @@
 .eyebrow {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: var(--fs-24);
-  line-height: 1.2;
+  font-size: var(--fs-16);
+  line-height: var(--lh-auto);
   color: var(--color-step-inactive);
 }
 
+/* Regular, with only the middle clause set Bold — the same 48px tier the Section
+   02 statements are authored at, on the same 62-of-48 Figma "Auto" pitch. */
 .paragraph {
   margin-top: 15.3867vh;
   font-family: var(--font-display);
-  font-weight: 300;
-  font-size: var(--fs-60);
-  line-height: 1.25;
+  font-weight: 400;
+  font-size: var(--fs-48);
+  line-height: var(--lh-auto);
   color: var(--color-panel);
+}
+
+.paragraph strong {
+  font-weight: 700;
 }
 
 /* The lists sit where they do in `07 Wrapup 3`; the footer takes the block's
@@ -66,12 +72,14 @@
   color: var(--color-panel);
 }
 
+/* Light, not Regular: the reference sets the entries markedly thinner than their
+   Medium titles, and Regular italic reads a full step too heavy against it. */
 .list {
   display: flex;
   flex-direction: column;
   font-family: var(--font-display);
   font-style: italic;
-  font-weight: 400;
+  font-weight: 300;
   font-size: var(--fs-20);
   line-height: 2;
   color: var(--color-panel);
@@ -88,8 +96,9 @@
   font-weight: 700;
 }
 
-/* Shared baseline across the three items, as in the reference — the centre
-   "Back to top" control is set larger than the two flanking lines. */
+/* Shared baseline across the three items, as in the reference, which sets all
+   three at a different size: the byline at 14, the copyright at 16, and the
+   centre "Back to top" control largest at 20. */
 .footer {
   margin-top: auto;
   display: flex;
@@ -98,9 +107,13 @@
   gap: 1cqw;
   font-family: var(--font-display);
   font-weight: 300;
-  font-size: var(--fs-16);
-  line-height: 1.2;
+  font-size: var(--fs-14);
+  line-height: var(--lh-auto);
   color: var(--color-panel);
+}
+
+.copyright {
+  font-size: var(--fs-16);
 }
 
 @media (max-width: 640px) {
