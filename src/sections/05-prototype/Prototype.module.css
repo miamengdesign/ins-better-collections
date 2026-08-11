@@ -56,60 +56,63 @@
   margin-block: auto;
   width: min(24.9421cqw, 38.582cqh);
   height: min(50.984cqw, 78.8646cqh);
+  display: flex;
+  align-items: center;
 }
 
 .link,
 .linkIdle {
   display: block;
   width: 100%;
-  height: 100%;
-  border-radius: 2cqw;
+  height: auto;
+  background: transparent;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .link {
   cursor: pointer;
-  transition:
-    transform 180ms ease-out,
-    box-shadow 180ms ease-out;
-  transform: scale(1);
-  box-shadow: none;
 }
 
 .linkIdle {
   pointer-events: none;
 }
 
-.link:hover,
-.link:focus-visible {
-  transform: scale(1.015);
-  box-shadow: 0 1.2cqw 2.8cqw rgba(0, 0, 0, 0.18);
-}
-
-/* Reduced motion: keep pointer/focus affordance, drop the scale. */
-.linkReduced:hover,
-.linkReduced:focus-visible {
-  transform: none;
-  box-shadow: 0 0.6cqw 1.4cqw rgba(0, 0, 0, 0.12);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .link {
-    transition: box-shadow 180ms ease-out;
-  }
-
-  .link:hover,
-  .link:focus-visible {
-    transform: none;
-    box-shadow: 0 0.6cqw 1.4cqw rgba(0, 0, 0, 0.12);
-  }
-}
-
-/* No drop shadow at rest: as in Section 04, the frame sits the mockup flat. */
+/* Hover on the artwork only — not the full mockup slot (avoids white panel fringe). */
 .phone {
   width: 100%;
   height: auto;
   display: block;
   pointer-events: none;
+  transform: scale(1);
+  filter: none;
+  transition:
+    transform 180ms ease-out,
+    filter 180ms ease-out;
+}
+
+.link:hover .phone,
+.link:focus-visible .phone {
+  transform: scale(1.015);
+  filter: drop-shadow(0 1.2cqw 2.8cqw rgba(0, 0, 0, 0.18));
+}
+
+.linkReduced:hover .phone,
+.linkReduced:focus-visible .phone {
+  transform: none;
+  filter: drop-shadow(0 0.6cqw 1.4cqw rgba(0, 0, 0, 0.12));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phone {
+    transition: filter 180ms ease-out;
+  }
+
+  .link:hover .phone,
+  .link:focus-visible .phone {
+    transform: none;
+    filter: drop-shadow(0 0.6cqw 1.4cqw rgba(0, 0, 0, 0.12));
+  }
 }
 
 .eyebrow {
