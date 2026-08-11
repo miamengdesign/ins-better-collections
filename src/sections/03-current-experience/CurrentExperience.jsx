@@ -8,18 +8,38 @@ import { img } from '../../lib/assets'
 import {
   clamp,
   easeInOutCubic,
+  easeInOutQuint,
+  easeOutQuart,
   lerp,
   rangeProgress,
 } from '../../lib/motion'
 import styles from './CurrentExperience.module.css'
 
-const PIN_TRACK_VH = 360
+/**
+ * Cinematic anchors:
+ *  0     — pre-entrance (after §02 fade; header/panel hidden)
+ *  0.22  — entrance complete → State 1 settled
+ *  0.48  — State 2 settled
+ *  0.74  — State 3 settled
+ *  1     — §03→04 exit complete
+ *
+ * Entrance (p 0→0.22) phases — gradient never moves:
+ *  A already done by §02 fade
+ *  B 0.00–0.08  header/tracker/bullet fade in
+ *  C 0.08–0.11  short pause
+ *  D 0.11–0.18  evidence panel rises from below (soft ease-out)
+ *  E 0.18–0.22  mockups/callouts fade in
+ */
+const ANCHORS = [0, 0.22, 0.48, 0.74, 1]
+const DURATIONS = [2400, 1100, 1100, 1200]
 
-/** Crossfade windows (~15% of local progress) centered on the state boundaries. */
-const FADE_12 = [0.225, 0.375]
-const FADE_23 = [0.575, 0.725]
-/** §03→04 evidence-canvas exit (ANIMATION_SPEC). */
-const EXIT = [0.85, 1.0]
+const PIN_TRACK_VH = 220
+/** Pull under Why Collection so the shared gradient stays put during handoff. */
+const OVERLAP_VH = 100
+
+const FADE_12 = [0.28, 0.42]
+const FADE_23 = [0.54, 0.68]
+const EXIT = [0.82, 1.0]
 
 const STATES = [
   {
@@ -32,7 +52,6 @@ const STATES = [
   {
     id: 'state2',
     activeSteps: ['Create', 'Collaborate'],
-    // Figma refs keep the Save→Create gap visualized as a dotted connector.
     dottedAfter: 'Save',
     bullet:
       'The creation flow is easily blocked, and collaboration is limited to one friend.',
@@ -46,13 +65,22 @@ const STATES = [
   },
 ]
 
-/**
- * Opacity (and optional drift) for each evidence layer as a pure function of `p`.
- * Overlap windows crossfade the outgoing/incoming pair; elsewhere one layer is fully on.
- */
-function layerMotion(p, reduced) {
-  const y = reduced ? 0 : 12
+/** §02→03 entrance visuals as a pure function of early progress. */
+function entranceMotion(p, reduced) {
+  const headerT = easeInOutQuint(rangeProgress(p, 0, 0.08))
+  const panelT = easeOutQuart(rangeProgress(p, 0.11, 0.18))
+  const contentT = easeInOutQuint(rangeProgress(p, 0.18, 0.22))
 
+  return {
+    headerOpacity: headerT,
+    panelY: reduced ? 0 : lerp(48, 0, panelT),
+    panelOpacity: p < 0.11 ? 0 : lerp(0.15, 1, panelT),
+    contentOpacity: contentT,
+  }
+}
+
+function layerMotion(p, reduced) {
+  const y = reduced ? 0 : 10
   let o1 = 1
   let o2 = 0
   let o3 = 0
@@ -61,20 +89,13 @@ function layerMotion(p, reduced) {
   let y3 = y
 
   if (p < FADE_12[0]) {
-    o1 = 1
-    o2 = 0
-    o3 = 0
-    y1 = 0
-    y2 = y
-    y3 = y
+    /* state 1 */
   } else if (p < FADE_12[1]) {
     const t = easeInOutCubic(rangeProgress(p, FADE_12[0], FADE_12[1]))
     o1 = 1 - t
     o2 = t
-    o3 = 0
     y1 = reduced ? 0 : lerp(0, -y, t)
     y2 = reduced ? 0 : lerp(y, 0, t)
-    y3 = y
   } else if (p < FADE_23[0]) {
     o1 = 0
     o2 = 1
@@ -106,25 +127,19 @@ function layerMotion(p, reduced) {
   ]
 }
 
-/** Dominant state index for tracker/bullet at the overlap midpoint. */
 function dominantStateIndex(p) {
   if (p < (FADE_12[0] + FADE_12[1]) / 2) return 0
   if (p < (FADE_23[0] + FADE_23[1]) / 2) return 1
   return 2
 }
 
-/** Bullet opacities — simple crossfade on the same overlap windows. */
 function bulletOpacities(p) {
-  const layers = layerMotion(p, true)
-  return layers.map((l) => l.opacity)
+  return layerMotion(p, true).map((l) => l.opacity)
 }
 
 function exitMotion(p, reduced) {
   if (p < EXIT[0]) return { opacity: 1, y: 0 }
-  const t = easeInOutCubic(rangeProgress(p, EXIT[0], EXIT[1]))
-  // Spec: translateY(0 → 40vh) + opacity(1 → 0). Keep the move under reduced-motion
-  // only if we drop drift elsewhere; exit is scroll-coupled, but prefer opacity-only
-  // when reduced (no large translate).
+  const t = easeInOutQuint(rangeProgress(p, EXIT[0], EXIT[1]))
   return {
     opacity: 1 - t,
     y: reduced ? 0 : t * 40,
@@ -197,8 +212,16 @@ function CurrentExperience() {
     <PinnedStage
       className={styles.section}
       ariaLabel="Current Experience"
-      height={`${PIN_TRACK_VH}vh`}
+      height={`calc(${OVERLAP_VH}vh + ${PIN_TRACK_VH}vh)`}
+      overlapVh={OVERLAP_VH}
+      startOffsetVh={0}
       style={{ zIndex: 2 }}
+      cinematic={{
+        anchors: ANCHORS,
+        durations: DURATIONS,
+        duration: 1200,
+        reduced,
+      }}
     >
       {({ progress, isPinned }) => {
         if (!isPinned) {
@@ -206,17 +229,31 @@ function CurrentExperience() {
         }
 
         const p = clamp(progress, 0, 1)
-        const layers = layerMotion(p, reduced)
-        const bullets = bulletOpacities(p)
-        const active = STATES[dominantStateIndex(p)]
+        const entrance = entranceMotion(p, reduced)
+        const layers = layerMotion(Math.max(p, 0.22), reduced)
+        const bullets = bulletOpacities(Math.max(p, 0.22))
+        const active = STATES[dominantStateIndex(Math.max(p, 0.22))]
         const exit = exitMotion(p, reduced)
+
+        // During entrance, only state-1 content; gate with contentOpacity.
+        const contentGate = p < 0.22 ? entrance.contentOpacity : 1
+        const headerOpacity =
+          p < 0.22 ? entrance.headerOpacity : exit.opacity < 1 ? exit.opacity : 1
+
+        const panelY =
+          p < 0.22 ? entrance.panelY : exit.y
+        const panelOpacity =
+          p < 0.22 ? entrance.panelOpacity : exit.opacity
 
         return (
           <>
             <GradientStage />
 
             <div className={styles.stack}>
-              <header className={styles.header}>
+              <header
+                className={styles.header}
+                style={{ opacity: headerOpacity }}
+              >
                 <h2 className={styles.title}>Current Experience</h2>
                 <StepTracker
                   activeSteps={active.activeSteps}
@@ -227,8 +264,21 @@ function CurrentExperience() {
                     <p
                       key={state.id}
                       className={styles.bullet}
-                      style={{ opacity: bullets[i] }}
-                      aria-hidden={bullets[i] < 0.5}
+                      style={{
+                        opacity:
+                          p < 0.22
+                            ? i === 0
+                              ? entrance.headerOpacity
+                              : 0
+                            : bullets[i],
+                      }}
+                      aria-hidden={
+                        (p < 0.22
+                          ? i === 0
+                            ? entrance.headerOpacity
+                            : 0
+                          : bullets[i]) < 0.5
+                      }
                     >
                       {state.bullet}
                     </p>
@@ -239,40 +289,43 @@ function CurrentExperience() {
               <div
                 className={styles.panel}
                 style={{
-                  opacity: exit.opacity,
-                  transform: `translateY(${exit.y}vh)`,
+                  opacity: panelOpacity,
+                  transform: `translateY(${panelY}vh)`,
                 }}
               >
                 <div
                   className={styles.layer}
                   style={{
-                    opacity: layers[0].opacity,
+                    opacity: layers[0].opacity * contentGate,
                     transform: `translateY(${layers[0].y}px)`,
-                    pointerEvents: layers[0].opacity > 0.5 ? 'auto' : 'none',
+                    pointerEvents:
+                      layers[0].opacity * contentGate > 0.5 ? 'auto' : 'none',
                   }}
-                  aria-hidden={layers[0].opacity < 0.05}
+                  aria-hidden={layers[0].opacity * contentGate < 0.05}
                 >
                   <EvidenceState1 />
                 </div>
                 <div
                   className={styles.layer}
                   style={{
-                    opacity: layers[1].opacity,
+                    opacity: layers[1].opacity * contentGate,
                     transform: `translateY(${layers[1].y}px)`,
-                    pointerEvents: layers[1].opacity > 0.5 ? 'auto' : 'none',
+                    pointerEvents:
+                      layers[1].opacity * contentGate > 0.5 ? 'auto' : 'none',
                   }}
-                  aria-hidden={layers[1].opacity < 0.05}
+                  aria-hidden={layers[1].opacity * contentGate < 0.05}
                 >
                   <EvidenceState2 />
                 </div>
                 <div
                   className={styles.layer}
                   style={{
-                    opacity: layers[2].opacity,
+                    opacity: layers[2].opacity * contentGate,
                     transform: `translateY(${layers[2].y}px)`,
-                    pointerEvents: layers[2].opacity > 0.5 ? 'auto' : 'none',
+                    pointerEvents:
+                      layers[2].opacity * contentGate > 0.5 ? 'auto' : 'none',
                   }}
-                  aria-hidden={layers[2].opacity < 0.05}
+                  aria-hidden={layers[2].opacity * contentGate < 0.05}
                 >
                   <EvidenceState3 />
                 </div>
@@ -285,7 +338,6 @@ function CurrentExperience() {
   )
 }
 
-/** Mobile: three stacked static groups in reading order (PinnedStage disabled). */
 function StackedFallback() {
   return (
     <div className={styles.stacked}>

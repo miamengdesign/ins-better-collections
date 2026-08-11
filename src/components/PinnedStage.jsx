@@ -1,23 +1,26 @@
 import { useRef } from 'react'
+import { useCinematicPlayhead, useStageActive } from '../hooks/useCinematicPlayhead'
 import { useMediaQuery } from '../hooks/useMediaQuery'
+import { useReducedMotion } from '../hooks/useReducedMotion'
 import { useScrollProgress } from '../hooks/useScrollProgress'
 import Stage from './Stage'
 import styles from './PinnedStage.module.css'
 
 /**
  * Scroll-track + sticky full-viewport stage. Exposes local progress `0–1` via a
- * render-prop child. Below the mobile breakpoint the pin is disabled and children
- * receive `progress = 0` inside a normal-flow Stage (sections that need a stacked
- * fallback should branch on `isPinned` themselves).
+ * render-prop child.
  *
- * `overlapVh` pulls the track under a preceding section via negative margin.
- * `startOffsetVh` (defaults to `overlapVh`) is the progress dead-zone so local `p`
- * stays 0 until that much of the track has scrolled past.
+ * When `cinematic` is set, wheel/trackpad gestures step through `cinematic.anchors`
+ * and each step eases to completion (trigger model). Scroll position no longer
+ * scrubs the animation 1:1. Mobile still disables the pin.
+ *
+ * `overlapVh` / `startOffsetVh` keep cross-section stacking geometry.
  */
 function PinnedStage({
   height = '400vh',
   overlapVh = 0,
   startOffsetVh,
+  cinematic = null,
   className = '',
   ariaLabel,
   children,
@@ -25,16 +28,45 @@ function PinnedStage({
 }) {
   const trackRef = useRef(null)
   const isMobile = useMediaQuery('(max-width: 767px)')
+  const reduced = useReducedMotion()
   const offsetVh = startOffsetVh ?? overlapVh
-  const progress = useScrollProgress(trackRef, {
+  const scrollProgress = useScrollProgress(trackRef, {
     startOffsetVh: offsetVh,
-    enabled: !isMobile,
+    enabled: !isMobile && !cinematic,
   })
+
+  const zIndex =
+    typeof rest.style?.zIndex === 'number'
+      ? rest.style.zIndex
+      : cinematic
+        ? overlapVh
+          ? 1
+          : 0
+        : 0
+
+  const stageActive = useStageActive(trackRef, {
+    enabled: !isMobile && !!cinematic,
+    zIndex,
+  })
+
+  const cine = useCinematicPlayhead({
+    anchors: cinematic?.anchors ?? [0, 1],
+    active: stageActive,
+    reduced: cinematic?.reduced ?? reduced,
+    duration: cinematic?.duration ?? 1100,
+    durations: cinematic?.durations,
+    threshold: cinematic?.threshold ?? 48,
+    enabled: !isMobile && !!cinematic,
+  })
+
+  const progress = cinematic ? cine.progress : scrollProgress
 
   if (isMobile) {
     return (
       <Stage className={className} aria-label={ariaLabel} data-pinned="false" {...rest}>
-        {typeof children === 'function' ? children({ progress: 0, isPinned: false }) : children}
+        {typeof children === 'function'
+          ? children({ progress: 0, isPinned: false, stepIndex: 0, animating: false })
+          : children}
       </Stage>
     )
   }
@@ -45,6 +77,7 @@ function PinnedStage({
       className={styles.track}
       aria-label={ariaLabel}
       data-pinned="true"
+      data-cinematic={cinematic ? 'true' : 'false'}
       {...rest}
       style={{
         height,
@@ -55,7 +88,15 @@ function PinnedStage({
     >
       <div className={styles.sticky}>
         <div className={`${styles.canvas} ${className}`}>
-          {typeof children === 'function' ? children({ progress, isPinned: true }) : children}
+          {typeof children === 'function'
+            ? children({
+                progress,
+                isPinned: true,
+                stepIndex: cine.stepIndex,
+                animating: cine.animating,
+                stageActive,
+              })
+            : children}
         </div>
       </div>
     </section>

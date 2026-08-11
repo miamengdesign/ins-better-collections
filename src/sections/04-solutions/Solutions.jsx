@@ -3,36 +3,27 @@ import PhoneMockup from '../../components/PhoneMockup'
 import PinnedStage from '../../components/PinnedStage'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { img } from '../../lib/assets'
+import { useSolutionsPushT } from '../../lib/handoff04to05'
 import {
   clamp,
   easeInOutCubic,
+  easeInOutQuint,
   easeOutBack,
   lerp,
   rangeProgress,
 } from '../../lib/motion'
 import styles from './Solutions.module.css'
 
-const PIN_TRACK_VH = 360
-/** Sticky viewport height included in the track (`100vh + PIN_TRACK_VH`). */
-const VIEW_VH = 100
-/**
- * Must match Prototype’s `overlapVh`. Shared scroll window for the physical push:
- * Prototype sticky engages when Solutions local `p` hits
- * `(VIEW_VH + PIN_TRACK_VH - OVERLAP_WITH_05) / PIN_TRACK_VH`.
- */
-const OVERLAP_WITH_05 = 160
+const PIN_TRACK_VH = 240
 
-/** §03→04: Solution light panel enters from the right. */
+/** Cinematic steps: enter → sol1 → sol2 → sol3 → push complete. */
+const ANCHORS = [0, 0.15, 0.42, 0.72, 1]
+const DURATIONS = [1100, 1100, 1100, 1300]
+
 const ENTER = [0, 0.15]
-/** Crossfade windows (~15%) between the three solution states. */
-const FADE_12 = [0.35, 0.5]
-const FADE_23 = [0.65, 0.8]
-/**
- * §04→05: Solution light panel pushed out to the right (linear-with-scroll).
- * Start is locked to Prototype’s enter window via OVERLAP_WITH_05 — not an
- * independent timer — so both panels move 1:1 for the whole handoff.
- */
-const PUSH = [(VIEW_VH + PIN_TRACK_VH - OVERLAP_WITH_05) / PIN_TRACK_VH, 1]
+const FADE_12 = [0.28, 0.42]
+const FADE_23 = [0.58, 0.72]
+const PUSH = [0.72, 1]
 
 const STATES = [
   {
@@ -134,26 +125,29 @@ function copyOpacities(p) {
 }
 
 /**
- * Light-panel X as a pure function of local `p`:
- * - enter from the right (§03→04) with slight overshoot
- * - hold through the three solution states
- * - push out to the right (§04→05), linear-with-scroll
+ * Light-panel X as a pure function of local `p`, with §04→05 push optionally
+ * driven by the shared handoff playhead (keeps Prototype locked).
  */
-function panelX(p, reduced) {
+function panelX(p, reduced, sharedPushT) {
   if (p < ENTER[1]) {
     const raw = rangeProgress(p, ENTER[0], ENTER[1])
     const t = reduced ? easeInOutCubic(raw) : easeOutBack(raw)
     return lerp(100, 0, t)
   }
+  // Prefer the shared push playhead once the handoff has started.
+  if (sharedPushT > 0.001) {
+    return lerp(0, 100, sharedPushT)
+  }
   if (p >= PUSH[0]) {
     const t = rangeProgress(p, PUSH[0], PUSH[1])
-    return lerp(0, 100, t)
+    return lerp(0, 100, easeInOutQuint(t))
   }
   return 0
 }
 
 function Solutions() {
   const reduced = useReducedMotion()
+  const sharedPushT = useSolutionsPushT()
 
   return (
     <PinnedStage
@@ -163,6 +157,12 @@ function Solutions() {
       overlapVh={100}
       startOffsetVh={0}
       style={{ zIndex: 2 }}
+      cinematic={{
+        anchors: ANCHORS,
+        durations: DURATIONS,
+        duration: 1100,
+        reduced,
+      }}
     >
       {({ progress, isPinned }) => {
         if (!isPinned) {
@@ -172,7 +172,7 @@ function Solutions() {
         const p = clamp(progress, 0, 1)
         const layers = layerMotion(p, reduced)
         const copies = copyOpacities(p)
-        const x = panelX(p, reduced)
+        const x = panelX(p, reduced, sharedPushT)
 
         return (
           <>

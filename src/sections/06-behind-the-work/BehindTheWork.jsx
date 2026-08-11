@@ -14,10 +14,13 @@ import styles from './BehindTheWork.module.css'
  */
 
 /** Extra scroll distance after the sticky viewport for the State 1→2 fade. */
-const PIN_TRACK_VH = 120
+const PIN_TRACK_VH = 100
 
 /** Each overlay layer settles at 70% — never fully opaque. */
 const OVERLAY_MAX = 0.7
+
+const ANCHORS = [0, 1]
+const DURATIONS = [1200]
 
 const STATEMENT =
   'Before narrowing the scope, I mapped issues across discovery, creation, sharing, and organization.'
@@ -71,6 +74,12 @@ function BehindTheWork() {
       ariaLabel="Behind the Work"
       height={`calc(100vh + ${PIN_TRACK_VH}vh)`}
       startOffsetVh={0}
+      cinematic={{
+        anchors: ANCHORS,
+        durations: DURATIONS,
+        duration: 1200,
+        reduced,
+      }}
     >
       {({ progress, isPinned }) => {
         if (!isPinned) {
@@ -79,7 +88,6 @@ function BehindTheWork() {
         }
 
         const p = clamp(progress, 0, 1)
-        // Reduced motion: scroll still drives the state, but as a single step at mid-track.
         const t = reduced ? (p >= 0.5 ? 1 : 0) : p
         const overlayOpacity = lerp(0, OVERLAY_MAX, t)
         const statementOpacity = t

@@ -26,6 +26,16 @@ export function easeInOutCubic(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - ((-2 * t + 2) ** 3) / 2
 }
 
+/** Softer cinematic ease — gentle accel/decel for timeline transitions. */
+export function easeInOutQuint(t) {
+  return t < 0.5 ? 16 * t * t * t * t * t : 1 - ((-2 * t + 2) ** 5) / 2
+}
+
+/** Soft settle for panels rising onto the stage (restrained, not bouncy). */
+export function easeOutQuart(t) {
+  return 1 - (1 - t) ** 4
+}
+
 /**
  * Slight overshoot settle approximating `cubic-bezier(0.34, 1.2, 0.64, 1)` —
  * used for the §03→04 Solution panel entrance. Output may exceed 1 briefly.
