@@ -52,23 +52,26 @@
 }
 
 /*
- * Narrative statements — left frame margin; `top` / `font-size` / `opacity` are
- * set inline from scroll progress so previous + active can share the stage
- * (matching `02 Why Collections 3/4` geometry).
+ * Narrative statements — fixed at the active resting top; motion is
+ * translate3d + scale + opacity only (no layout top/font-size thrash).
+ * At most two layers mount during a relay (exiting + incoming).
  */
 .statement {
   position: absolute;
   z-index: 1;
   left: var(--frame-margin);
+  top: 53.08cqh; /* GEO.activeTop = 592.9/1117 */
   width: 56cqw;
   margin: 0;
   font-family: var(--font-display);
   font-weight: 400;
+  font-size: var(--fs-48);
   line-height: var(--lh-auto);
   color: var(--color-white);
   text-align: left;
   transform-origin: left top;
-  will-change: top, opacity, font-size;
+  will-change: transform, opacity;
+  pointer-events: none;
 }
 
 .statement strong {

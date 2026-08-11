@@ -1,4 +1,4 @@
-import { clamp, easeInOutQuint } from '../lib/motion'
+import { clamp } from '../lib/motion'
 import { LAST_CINEMATIC_INDEX, SCENES } from './scenes'
 
 /**
@@ -54,8 +54,8 @@ function tickTransition(from, to, duration, onDone) {
 
   const step = (now) => {
     const u = clamp((now - start) / duration, 0, 1)
-    const t = easeInOutQuint(u)
-    transition = { from, to, t }
+    // Store linear progress; sections apply their own easing once.
+    transition = { from, to, t: u }
     emit()
     if (u < 1) {
       raf = requestAnimationFrame(step)
