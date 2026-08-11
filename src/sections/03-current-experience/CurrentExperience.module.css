@@ -175,6 +175,8 @@
   display: block;
   object-fit: contain;
   object-position: top center;
+  /* Match State-1 PhoneMockup depth (PhoneMockup.module.css). */
+  filter: drop-shadow(0 1.2cqw 2.4cqw rgba(0, 0, 0, 0.18));
 }
 
 .group2 {
@@ -184,6 +186,7 @@
   display: block;
   object-fit: contain;
   object-position: top center;
+  filter: drop-shadow(0 1.2cqw 2.4cqw rgba(0, 0, 0, 0.18));
 }
 
 /* —— State 3: single combined phone + callout composite ——
@@ -198,6 +201,8 @@
   height: auto;
   display: block;
   object-fit: contain;
+  /* Match State-1 PhoneMockup depth (PhoneMockup.module.css). */
+  filter: drop-shadow(0 1.2cqw 2.4cqw rgba(0, 0, 0, 0.18));
 }
 
 /* —— Mobile stacked fallback —— */
