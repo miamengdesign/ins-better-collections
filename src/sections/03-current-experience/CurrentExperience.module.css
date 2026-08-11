@@ -162,8 +162,8 @@
 
 .evidenceState2 {
   gap: 4.08cqw;
-  /* Nudges both mockups down together to the updated y≈403 resting line. */
-  padding: 12.08cqh 4cqw 2cqh;
+  /* Base resting line y≈403; nudged up ~1cqh for approved State-2 placement. */
+  padding: 11.08cqh 4cqw 2cqh;
   align-items: flex-start;
   justify-content: center;
 }
