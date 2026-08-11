@@ -43,6 +43,7 @@
 /*
  * Footer — left path x≈24.7 (6.144vw); right path ends ≈374.7 (93.2vw).
  * Shared baseline center y ≈ 93.94% → bottom inset ≈ 5.58% of frame height.
+ * fs-12 at the 402px reference width — slightly lighter than the centered message.
  */
 .footer {
   position: absolute;
@@ -56,7 +57,7 @@
   gap: 4vw;
   font-family: var(--font-display);
   font-weight: 300;
-  font-size: calc(14 / 402 * 100vw);
+  font-size: calc(12 / 402 * 100vw);
   line-height: var(--lh-auto);
   color: var(--color-panel);
   pointer-events: none;
