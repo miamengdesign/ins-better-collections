@@ -59,8 +59,8 @@
   top: var(--frame-margin);
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: var(--fs-24);
-  line-height: 1.2;
+  font-size: var(--fs-16);
+  line-height: var(--lh-auto);
   color: var(--color-step-inactive);
 }
 
@@ -71,7 +71,7 @@
   max-width: 16cqw;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: var(--fs-32);
-  line-height: 1.19;
+  font-size: var(--fs-20);
+  line-height: var(--lh-ui);
   color: var(--color-white);
 }

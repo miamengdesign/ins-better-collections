@@ -24,8 +24,8 @@
 .title {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: var(--fs-24);
-  line-height: 1.2;
+  font-size: var(--fs-16);
+  line-height: var(--lh-auto);
   color: var(--color-step-inactive);
   text-align: left;
 }
@@ -37,9 +37,9 @@
   margin-top: 2.9103cqw;
   padding-left: 1.1308cqw;
   font-family: var(--font-display);
-  font-size: var(--fs-32);
+  font-size: var(--fs-24);
   font-weight: 500;
-  line-height: 1.2;
+  line-height: var(--lh-auto);
   color: var(--color-white);
   max-width: 60cqw;
   text-align: left;

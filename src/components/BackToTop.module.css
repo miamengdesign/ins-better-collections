@@ -4,9 +4,9 @@
   gap: 0.9cqw;
   color: var(--color-white);
   font-family: var(--font-body);
-  font-size: var(--fs-24); /* set one tier above the footer lines it sits between */
-  font-weight: 500;
-  line-height: 1.2;
+  font-size: var(--fs-20); /* the largest of the footer's three sizes, as in the reference */
+  font-weight: 400;
+  line-height: var(--lh-auto);
 }
 
 .arrow {
