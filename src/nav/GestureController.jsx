@@ -32,7 +32,7 @@ function GestureController() {
 
     let latched = false
     let idleTimer = 0
-    let lastWheelAt = 0
+    let sawWheelDuringAnim = false
     let wasAnimating = getNavigatorSnapshot().animating
 
     const clearIdle = () => {
@@ -53,14 +53,14 @@ function GestureController() {
     const unsub = subscribeNavigator(() => {
       const { animating } = getNavigatorSnapshot()
       if (wasAnimating && !animating) {
-        // Scene just became visually settled. Absorb residual trackpad
-        // momentum from the gesture that started this transition — but only
-        // if wheels are still streaming. A clean settle stays immediately
-        // eligible for the next deliberate swipe (no click/focus needed).
-        if (performance.now() - lastWheelAt < GESTURE_IDLE_MS) {
+        // Settled: briefly absorb residual coast from the gesture that
+        // drove this transition. Use a hard idle window (not refreshed by
+        // every latched wheel) so a deliberate follow-up swipe can land.
+        if (sawWheelDuringAnim) {
           latched = true
           scheduleIdle()
         }
+        sawWheelDuringAnim = false
       }
       wasAnimating = animating
     })
@@ -68,8 +68,6 @@ function GestureController() {
     const onWheel = (e) => {
       const intent = readVerticalIntent(e)
       if (intent === 0) return
-
-      lastWheelAt = performance.now()
 
       // Synchronous store read — not React-mirrored refs (one commit late).
       const { animating, unlocked: isUnlocked } = getNavigatorSnapshot()
@@ -80,7 +78,7 @@ function GestureController() {
         if (intent < 0 && window.scrollY <= 4) {
           e.preventDefault()
           if (latched || animating) {
-            scheduleIdle()
+            if (animating) sawWheelDuringAnim = true
             return
           }
           latched = true
@@ -95,15 +93,17 @@ function GestureController() {
       // Cinematic lock: always take vertical intent.
       e.preventDefault()
 
-      // During a timeline: swallow momentum without extending the post-gesture
-      // latch. Extending idle here was holding the latch for the entire Mac
-      // coast, so the first deliberate §02 swipe after settle was discarded.
+      // During a timeline: swallow momentum. Mark that coast occurred so
+      // settle can arm a short hard latch — do not refresh that latch on
+      // every event (refreshing starved the next deliberate §02 swipe).
       if (animating) {
+        sawWheelDuringAnim = true
         return
       }
 
       if (latched) {
-        scheduleIdle()
+        // Hard window: do not scheduleIdle() again. Extending idle here
+        // meant each retry swipe kept the latch alive indefinitely.
         return
       }
 

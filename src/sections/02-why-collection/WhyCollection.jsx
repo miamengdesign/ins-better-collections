@@ -164,8 +164,13 @@ function relayLayers(blend, reduced) {
     }
   }
 
-  // why-4 held during §02→03 handoff (content opacity handles leave — no stack).
-  if (fromIdx === 3 || toIdx === 3) {
+  // why-4 ↔ ce only: keep statement 3 frozen (content opacity owns leave/enter).
+  // Must NOT use `toIdx === 3` alone — that index is also the why-3→why-4
+  // destination and is already handled by the stmt-relay branch above.
+  if (
+    (blend.from === WHY_4 && blend.to === CE_1) ||
+    (blend.from === CE_1 && blend.to === WHY_4)
+  ) {
     return {
       headingT: 1,
       layers: [{ index: 3, pose: POSE.active, role: 'current' }],

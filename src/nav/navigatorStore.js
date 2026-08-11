@@ -32,7 +32,15 @@ function buildSnapshot() {
 
 function emit() {
   snapshot = buildSnapshot()
-  listeners.forEach((fn) => fn())
+  listeners.forEach((fn) => {
+    try {
+      fn()
+    } catch (err) {
+      // A subscriber throw must not kill the transition RAF chain
+      // (would leave animating=true and freeze the current scene).
+      console.error(err)
+    }
+  })
 }
 
 function getDuration(fromIndex, toIndex, reduced) {
@@ -54,12 +62,14 @@ function tickTransition(from, to, duration, onDone) {
 
   const step = (now) => {
     const u = clamp((now - start) / duration, 0, 1)
-    // Store linear progress; sections apply their own easing once.
-    transition = { from, to, t: u }
-    emit()
     if (u < 1) {
+      // Store linear progress; sections apply their own easing once.
+      transition = { from, to, t: u }
+      emit()
       raf = requestAnimationFrame(step)
     } else {
+      // Commit settled ownership before notify so input eligibility and
+      // section relays agree on the same snapshot (no t=1 + animating hole).
       raf = 0
       sceneIndex = to
       transition = null
