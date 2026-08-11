@@ -83,17 +83,19 @@
 }
 
 /*
- * Evidence canvas — bottom edge fixed to the viewport bottom; top edge set from
- * the SVG panel path (y=276 / 1117) so the panel is taller and closer to the
- * bullet above, without moving the header text. Contents crossfade in stacked
- * `.layer`s; the panel itself only moves on the §03→04 exit tail.
+ * Evidence canvas — bottom edge fixed to the viewport bottom; top edge raised
+ * toward the bullet (closer than the old flex-driven start) without moving the
+ * header text. Width, radius, and 93% fill unchanged. Contents crossfade in
+ * stacked `.layer`s; the panel itself only moves on the §03→04 exit tail.
  */
 .panel {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  top: 24.709cqh; /* 276/1117 — Figma panel top */
+  /* Above the SVG’s y=276 (24.7cqh) so the top sits nearer the bullet; header
+     text stays where it is and the bottom edge remains viewport-locked. */
+  top: 21.5cqh;
   z-index: 1;
   background: var(--panel-fill);
   border-top-left-radius: var(--panel-radius);
