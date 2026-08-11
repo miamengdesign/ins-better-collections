@@ -7,7 +7,7 @@
   position: absolute;
   left: var(--frame-margin);
   top: var(--frame-margin);
-  z-index: 2;
+  z-index: 1;
 }
 
 .eyebrow {
@@ -34,10 +34,13 @@
  * off the frame edges are all already baked into the exports, so nothing is
  * transformed or cropped here — the files render 1:1 with the frame. Only a width
  * is set on each sheet, so every PNG keeps its native aspect ratio.
+ *
+ * Positions are never animated — State 2 only fades an overlay on top.
  */
 .collage {
   position: absolute;
   inset: 0;
+  z-index: 0;
 }
 
 .pic1 {
@@ -66,4 +69,35 @@
   left: 62.6157cqw;
   top: 47.8872cqh;
   width: 37.3843cqw;
+}
+
+/* Dark project-gradient overlay — opacity driven by scroll (0 → 0.7). */
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  will-change: opacity;
+}
+
+/*
+ * State 2 centered statement. Geometry from `references/png|svg/06 Behind 2`:
+ * roughly half-frame wide, vertically centered, two wrapped lines at the 24px tier.
+ */
+.statement {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 3;
+  width: 48cqw;
+  margin: 0;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: var(--fs-24);
+  line-height: var(--lh-auto);
+  color: var(--color-white);
+  pointer-events: none;
+  will-change: opacity;
 }
