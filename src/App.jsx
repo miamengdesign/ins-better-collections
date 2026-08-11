@@ -52,6 +52,7 @@ function StaticTail() {
       className={tailStyles.tail}
       data-visible={unlocked ? 'true' : 'false'}
       aria-hidden={!unlocked}
+      inert={!unlocked || undefined}
     >
       {/* Phase 1: cinematic disabled — static first-state presentation only. */}
       <Solutions phase1Static />

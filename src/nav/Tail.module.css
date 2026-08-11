@@ -3,8 +3,14 @@
   z-index: 0;
 }
 
+/*
+ * §§04–07 sit in document flow under the fixed cinematic viewport. While the
+ * navigator is locked they are not the current scene and do not participate in
+ * any handoff — they must not paint. Otherwise Hero's exit (transparent hole
+ * before §02/gradient fade in) briefly reveals §04 underneath.
+ */
 .tail[data-visible='false'] {
-  /* Keep mounted for later migration, but inert until cinematic unlocks. */
-  content-visibility: auto;
+  visibility: hidden;
   pointer-events: none;
+  content-visibility: hidden;
 }
