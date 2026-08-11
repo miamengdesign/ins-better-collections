@@ -99,9 +99,9 @@ export function goNext({ reduced = false } = {}) {
   if (unlocked) return false
 
   if (sceneIndex >= LAST_CINEMATIC_INDEX) {
-    unlocked = true
-    emit()
-    return true
+    // Terminal cinematic scene (wrap-3): absorb further forward gestures.
+    // Do not unlock an empty static tail / blank viewport.
+    return false
   }
 
   const from = sceneIndex

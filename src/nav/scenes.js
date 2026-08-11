@@ -1,7 +1,6 @@
 /**
  * Phase-1 cinematic scene graph
- * (Hero → Why → CE → Solutions 1–3 → Prototype → Behind 1–2 → Wrap 1–2).
- * Wrap Up scene 3 remains for a later migration.
+ * (Hero → Why → CE → Solutions 1–3 → Prototype → Behind 1–2 → Wrap 1–3).
  */
 
 /** @typedef {{ id: string, label: string, enterMs: number }} SceneDef */
@@ -68,6 +67,11 @@ export const SCENES = [
     id: 'wrap-2',
     label: 'Wrap Up — scene 2',
     enterMs: 1600, // statement rises; “If I had more time…” fades in
+  },
+  {
+    id: 'wrap-3',
+    label: 'Wrap Up — scene 3',
+    enterMs: 1800, // Wrap-2 exits up; Tools / Quick Links / footer settle
   },
 ]
 
