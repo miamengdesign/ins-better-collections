@@ -30,8 +30,11 @@ const STATEMENTS = [
 ]
 
 /**
- * Geometry from `references/svg/02 Why Collections {2,3,4}.svg` (1728×1117).
- * Motion uses transform from the active resting top (not layout `top`/`font-size`).
+ * Shared transform origin = Why 1 / Why 4 active slot (1728×1117).
+ * Motion uses transform from this slot (not layout `top`/`font-size`).
+ *
+ * Why 2 / Why 3 resting overrides from latest
+ * `references/svg/02 Why Collections {2,3}.svg` (path bbox tops / widths).
  */
 const GEO = {
   previousTop: (187.9 / 1117) * 100,
@@ -46,14 +49,33 @@ const GEO = {
   previousOpacity: 0.38,
   enterOpacity: 0,
   dismissOpacity: 0,
+  widthCqw: 56,
 }
+
+/** Per-statement active resting geometry (indices 1 / 2 updated). */
+const STATEMENT_REST = [
+  { top: GEO.activeTop, font: GEO.activeFont, widthCqw: GEO.widthCqw },
+  // Why Collections 2 — middle statement line (path y≈562.9, fs-24)
+  {
+    top: (562.9 / 1117) * 100,
+    font: 24,
+    widthCqw: ((963.2 - 81.7) / 1728) * 100,
+  },
+  // Why Collections 3 — statement block (path y≈547.4, fs-24)
+  {
+    top: (547.4 / 1117) * 100,
+    font: 24,
+    widthCqw: ((714.1 - 81.2) / 1728) * 100,
+  },
+  { top: GEO.activeTop, font: GEO.activeFont, widthCqw: GEO.widthCqw },
+]
 
 const WHY_TITLE = SCENE_INDEX['why-title']
 const WHY_1 = SCENE_INDEX['why-1']
 const WHY_4 = SCENE_INDEX['why-4']
 const CE_1 = SCENE_INDEX['ce-1']
 
-/** Pose relative to the active resting slot (transform + opacity only). */
+/** Pose relative to the shared active resting slot (transform + opacity only). */
 function pose(topCqh, fontPx, opacity) {
   return {
     y: topCqh - GEO.activeTop,
@@ -62,11 +84,15 @@ function pose(topCqh, fontPx, opacity) {
   }
 }
 
-const POSE = {
-  active: pose(GEO.activeTop, GEO.activeFont, GEO.activeOpacity),
-  previous: pose(GEO.previousTop, GEO.previousFont, GEO.previousOpacity),
-  enter: pose(GEO.enterTop, GEO.enterFont, GEO.enterOpacity),
-  dismiss: pose(GEO.dismissTop, GEO.dismissFont, GEO.dismissOpacity),
+/** Active / enter poses for a statement index; previous/dismiss stay shared. */
+function posesFor(index) {
+  const rest = STATEMENT_REST[index] ?? STATEMENT_REST[0]
+  return {
+    active: pose(rest.top, rest.font, GEO.activeOpacity),
+    previous: pose(GEO.previousTop, GEO.previousFont, GEO.previousOpacity),
+    enter: pose(rest.top + 8, rest.font * 0.72, GEO.enterOpacity),
+    dismiss: pose(GEO.dismissTop, GEO.dismissFont, GEO.dismissOpacity),
+  }
 }
 
 function mixPose(a, b, t) {
@@ -100,7 +126,9 @@ function relayLayers(blend, reduced) {
     if (current < 0) return { headingT: 0, layers: [] }
     return {
       headingT: 1,
-      layers: [{ index: current, pose: POSE.active, role: 'current' }],
+      layers: [
+        { index: current, pose: posesFor(current).active, role: 'current' },
+      ],
     }
   }
 
@@ -109,12 +137,13 @@ function relayLayers(blend, reduced) {
   // Title ↔ first statement (heading demotes while stmt 0 enters / exits).
   if (fromIdx < 0 && toIdx === 0) {
     const enterT = reduced ? rawT : easeOutCubic(rawT)
+    const p0 = posesFor(0)
     return {
       headingT: t,
       layers: [
         {
           index: 0,
-          pose: mixPose(POSE.enter, POSE.active, enterT),
+          pose: mixPose(p0.enter, p0.active, enterT),
           role: 'incoming',
         },
       ],
@@ -122,12 +151,13 @@ function relayLayers(blend, reduced) {
   }
   if (fromIdx === 0 && toIdx < 0) {
     const exitT = reduced ? rawT : easeInOutQuint(rawT)
+    const p0 = posesFor(0)
     return {
       headingT: 1 - t,
       layers: [
         {
           index: 0,
-          pose: mixPose(POSE.active, POSE.enter, exitT),
+          pose: mixPose(p0.active, p0.enter, exitT),
           role: 'exiting',
         },
       ],
@@ -138,14 +168,16 @@ function relayLayers(blend, reduced) {
   if (fromIdx >= 0 && toIdx >= 0 && fromIdx !== toIdx) {
     const exitT = reduced ? rawT : easeInOutQuint(rawT)
     const enterT = reduced ? rawT : easeOutCubic(rawT)
+    const fromPoses = posesFor(fromIdx)
+    const toPoses = posesFor(toIdx)
 
     // Exit: active → previous pose → fully dismissed (no leftover ghost).
     const exitPose =
       exitT < 0.65
-        ? mixPose(POSE.active, POSE.previous, exitT / 0.65)
-        : mixPose(POSE.previous, POSE.dismiss, (exitT - 0.65) / 0.35)
+        ? mixPose(fromPoses.active, fromPoses.previous, exitT / 0.65)
+        : mixPose(fromPoses.previous, fromPoses.dismiss, (exitT - 0.65) / 0.35)
 
-    const enterPose = mixPose(POSE.enter, POSE.active, enterT)
+    const enterPose = mixPose(toPoses.enter, toPoses.active, enterT)
 
     return {
       headingT: 1,
@@ -173,7 +205,7 @@ function relayLayers(blend, reduced) {
   ) {
     return {
       headingT: 1,
-      layers: [{ index: 3, pose: POSE.active, role: 'current' }],
+      layers: [{ index: 3, pose: posesFor(3).active, role: 'current' }],
     }
   }
 
@@ -257,6 +289,7 @@ function WhyCollection() {
           className={styles.statement}
           data-role={role}
           style={{
+            width: `${STATEMENT_REST[index]?.widthCqw ?? GEO.widthCqw}cqw`,
             opacity: p.opacity,
             transform: `translate3d(0, ${p.y}cqh, 0) scale(${p.scale})`,
           }}

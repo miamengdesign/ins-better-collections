@@ -36,16 +36,17 @@
  * Closing statement. Layout `top` is the Scene 1 resting position; Scene 1→2
  * rises via transform translateY (cqh delta to Wrapup-2), never per-frame `top`.
  * Explicit <br>s match the reference line breaks; Regular with one Bold clause.
+ * Latest Wrapup 1.svg: path y≈531.9–613.8 / x≈81–670 → fs-24, width ≈34.08cqw.
  */
 .paragraph {
   position: absolute;
   left: var(--frame-margin);
-  right: var(--frame-margin);
+  width: 34.08cqw;
   z-index: 1;
   margin: 0;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: var(--fs-48);
+  font-size: var(--fs-24);
   line-height: var(--lh-auto);
   color: var(--color-panel);
   will-change: transform;
@@ -56,12 +57,12 @@
   font-weight: 700;
 }
 
-/* State-2 “If I had more time…” block — Wrapup 2 PNG/SVG: top ≈61.85cqh, width ≈41.4cqw.
+/* State-2 “If I had more time…” block — Wrapup 2.svg: top ≈55.48cqh, width ≈41.22cqw.
    Scene 2→3 shares the same upward translateY as the statement (spacing preserved). */
 .future {
   position: absolute;
   left: var(--frame-margin);
-  width: 41.37cqw;
+  width: 41.22cqw;
   z-index: 1;
   will-change: transform, opacity;
   pointer-events: none;
@@ -197,9 +198,10 @@
   margin: 0;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: var(--fs-48);
+  font-size: var(--fs-24);
   line-height: var(--lh-auto);
   color: var(--color-panel);
+  max-width: 34.08cqw;
 }
 
 .paragraphStatic strong {
@@ -207,7 +209,7 @@
 }
 
 .futureStatic {
-  width: min(41.37cqw, 100%);
+  width: min(41.22cqw, 100%);
 }
 
 .listsStatic {

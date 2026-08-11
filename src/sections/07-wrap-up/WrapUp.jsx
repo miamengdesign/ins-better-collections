@@ -19,10 +19,11 @@ import styles from './WrapUp.module.css'
 /**
  * §07 Wrap Up — Scene 1 entrance → Scene 2 rise → Scene 3 final composition.
  *
- * Geometry from references (1728×1117 → cqh), measured from PNG text bands:
- *  Scene 1 statement top ≈ 43.903cqh
- *  Scene 2 statement top ≈ 20.850cqh
- *  Scene 2 “If I had more time…” top ≈ 61.853cqh
+ * Geometry from latest `references/svg/07 Wrapup {1,2}.svg` (1728×1117 → cqh),
+ * path bbox tops (SVG primary):
+ *  Scene 1 statement top ≈ 47.619cqh (path y≈531.9)
+ *  Scene 2 statement top ≈ 39.875cqh (path y≈445.4)
+ *  Scene 2 “If I had more time…” top ≈ 55.479cqh (path y≈619.7)
  *  Scene 3 Tools/Quick Links ≈ 42.426cqh; footer ≈ 90.886cqh
  */
 
@@ -31,9 +32,9 @@ const WRAP_2 = SCENE_INDEX['wrap-2']
 const WRAP_3 = SCENE_INDEX['wrap-3']
 const BEHIND_2 = SCENE_INDEX['behind-2']
 
-const S1_STATEMENT_TOP = 43.903
-const S2_STATEMENT_TOP = 20.85
-const S2_FUTURE_TOP = 61.853
+const S1_STATEMENT_TOP = (531.9 / 1117) * 100
+const S2_STATEMENT_TOP = (445.4 / 1117) * 100
+const S2_FUTURE_TOP = (619.7 / 1117) * 100
 const S3_LISTS_TOP = 42.426
 const S3_FOOTER_TOP = 90.886
 /** Scene 1→2 rise delta — transform only. */
