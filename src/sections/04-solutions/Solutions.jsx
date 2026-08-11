@@ -1,39 +1,38 @@
 import CardNav from '../../components/CardNav'
 import GradientStage from '../../components/GradientStage'
 import PhoneMockup from '../../components/PhoneMockup'
-import PinnedStage from '../../components/PinnedStage'
 import Stage from '../../components/Stage'
+import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { img } from '../../lib/assets'
-import { useHandoff03to04 } from '../../lib/handoff03to04'
-import { useSolutionsPushT } from '../../lib/handoff04to05'
 import {
-  clamp,
   easeInOutCubic,
   easeInOutQuint,
   easeOutQuart,
   lerp,
   rangeProgress,
 } from '../../lib/motion'
+import { goNext, goPrev } from '../../nav/navigatorStore'
+import { SCENE_INDEX } from '../../nav/scenes'
+import { useNavigator, useSceneBlend } from '../../nav/useNavigator'
 import styles from './Solutions.module.css'
 
 /**
- * Cinematic anchors (after §03→04 handoff has delivered sol1):
- *  0    — sol1 settled (handoff-driven entrance may still be finishing)
- *  0.33 — sol2
- *  0.66 — sol3
- *  1    — §04→05 push complete
- *
- * Arrows step among 0–2 only. Scroll also runs the push exit.
+ * §04 Solutions — entrance from ce-3, then internal states 1→2→3.
+ * Light card + phone body resting rectangle stay fixed; content crossfades.
+ * §04→05 handoff is intentionally not implemented yet.
  */
-const ANCHORS = [0, 0.33, 0.66, 1]
-const DURATIONS = [1100, 1100, 1300]
 
-const PIN_TRACK_VH = 220
-
-const FADE_12 = [0.12, 0.28]
-const FADE_23 = [0.45, 0.61]
-const PUSH = [0.72, 1]
+/**
+ * Phone-body alignment within each composite PNG (measured):
+ * dense opaque phone columns are 37..1686 (1650px) on every asset; canvases
+ * differ only because callouts extend further right. Trim so the phone body
+ * maps to one shared stage rectangle.
+ */
+const PHONE_BODY_LEFT = 37
+const PHONE_BODY_WIDTH = 1650
+/** Sol-1 canvas height — stage aspect uses this so sol-1 size is unchanged. */
+const PHONE_STAGE_HEIGHT = 3657
 
 const STATES = [
   {
@@ -52,6 +51,7 @@ const STATES = [
     ),
     src: img('04 Solution asset/04 Solution 1 pic.png'),
     alt: 'Reel detail view with a Collection save option',
+    canvasWidth: 2420,
   },
   {
     id: 'sol2',
@@ -69,6 +69,7 @@ const STATES = [
     ),
     src: img('04 Solution asset/04 Solution 2 pic.png'),
     alt: 'New collection flow with multi-friend selection',
+    canvasWidth: 2544,
   },
   {
     id: 'sol3',
@@ -86,65 +87,109 @@ const STATES = [
     ),
     src: img('04 Solution asset/04 Solution 3 pic.png'),
     alt: 'Manage collection share sheet with collaborators',
+    canvasWidth: 2672,
   },
 ]
 
+const CE_3 = SCENE_INDEX['ce-3']
+const SOL_1 = SCENE_INDEX['sol-1']
+const SOL_3 = SCENE_INDEX['sol-3']
+
+/** 0..2 for Solutions states; -1 outside. */
+function stateIndexForScene(sceneIndex) {
+  if (sceneIndex >= SOL_1 && sceneIndex <= SOL_3) return sceneIndex - SOL_1
+  return -1
+}
+
 /**
- * §03→04 entrance from shared handoff T (gradient stationary):
- *  0.35–0.55  upper text fades in
- *  0.50–0.75  light card enters from the right (soft settle)
- *  0.70–1.00  mockup content fades in
+ * §03→04 entrance presence 0→1 (reverse via 1−t). Gradient stays put.
+ *
+ *  Phase A–B  0.00–0.42  §03 card exit + upper fade (owned by CE)
+ *  Phase C    0.38–0.55  §04 upper content fades in (static position)
+ *  Phase D    0.52–0.78  §04 light card enters from the right (ease-out)
+ *  Phase E    0.72–1.00  mockup / card content fades in after settle
  */
-function handoffEnterMotion(t, reduced) {
-  const textT = easeInOutQuint(rangeProgress(t, 0.35, 0.55))
+function entranceFromPresence(presence, reduced) {
+  const textT = easeInOutQuint(rangeProgress(presence, 0.38, 0.55))
   const cardT = reduced
-    ? rangeProgress(t, 0.5, 0.75)
-    : easeOutQuart(rangeProgress(t, 0.5, 0.75))
-  const mockT = easeInOutQuint(rangeProgress(t, 0.7, 1))
+    ? rangeProgress(presence, 0.52, 0.78)
+    : easeOutQuart(rangeProgress(presence, 0.52, 0.78))
+  const mockT = easeInOutQuint(rangeProgress(presence, 0.72, 1))
   return {
     textOpacity: textT,
-    panelX: lerp(100, 0, cardT),
+    panelX: reduced ? 0 : lerp(100, 0, cardT),
     mockOpacity: mockT,
   }
 }
 
-/** In-place phone content crossfade — no translate/drift. */
-function layerMotion(p) {
-  if (p < FADE_12[0]) {
-    return [{ opacity: 1 }, { opacity: 0 }, { opacity: 0 }]
-  }
-  if (p < FADE_12[1]) {
-    const t = easeInOutCubic(rangeProgress(p, FADE_12[0], FADE_12[1]))
-    return [{ opacity: 1 - t }, { opacity: t }, { opacity: 0 }]
-  }
-  if (p < FADE_23[0]) {
-    return [{ opacity: 0 }, { opacity: 1 }, { opacity: 0 }]
-  }
-  if (p < FADE_23[1]) {
-    const t = easeInOutCubic(rangeProgress(p, FADE_23[0], FADE_23[1]))
-    return [{ opacity: 0 }, { opacity: 1 - t }, { opacity: t }]
-  }
-  return [{ opacity: 0 }, { opacity: 0 }, { opacity: 1 }]
+function isEntranceHandoff(blend) {
+  if (blend.settled) return false
+  return (
+    (blend.from === CE_3 && blend.to === SOL_1) ||
+    (blend.from === SOL_1 && blend.to === CE_3)
+  )
 }
 
-function copyOpacities(p) {
-  return layerMotion(p).map((l) => l.opacity)
+function isInternalSol(blend) {
+  if (blend.settled) return false
+  return (
+    blend.from >= SOL_1 &&
+    blend.from <= SOL_3 &&
+    blend.to >= SOL_1 &&
+    blend.to <= SOL_3 &&
+    blend.from !== blend.to
+  )
 }
 
-function panelPushX(p, sharedPushT) {
-  if (sharedPushT > 0.001) return lerp(0, 100, sharedPushT)
-  if (p >= PUSH[0]) {
-    return lerp(0, 100, easeInOutQuint(rangeProgress(p, PUSH[0], PUSH[1])))
+function entrancePresence(blend) {
+  if (blend.settled) {
+    return blend.sceneIndex >= SOL_1 ? 1 : 0
   }
+  if (blend.from === CE_3 && blend.to === SOL_1) return blend.t
+  if (blend.from === SOL_1 && blend.to === CE_3) return 1 - blend.t
+  if (blend.to >= SOL_1 || blend.from >= SOL_1) return 1
   return 0
 }
 
-function Solutions({ phase1Static = false } = {}) {
-  const reduced = useReducedMotion()
-  const handoffT = useHandoff03to04()
-  const sharedPushT = useSolutionsPushT()
+/**
+ * At most two content layers — exiting + incoming — never a historical stack.
+ */
+function contentRelay(blend, reduced) {
+  if (blend.settled) {
+    const idx = stateIndexForScene(blend.sceneIndex)
+    if (idx < 0) return []
+    return [{ index: idx, opacity: 1, role: 'current' }]
+  }
 
-  if (phase1Static) {
+  // §03→04 entrance / reverse: only State 1, gated by entrance opacities.
+  if (isEntranceHandoff(blend)) {
+    return [{ index: 0, opacity: 1, role: 'current' }]
+  }
+
+  if (isInternalSol(blend)) {
+    const fromIdx = stateIndexForScene(blend.from)
+    const toIdx = stateIndexForScene(blend.to)
+    const t = reduced ? blend.t : easeInOutCubic(blend.t)
+    return [
+      { index: fromIdx, opacity: 1 - t, role: 'exiting' },
+      { index: toIdx, opacity: t, role: 'incoming' },
+    ]
+  }
+
+  const idx = stateIndexForScene(
+    blend.to >= SOL_1 && blend.to <= SOL_3 ? blend.to : blend.from,
+  )
+  if (idx < 0) return []
+  return [{ index: idx, opacity: 1, role: 'current' }]
+}
+
+function Solutions({ phase1Static = false } = {}) {
+  const isMobile = useMediaQuery('(max-width: 767px)')
+  const reduced = useReducedMotion()
+  const blend = useSceneBlend()
+  const { animating, sceneIndex } = useNavigator()
+
+  if (isMobile || phase1Static) {
     return (
       <Stage className={styles.section} aria-label="Solutions">
         <StackedFallback />
@@ -152,121 +197,117 @@ function Solutions({ phase1Static = false } = {}) {
     )
   }
 
-  return (
-    <PinnedStage
-      className={styles.section}
-      ariaLabel="Solutions"
-      height={`calc(100vh + ${PIN_TRACK_VH}vh)`}
-      overlapVh={100}
-      startOffsetVh={0}
-      style={{ zIndex: handoffT >= 0.999 ? 2 : 0 }}
-      cinematic={{
-        anchors: ANCHORS,
-        durations: DURATIONS,
-        duration: 1100,
-        reduced,
-      }}
-    >
-      {({ progress, isPinned, stepIndex, goToStep, animating }) => {
-        if (!isPinned) {
-          return <StackedFallback />
-        }
+  const presence = entrancePresence(blend)
+  const involved =
+    presence > 0.001 ||
+    (!blend.settled && (blend.to >= SOL_1 || blend.from >= SOL_1))
 
-        const p = clamp(progress, 0, 1)
-        const enter = handoffEnterMotion(handoffT, reduced)
-        const entering = handoffT < 0.999
-        const layers = layerMotion(p)
-        const copies = copyOpacities(p)
-        const pushX = panelPushX(p, sharedPushT)
-        const panelX = entering ? enter.panelX : pushX
-
-        const textOpacity = entering
-          ? enter.textOpacity
-          : copies[dominantCopy(p)]
-        const mockGate = entering ? enter.mockOpacity : 1
-
-        const inPush = p > PUSH[0]
-        const canPrev = stepIndex > 0 && stepIndex <= 2 && !animating && !entering && !inPush
-        const canNext = stepIndex < 2 && !animating && !entering && !inPush
-        const showNav = !entering && !inPush && stepIndex >= 0 && stepIndex <= 2
-
-        return (
-          <>
-            <GradientStage />
-
-            <div className={styles.left}>
-              {STATES.map((state, i) => {
-                const op = entering
-                  ? i === 0
-                    ? textOpacity
-                    : 0
-                  : copies[i]
-                return (
-                  <div
-                    key={state.id}
-                    className={styles.copyLayer}
-                    style={{ opacity: op }}
-                    aria-hidden={op < 0.5}
-                  >
-                    <p className={styles.eyebrow}>{state.eyebrow}</p>
-                    <h2 className={styles.heading}>{state.heading}</h2>
-                    <div className={styles.badgeGroup}>
-                      <span className={styles.badge}>{state.badge}</span>
-                      <p className={styles.explanation}>{state.explanation}</p>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-
-            <div
-              className={styles.right}
-              style={{ transform: `translateX(${panelX}%)` }}
-            >
-              {STATES.map((state, i) => (
-                <div
-                  key={state.id}
-                  className={styles.mockupLayer}
-                  style={{
-                    opacity: layers[i].opacity * mockGate,
-                    pointerEvents:
-                      layers[i].opacity * mockGate > 0.5 ? 'auto' : 'none',
-                  }}
-                  aria-hidden={layers[i].opacity * mockGate < 0.05}
-                >
-                  <div className={styles.mockup}>
-                    <PhoneMockup
-                      className={styles.phone}
-                      src={state.src}
-                      alt={state.alt}
-                    />
-                  </div>
-                </div>
-              ))}
-
-              {showNav && (
-                <CardNav
-                  onPrev={() => goToStep(stepIndex - 1)}
-                  onNext={() => goToStep(stepIndex + 1)}
-                  disablePrev={!canPrev}
-                  disableNext={!canNext}
-                />
-              )}
-            </div>
-          </>
-        )
-      }}
-    </PinnedStage>
-  )
-}
-
-function dominantCopy(p) {
-  const ops = copyOpacities(p)
-  let best = 0
-  for (let i = 1; i < ops.length; i += 1) {
-    if (ops[i] > ops[best]) best = i
+  if (!involved) {
+    return null
   }
-  return best
+
+  const motion = entranceFromPresence(presence, reduced)
+  const layers = contentRelay(blend, reduced)
+
+  const onSolStage =
+    blend.settled && sceneIndex >= SOL_1 && sceneIndex <= SOL_3
+  const inInternal = isInternalSol(blend)
+  const showNav =
+    presence > 0.95 &&
+    motion.panelX < 0.5 &&
+    (onSolStage || inInternal) &&
+    !isEntranceHandoff(blend)
+  const stateIdx = onSolStage
+    ? stateIndexForScene(sceneIndex)
+    : inInternal
+      ? stateIndexForScene(blend.to)
+      : 0
+
+  return (
+    <section
+      className={styles.phaseLayer}
+      aria-label="Solutions"
+      style={{
+        pointerEvents: presence > 0.55 ? 'auto' : 'none',
+      }}
+      aria-hidden={presence < 0.05}
+    >
+      {/* Gradient: SharedStageBackground — content choreography only. */}
+
+      <div
+        className={styles.left}
+        style={{ opacity: motion.textOpacity }}
+      >
+        {layers.map(({ index, opacity, role }) => {
+          const state = STATES[index]
+          return (
+            <div
+              key={state.id}
+              className={styles.copyLayer}
+              data-role={role}
+              style={{ opacity }}
+              aria-hidden={opacity < 0.5}
+            >
+              <p className={styles.eyebrow}>{state.eyebrow}</p>
+              <h2 className={styles.heading}>{state.heading}</h2>
+              <div className={styles.badgeGroup}>
+                <span className={styles.badge}>{state.badge}</span>
+                <p className={styles.explanation}>{state.explanation}</p>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      <div
+        className={styles.right}
+        style={{
+          transform: `translate3d(${motion.panelX}%, 0, 0)`,
+        }}
+      >
+        <div
+          className={styles.mockupStage}
+          style={{
+            opacity: motion.mockOpacity,
+            aspectRatio: `${PHONE_BODY_WIDTH} / ${PHONE_STAGE_HEIGHT}`,
+          }}
+          aria-hidden={motion.mockOpacity < 0.05}
+        >
+          {layers.map(({ index, opacity, role }) => {
+            const state = STATES[index]
+            const trimX = PHONE_BODY_LEFT / state.canvasWidth
+            return (
+              <div
+                key={state.id}
+                className={styles.mockupLayer}
+                data-role={role}
+                style={{ opacity }}
+                aria-hidden={opacity < 0.05}
+              >
+                <PhoneMockup
+                  className={styles.phone}
+                  src={state.src}
+                  alt={state.alt}
+                  style={{
+                    '--phone-trim-x': String(trimX),
+                  }}
+                />
+              </div>
+            )
+          })}
+        </div>
+
+        {showNav && (
+          <CardNav
+            onPrev={() => goPrev({ reduced })}
+            onNext={() => goNext({ reduced })}
+            disablePrev={animating || stateIdx <= 0}
+            disableNext={animating || stateIdx >= STATES.length - 1}
+          />
+        )}
+      </div>
+    </section>
+  )
 }
 
 function StackedFallback() {
@@ -284,12 +325,24 @@ function StackedFallback() {
             </div>
           </div>
           <div className={styles.right}>
-            <div className={styles.mockup}>
-              <PhoneMockup
-                className={styles.phone}
-                src={state.src}
-                alt={state.alt}
-              />
+            <div
+              className={styles.mockupStage}
+              style={{
+                aspectRatio: `${PHONE_BODY_WIDTH} / ${PHONE_STAGE_HEIGHT}`,
+              }}
+            >
+              <div className={styles.mockupLayer}>
+                <PhoneMockup
+                  className={styles.phone}
+                  src={state.src}
+                  alt={state.alt}
+                  style={{
+                    '--phone-trim-x': String(
+                      PHONE_BODY_LEFT / state.canvasWidth,
+                    ),
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>

@@ -12,8 +12,8 @@ import WrapUp from './sections/07-wrap-up/WrapUp'
 import { useMediaQuery } from './hooks/useMediaQuery'
 
 /**
- * Phase 1: unified navigator drives Hero → Why Collection → §02→03 handoff.
- * Sections 04–07 remain static tail content until a later migration.
+ * Phase 1: navigator drives Hero → Why → CE → Solutions states 1–3.
+ * §§05–07 remain static tail content until a later migration.
  */
 function App() {
   const isMobile = useMediaQuery('(max-width: 767px)')
@@ -39,6 +39,7 @@ function App() {
         <Hero />
         <WhyCollection />
         <CurrentExperience />
+        <Solutions />
       </CinematicRoot>
       <StaticTail />
     </>
@@ -54,8 +55,7 @@ function StaticTail() {
       aria-hidden={!unlocked}
       inert={!unlocked || undefined}
     >
-      {/* Phase 1: cinematic disabled — static first-state presentation only. */}
-      <Solutions phase1Static />
+      {/* Solutions lives in CinematicRoot (sol-1..3). Tail starts at Prototype. */}
       <Prototype phase1Static />
       <BehindTheWork phase1Static />
       <WrapUp phase1Static />

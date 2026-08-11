@@ -50,6 +50,7 @@ const STATES = [
 const WHY_4 = SCENE_INDEX['why-4']
 const CE_1 = SCENE_INDEX['ce-1']
 const CE_3 = SCENE_INDEX['ce-3']
+const SOL_1 = SCENE_INDEX['sol-1']
 
 /** 0..2 for CE states; -1 outside CE. */
 function stateIndexForScene(sceneIndex) {
@@ -144,8 +145,49 @@ function entranceFromPresence(presence, reduced) {
   }
 }
 
-/** Presence: 0 = pre-entrance, 1 = fully on stage (any CE state). */
+/**
+ * §03→04 exit timeline t∈[0,1] (gradient stays put):
+ *  Phase A  0.00–0.26  light card descends out
+ *  Phase B  0.22–0.42  upper content fades (after card is substantially clear)
+ */
+function exitToSolutions(t, reduced) {
+  const cardT = reduced
+    ? rangeProgress(t, 0, 0.26)
+    : easeInOutQuint(rangeProgress(t, 0, 0.26))
+  const headerT = easeInOutQuint(rangeProgress(t, 0.22, 0.42))
+  return {
+    headerOpacity: 1 - headerT,
+    panelY: reduced ? 0 : lerp(0, 55, cardT),
+    panelOpacity: 1 - cardT,
+    contentOpacity: 1 - cardT,
+  }
+}
+
+function isSolutionsHandoff(blend) {
+  if (blend.settled) return false
+  return (
+    (blend.from === CE_3 && blend.to === SOL_1) ||
+    (blend.from === SOL_1 && blend.to === CE_3)
+  )
+}
+
+/** Exit progress 0 = fully on CE, 1 = fully handed to Solutions. */
+function solutionsExitT(blend) {
+  if (blend.settled) {
+    return blend.sceneIndex >= SOL_1 ? 1 : 0
+  }
+  if (blend.from === CE_3 && blend.to === SOL_1) return blend.t
+  if (blend.from === SOL_1 && blend.to === CE_3) return 1 - blend.t
+  if (blend.to >= SOL_1 || blend.from >= SOL_1) return 1
+  return 0
+}
+
+/** Presence for §02→03 entrance only (not solutions exit). */
 function entrancePresence(blend) {
+  if (isSolutionsHandoff(blend)) {
+    // Fully entered while exiting to Solutions (exit motion owns leave).
+    return 1
+  }
   if (blend.settled) {
     return blend.sceneIndex >= CE_1 && blend.sceneIndex <= CE_3 ? 1 : 0
   }
@@ -158,6 +200,14 @@ function entrancePresence(blend) {
     return 1
   }
   return 0
+}
+
+function stageMotion(blend, reduced) {
+  const exitT = solutionsExitT(blend)
+  if (exitT > 0.001) {
+    return exitToSolutions(exitT, reduced)
+  }
+  return entranceFromPresence(entrancePresence(blend), reduced)
 }
 
 function isWhyHandoff(blend) {
@@ -205,6 +255,11 @@ function evidenceRelay(blend, reduced) {
     ]
   }
 
+  // §03→04 handoff: hold State 3 evidence (exit motion owns leave).
+  if (isSolutionsHandoff(blend)) {
+    return [{ index: 2, opacity: 1, role: 'current' }]
+  }
+
   const idx = stateIndexForScene(
     blend.to >= CE_1 && blend.to <= CE_3 ? blend.to : blend.from,
   )
@@ -236,6 +291,14 @@ function trackerEmphasis(blend, reduced) {
     return {
       activeSteps: STATES[0].activeSteps,
       dottedAfter: STATES[0].dottedAfter,
+      emphasis: null,
+    }
+  }
+
+  if (isSolutionsHandoff(blend)) {
+    return {
+      activeSteps: STATES[2].activeSteps,
+      dottedAfter: STATES[2].dottedAfter,
       emphasis: null,
     }
   }
@@ -285,9 +348,12 @@ function CurrentExperience() {
   const reduced = useReducedMotion()
   const blend = useSceneBlend()
   const { animating, sceneIndex } = useNavigator()
-  const presence = entrancePresence(blend)
+  const exitT = solutionsExitT(blend)
+  const enterPresence = entrancePresence(blend)
+  // sol-1+ internals are owned by Solutions — do not remount CE there.
   const involved =
-    presence > 0.001 ||
+    isSolutionsHandoff(blend) ||
+    (enterPresence > 0.001 && exitT < 0.999) ||
     (!blend.settled &&
       ((blend.to >= CE_1 && blend.to <= CE_3) ||
         (blend.from >= CE_1 && blend.from <= CE_3)))
@@ -300,11 +366,11 @@ function CurrentExperience() {
     )
   }
 
-  if (!involved) {
+  if (!involved || (exitT >= 0.999 && blend.settled)) {
     return null
   }
 
-  const motion = entranceFromPresence(presence, reduced)
+  const motion = stageMotion(blend, reduced)
   const layers = evidenceRelay(blend, reduced)
   const bullets = bulletRelay(blend, reduced)
   const tracker = trackerEmphasis(blend, reduced)
@@ -313,7 +379,11 @@ function CurrentExperience() {
     blend.settled && sceneIndex >= CE_1 && sceneIndex <= CE_3
   const inInternal = isInternalCe(blend)
   const showNav =
-    presence > 0.95 && (onCeStage || inInternal) && !isWhyHandoff(blend)
+    enterPresence > 0.95 &&
+    exitT < 0.001 &&
+    (onCeStage || inInternal) &&
+    !isWhyHandoff(blend) &&
+    !isSolutionsHandoff(blend)
   const stateIdx = onCeStage
     ? stateIndexForScene(sceneIndex)
     : inInternal
@@ -325,9 +395,9 @@ function CurrentExperience() {
       className={styles.phaseLayer}
       aria-label="Current Experience"
       style={{
-        pointerEvents: presence > 0.5 ? 'auto' : 'none',
+        pointerEvents: enterPresence > 0.5 && exitT < 0.5 ? 'auto' : 'none',
       }}
-      aria-hidden={presence < 0.05}
+      aria-hidden={enterPresence < 0.05 || exitT > 0.95}
     >
       {/* Gradient: SharedStageBackground — content choreography only. */}
 
