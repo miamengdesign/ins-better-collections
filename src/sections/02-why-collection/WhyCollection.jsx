@@ -1,14 +1,9 @@
 import GradientStage from '../../components/GradientStage'
-import PinnedStage from '../../components/PinnedStage'
-import { HERO_EXIT_VH, HERO_TRACK_VH } from '../../config/layout'
+import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
-import {
-  clamp,
-  easeInOutQuint,
-  easeOutCubic,
-  lerp,
-  rangeProgress,
-} from '../../lib/motion'
+import { easeInOutQuint, easeOutCubic, lerp } from '../../lib/motion'
+import { SCENE_INDEX } from '../../nav/scenes'
+import { useSceneBlend } from '../../nav/useNavigator'
 import styles from './WhyCollection.module.css'
 
 /**
@@ -36,7 +31,7 @@ const STATEMENTS = [
 
 /**
  * Geometry from `references/svg/02 Why Collections {2,3,4}.svg` (1728×1117).
- * Enter from slightly below; previous settles upper-left dimmed — never snaps off.
+ * Motion uses transform from the active resting top (not layout `top`/`font-size`).
  */
 const GEO = {
   previousTop: (187.9 / 1117) * 100,
@@ -53,220 +48,224 @@ const GEO = {
   dismissOpacity: 0,
 }
 
-/**
- * Progress anchors for cinematic steps (trigger → timeline, not scrub).
- * Final anchor fades the stage out for the §02→03 handoff.
- */
-const ANCHORS = [0, 0.12, 0.32, 0.52, 0.72, 0.9, 1]
-const DURATIONS = [1000, 1250, 1250, 1250, 1250, 1100]
+const WHY_TITLE = SCENE_INDEX['why-title']
+const WHY_1 = SCENE_INDEX['why-1']
+const WHY_4 = SCENE_INDEX['why-4']
+const CE_1 = SCENE_INDEX['ce-1']
 
-const WINDOWS = [
-  { enter: [0.12, 0.22], activeEnd: 0.32, previousEnd: 0.52, dismissEnd: 0.62 },
-  { enter: [0.32, 0.42], activeEnd: 0.52, previousEnd: 0.72, dismissEnd: 0.82 },
-  { enter: [0.52, 0.62], activeEnd: 0.72, previousEnd: 0.9, dismissEnd: 0.96 },
-  { enter: [0.72, 0.82], activeEnd: 0.9, previousEnd: null, dismissEnd: null },
-]
-
-const PIN_TRACK_VH = 280
-
-const ACTIVE = {
-  top: GEO.activeTop,
-  font: GEO.activeFont,
-  opacity: GEO.activeOpacity,
-}
-const PREVIOUS = {
-  top: GEO.previousTop,
-  font: GEO.previousFont,
-  opacity: GEO.previousOpacity,
-}
-const ENTER = {
-  top: GEO.enterTop,
-  font: GEO.enterFont,
-  opacity: GEO.enterOpacity,
-}
-const DISMISS = {
-  top: GEO.dismissTop,
-  font: GEO.dismissFont,
-  opacity: GEO.dismissOpacity,
-}
-
-function mix(a, b, t) {
+/** Pose relative to the active resting slot (transform + opacity only). */
+function pose(topCqh, fontPx, opacity) {
   return {
-    top: lerp(a.top, b.top, t),
-    font: lerp(a.font, b.font, t),
+    y: topCqh - GEO.activeTop,
+    scale: fontPx / GEO.activeFont,
+    opacity,
+  }
+}
+
+const POSE = {
+  active: pose(GEO.activeTop, GEO.activeFont, GEO.activeOpacity),
+  previous: pose(GEO.previousTop, GEO.previousFont, GEO.previousOpacity),
+  enter: pose(GEO.enterTop, GEO.enterFont, GEO.enterOpacity),
+  dismiss: pose(GEO.dismissTop, GEO.dismissFont, GEO.dismissOpacity),
+}
+
+function mixPose(a, b, t) {
+  return {
+    y: lerp(a.y, b.y, t),
+    scale: lerp(a.scale, b.scale, t),
     opacity: lerp(a.opacity, b.opacity, t),
   }
 }
 
-function headingMotion(p, reduced) {
-  if (p <= 0.02) return { t: 0 }
-  if (p >= 0.12) return { t: 1 }
-  const raw = rangeProgress(p, 0.02, 0.12)
-  return { t: reduced ? raw : easeInOutQuint(raw) }
-}
-
-/**
- * Calm continuous styles for one statement. Previous stays visible in the upper
- * dimmed slot while the next takes focus — no sudden disappearance.
- */
-function statementMotion(p, index, reduced) {
-  const window = WINDOWS[index]
-  const [enterStart, enterEnd] = window.enter
-  const { activeEnd, previousEnd, dismissEnd } = window
-
-  if (p < enterStart) {
-    return { ...ENTER, phase: 'pending' }
-  }
-
-  if (p < enterEnd) {
-    const raw = rangeProgress(p, enterStart, enterEnd)
-    const t = reduced ? raw : easeOutCubic(raw)
-    if (reduced) return { ...ACTIVE, opacity: t, phase: 'entering' }
-    return { ...mix(ENTER, ACTIVE, t), phase: 'entering' }
-  }
-
-  if (previousEnd == null || p <= activeEnd) {
-    return { ...ACTIVE, phase: 'active' }
-  }
-
-  const next = WINDOWS[index + 1]
-  const handoffEnd = next ? next.enter[1] : activeEnd
-  if (p < handoffEnd) {
-    const raw = rangeProgress(p, activeEnd, handoffEnd)
-    const t = reduced ? raw : easeInOutQuint(raw)
-    if (reduced) {
-      return {
-        ...PREVIOUS,
-        opacity: lerp(ACTIVE.opacity, PREVIOUS.opacity, t),
-        phase: 'to-previous',
-      }
-    }
-    return { ...mix(ACTIVE, PREVIOUS, t), phase: 'to-previous' }
-  }
-
-  if (dismissEnd == null || p <= previousEnd) {
-    return { ...PREVIOUS, phase: 'previous' }
-  }
-
-  if (p >= dismissEnd) {
-    return { ...DISMISS, phase: 'gone' }
-  }
-
-  const raw = rangeProgress(p, previousEnd, dismissEnd)
-  const t = reduced ? raw : easeInOutQuint(raw)
-  if (reduced) {
-    return {
-      ...DISMISS,
-      opacity: lerp(PREVIOUS.opacity, DISMISS.opacity, t),
-      phase: 'dismissing',
-    }
-  }
-  return { ...mix(PREVIOUS, DISMISS, t), phase: 'dismissing' }
-}
-
-/** Stage-wide fade for the §02→03 handoff (last cinematic step). */
-function stageExitOpacity(p) {
-  if (p < 0.92) return 1
-  return 1 - rangeProgress(p, 0.92, 1)
-}
-
-function currentStatementIndex(p) {
-  if (p < 0.12) return -1
-  for (let i = WINDOWS.length - 1; i >= 0; i -= 1) {
-    if (p >= WINDOWS[i].enter[0]) return i
-  }
+/** -1 = title only; 0..3 = active statement index. */
+function statementIndexForScene(sceneIndex) {
+  if (sceneIndex <= WHY_TITLE) return -1
+  if (sceneIndex >= WHY_1 && sceneIndex <= WHY_4) return sceneIndex - WHY_1
+  if (sceneIndex >= CE_1) return 3
   return -1
 }
 
+/**
+ * Relay layers for the current navigator blend.
+ * At most two statement indices are ever returned — never a historical stack.
+ */
+function relayLayers(blend, reduced) {
+  const fromIdx = statementIndexForScene(blend.from)
+  const toIdx = statementIndexForScene(blend.settled ? blend.sceneIndex : blend.to)
+  const rawT = blend.settled ? 1 : blend.t
+
+  // Settled: only the current statement at full focus (no lingering previous).
+  if (blend.settled) {
+    const current = statementIndexForScene(blend.sceneIndex)
+    if (current < 0) return { headingT: 0, layers: [] }
+    return {
+      headingT: 1,
+      layers: [{ index: current, pose: POSE.active, role: 'current' }],
+    }
+  }
+
+  const t = reduced ? rawT : easeInOutQuint(rawT)
+
+  // Title ↔ first statement (heading demotes while stmt 0 enters / exits).
+  if (fromIdx < 0 && toIdx === 0) {
+    const enterT = reduced ? rawT : easeOutCubic(rawT)
+    return {
+      headingT: t,
+      layers: [
+        {
+          index: 0,
+          pose: mixPose(POSE.enter, POSE.active, enterT),
+          role: 'incoming',
+        },
+      ],
+    }
+  }
+  if (fromIdx === 0 && toIdx < 0) {
+    const exitT = reduced ? rawT : easeInOutQuint(rawT)
+    return {
+      headingT: 1 - t,
+      layers: [
+        {
+          index: 0,
+          pose: mixPose(POSE.active, POSE.enter, exitT),
+          role: 'exiting',
+        },
+      ],
+    }
+  }
+
+  // Statement ↔ statement relay (only the pair in this gesture).
+  if (fromIdx >= 0 && toIdx >= 0 && fromIdx !== toIdx) {
+    const exitT = reduced ? rawT : easeInOutQuint(rawT)
+    const enterT = reduced ? rawT : easeOutCubic(rawT)
+
+    // Exit: active → previous pose → fully dismissed (no leftover ghost).
+    const exitPose =
+      exitT < 0.65
+        ? mixPose(POSE.active, POSE.previous, exitT / 0.65)
+        : mixPose(POSE.previous, POSE.dismiss, (exitT - 0.65) / 0.35)
+
+    const enterPose = mixPose(POSE.enter, POSE.active, enterT)
+
+    return {
+      headingT: 1,
+      layers: [
+        {
+          index: fromIdx,
+          pose: exitPose,
+          role: 'exiting',
+        },
+        {
+          index: toIdx,
+          pose: enterPose,
+          role: 'incoming',
+        },
+      ],
+    }
+  }
+
+  // why-4 ↔ ce only: keep statement 3 frozen (content opacity owns leave/enter).
+  // Must NOT use `toIdx === 3` alone — that index is also the why-3→why-4
+  // destination and is already handled by the stmt-relay branch above.
+  if (
+    (blend.from === WHY_4 && blend.to === CE_1) ||
+    (blend.from === CE_1 && blend.to === WHY_4)
+  ) {
+    return {
+      headingT: 1,
+      layers: [{ index: 3, pose: POSE.active, role: 'current' }],
+    }
+  }
+
+  return { headingT: fromIdx < 0 && toIdx < 0 ? 0 : 1, layers: [] }
+}
+
+/**
+ * Content-only opacity (gradient lives on SharedStageBackground).
+ * §02→03 Phase A: why content fades early; reverse fades why back in late.
+ */
+function contentOpacity(blend) {
+  if (blend.settled) {
+    return blend.sceneIndex >= CE_1 ? 0 : blend.sceneIndex >= WHY_TITLE ? 1 : 0
+  }
+  // Phase A forward: §02 active content slowly fades out.
+  if (blend.from === WHY_4 && blend.to === CE_1) {
+    return 1 - easeInOutQuint(Math.min(1, Math.max(0, blend.t / 0.22)))
+  }
+  // Phase A reverse: §02 content returns after CE has exited.
+  if (blend.from === CE_1 && blend.to === WHY_4) {
+    return easeInOutQuint(Math.min(1, Math.max(0, (blend.t - 0.78) / 0.22)))
+  }
+  if (blend.from < WHY_TITLE && blend.to === WHY_TITLE) {
+    return easeInOutQuint(Math.min(1, Math.max(0, (blend.t - 0.35) / 0.65)))
+  }
+  if (blend.from === WHY_TITLE && blend.to < WHY_TITLE) {
+    return 1 - easeInOutQuint(Math.min(1, Math.max(0, blend.t / 0.65)))
+  }
+  if (blend.to < WHY_TITLE && blend.from < WHY_TITLE) return 0
+  if (blend.to >= CE_1 && blend.from >= CE_1) return 0
+  return 1
+}
+
 function WhyCollection() {
+  const isMobile = useMediaQuery('(max-width: 767px)')
   const reduced = useReducedMotion()
+  const blend = useSceneBlend()
+
+  if (isMobile) {
+    return (
+      <section className={styles.sectionFlow} aria-label="Why Collection">
+        <StackedFallback />
+      </section>
+    )
+  }
+
+  const opacity = contentOpacity(blend)
+  const whyInvolved =
+    !blend.settled &&
+    ((blend.from >= WHY_TITLE && blend.from <= WHY_4) ||
+      (blend.to >= WHY_TITLE && blend.to <= WHY_4) ||
+      blend.from === CE_1 ||
+      blend.to === CE_1)
+  const show = opacity > 0.001 || whyInvolved
+
+  if (!show) return null
+
+  const { headingT, layers } = relayLayers(blend, reduced)
 
   return (
-    <PinnedStage
-      className={styles.section}
-      ariaLabel="Why Collection"
-      height={`calc(${HERO_TRACK_VH}vh + ${PIN_TRACK_VH}vh)`}
-      overlapVh={HERO_TRACK_VH}
-      startOffsetVh={HERO_EXIT_VH}
-      cinematic={{
-        anchors: ANCHORS,
-        durations: DURATIONS,
-        duration: 1200,
-        reduced,
-      }}
+    <section
+      className={styles.layer}
+      aria-label="Why Collection"
+      style={{ opacity, pointerEvents: opacity < 0.05 ? 'none' : 'auto' }}
+      aria-hidden={opacity < 0.05}
     >
-      {({ progress, isPinned }) => {
-        if (!isPinned) {
-          return <StackedFallback />
-        }
+      {/* Gradient: SharedStageBackground — content layers only here. */}
 
-        const p = clamp(progress, 0, 1)
-        const heading = headingMotion(p, reduced)
-        const currentIdx = currentStatementIndex(p)
-        const exitOp = stageExitOpacity(p)
+      <h2
+        className={styles.heading}
+        style={{
+          '--heading-t': headingT,
+        }}
+      >
+        Why Collection?
+      </h2>
 
-        return (
-          <>
-            <GradientStage className={styles.gradient} />
-
-            <h2
-              className={styles.heading}
-              style={{
-                '--heading-t': heading.t,
-                opacity: exitOp,
-              }}
-            >
-              Why Collection?
-            </h2>
-
-            {STATEMENTS.map((copy, i) => {
-              if (reduced) {
-                const isCurrent = i === currentIdx
-                const isPrevious = i === currentIdx - 1
-                const opacity =
-                  (isCurrent ? 1 : isPrevious ? GEO.previousOpacity : 0) * exitOp
-                const top = isPrevious ? GEO.previousTop : GEO.activeTop
-                const font = isPrevious ? GEO.previousFont : GEO.activeFont
-                return (
-                  <p
-                    key={i}
-                    className={styles.statement}
-                    style={{
-                      opacity,
-                      top: `${top}cqh`,
-                      fontSize: `${(font / 1728) * 100}cqw`,
-                      pointerEvents: 'none',
-                    }}
-                    aria-hidden={opacity < 0.05}
-                  >
-                    {copy}
-                  </p>
-                )
-              }
-
-              const motion = statementMotion(p, i, false)
-
-              return (
-                <p
-                  key={i}
-                  className={styles.statement}
-                  style={{
-                    opacity: motion.opacity * exitOp,
-                    top: `${motion.top}cqh`,
-                    fontSize: `${(motion.font / 1728) * 100}cqw`,
-                    pointerEvents: 'none',
-                  }}
-                  aria-hidden={motion.opacity * exitOp < 0.05}
-                  data-phase={motion.phase}
-                >
-                  {copy}
-                </p>
-              )
-            })}
-          </>
-        )
-      }}
-    </PinnedStage>
+      {layers.map(({ index, pose: p, role }) => (
+        <p
+          key={index}
+          className={styles.statement}
+          data-role={role}
+          style={{
+            opacity: p.opacity,
+            transform: `translate3d(0, ${p.y}cqh, 0) scale(${p.scale})`,
+          }}
+          aria-hidden={p.opacity < 0.05}
+        >
+          {STATEMENTS[index]}
+        </p>
+      ))}
+    </section>
   )
 }
 

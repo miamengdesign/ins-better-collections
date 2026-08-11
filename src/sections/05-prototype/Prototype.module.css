@@ -2,7 +2,14 @@
   position: relative;
 }
 
-/* Owns the GradientStage so opacity can clear during §04→05 without moving it. */
+/* Absolute host inside the shared cinematic viewport (§04→05 push). */
+.phaseLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+}
+
+/* Owns the GradientStage so opacity can clear during mobile/static paths. */
 .gradientSlot {
   position: absolute;
   inset: 0;
@@ -51,17 +58,25 @@
   height: min(50.984cqw, 78.8646cqh);
 }
 
-.link {
+.link,
+.linkIdle {
   display: block;
   width: 100%;
   height: 100%;
-  cursor: pointer;
   border-radius: 2cqw;
+}
+
+.link {
+  cursor: pointer;
   transition:
     transform 180ms ease-out,
     box-shadow 180ms ease-out;
   transform: scale(1);
   box-shadow: none;
+}
+
+.linkIdle {
+  pointer-events: none;
 }
 
 .link:hover,

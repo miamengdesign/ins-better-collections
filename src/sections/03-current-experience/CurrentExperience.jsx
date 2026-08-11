@@ -1,43 +1,27 @@
-import { useEffect } from 'react'
 import CalloutCard from '../../components/CalloutCard'
 import CardNav from '../../components/CardNav'
 import GradientStage from '../../components/GradientStage'
 import PhoneMockup from '../../components/PhoneMockup'
-import PinnedStage from '../../components/PinnedStage'
 import StepTracker from '../../components/StepTracker'
+import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { img } from '../../lib/assets'
-import { setHandoff03to04 } from '../../lib/handoff03to04'
 import {
-  clamp,
   easeInOutCubic,
   easeInOutQuint,
   easeOutQuart,
   lerp,
   rangeProgress,
 } from '../../lib/motion'
+import { goNext, goPrev } from '../../nav/navigatorStore'
+import { SCENE_INDEX } from '../../nav/scenes'
+import { useNavigator, useSceneBlend } from '../../nav/useNavigator'
 import styles from './CurrentExperience.module.css'
 
 /**
- * Cinematic anchors:
- *  0     — pre-entrance
- *  0.20  — entrance complete → State 1
- *  0.42  — State 2
- *  0.64  — State 3
- *  1.00  — §03→04 handoff complete
- *
- * Arrows only step among states 1–3 (indices 1–3). Scroll also runs entrance/exit.
+ * §03 Current Experience — entrance from why-4, then internal states 1→2→3.
+ * Panel geometry stays fixed during internal relays (opacity crossfade only).
  */
-const ANCHORS = [0, 0.2, 0.42, 0.64, 1]
-const DURATIONS = [2400, 1100, 1100, 2800]
-
-const PIN_TRACK_VH = 220
-const OVERLAP_VH = 100
-
-const FADE_12 = [0.26, 0.38]
-const FADE_23 = [0.48, 0.6]
-/** Local progress window for the §03→04 handoff (published to Solutions). */
-const HANDOFF = [0.64, 1]
 
 const STATES = [
   {
@@ -63,73 +47,15 @@ const STATES = [
   },
 ]
 
-function entranceMotion(p, reduced) {
-  const headerT = easeInOutQuint(rangeProgress(p, 0, 0.07))
-  const panelT = easeOutQuart(rangeProgress(p, 0.1, 0.16))
-  const contentT = easeInOutQuint(rangeProgress(p, 0.16, 0.2))
-  return {
-    headerOpacity: headerT,
-    panelY: reduced ? 0 : lerp(48, 0, panelT),
-    panelOpacity: p < 0.1 ? 0 : lerp(0.15, 1, panelT),
-    contentOpacity: contentT,
-  }
-}
+const WHY_4 = SCENE_INDEX['why-4']
+const CE_1 = SCENE_INDEX['ce-1']
+const CE_3 = SCENE_INDEX['ce-3']
+const SOL_1 = SCENE_INDEX['sol-1']
 
-/**
- * §03→04 local exit phases (gradient stays put):
- *  0.00–0.28  card descends
- *  0.22–0.45  upper text fades
- *  (04 entrance is driven on the Solutions side from the same handoff T)
- */
-function handoffExitMotion(t, reduced) {
-  const cardT = easeInOutQuint(rangeProgress(t, 0, 0.28))
-  const headerT = easeInOutQuint(rangeProgress(t, 0.22, 0.45))
-  return {
-    panelY: reduced ? 0 : lerp(0, 55, cardT),
-    panelOpacity: 1 - cardT,
-    headerOpacity: 1 - headerT,
-    contentOpacity: 1 - cardT,
-  }
-}
-
-/** Opacity-only evidence crossfade — no diagonal drift. */
-function layerMotion(p) {
-  let o1 = 1
-  let o2 = 0
-  let o3 = 0
-
-  if (p < FADE_12[0]) {
-    /* state 1 */
-  } else if (p < FADE_12[1]) {
-    const t = easeInOutCubic(rangeProgress(p, FADE_12[0], FADE_12[1]))
-    o1 = 1 - t
-    o2 = t
-  } else if (p < FADE_23[0]) {
-    o1 = 0
-    o2 = 1
-    o3 = 0
-  } else if (p < FADE_23[1]) {
-    const t = easeInOutCubic(rangeProgress(p, FADE_23[0], FADE_23[1]))
-    o1 = 0
-    o2 = 1 - t
-    o3 = t
-  } else {
-    o1 = 0
-    o2 = 0
-    o3 = 1
-  }
-
-  return [{ opacity: o1 }, { opacity: o2 }, { opacity: o3 }]
-}
-
-function dominantStateIndex(p) {
-  if (p < (FADE_12[0] + FADE_12[1]) / 2) return 0
-  if (p < (FADE_23[0] + FADE_23[1]) / 2) return 1
-  return 2
-}
-
-function bulletOpacities(p) {
-  return layerMotion(p).map((l) => l.opacity)
+/** 0..2 for CE states; -1 outside CE. */
+function stateIndexForScene(sceneIndex) {
+  if (sceneIndex >= CE_1 && sceneIndex <= CE_3) return sceneIndex - CE_1
+  return -1
 }
 
 function EvidenceState1() {
@@ -191,116 +117,311 @@ function EvidenceState3() {
   )
 }
 
-function CurrentExperience() {
-  const reduced = useReducedMotion()
+const EVIDENCE = [EvidenceState1, EvidenceState2, EvidenceState3]
 
+/**
+ * Single §02→03 presence timeline (presence 0→1 enter, 1→0 exit via 1−t).
+ * Gradient is SharedStageBackground — never animated here.
+ *
+ *  Phase A  0.00–0.22  why content fade (owned by WhyCollection)
+ *  Phase B  0.22–0.42  CE upper content fades in (title / tracker / bullet)
+ *  Phase C  0.42–0.52  short visual pause
+ *  Phase D  0.52–0.78  light evidence card rises (ease-out, no bounce)
+ *  Phase E  0.78–1.00  mockups + callout fade in after card is settled
+ */
+function entranceFromPresence(presence, reduced) {
+  const headerT = easeInOutQuint(rangeProgress(presence, 0.22, 0.42))
+  const cardT = reduced
+    ? rangeProgress(presence, 0.52, 0.78)
+    : easeOutQuart(rangeProgress(presence, 0.52, 0.78))
+  const contentT = easeInOutQuint(rangeProgress(presence, 0.78, 1))
+  const cardRising = presence >= 0.52
+
+  return {
+    headerOpacity: headerT,
+    panelY: reduced ? 0 : lerp(36, 0, cardT),
+    panelOpacity: cardRising ? lerp(0.2, 1, Math.max(cardT, 0.001)) : 0,
+    contentOpacity: contentT,
+  }
+}
+
+/**
+ * §03→04 exit timeline t∈[0,1] (gradient stays put):
+ *  Phase A  0.00–0.26  light card descends out
+ *  Phase B  0.22–0.42  upper content fades (after card is substantially clear)
+ */
+function exitToSolutions(t, reduced) {
+  const cardT = reduced
+    ? rangeProgress(t, 0, 0.26)
+    : easeInOutQuint(rangeProgress(t, 0, 0.26))
+  const headerT = easeInOutQuint(rangeProgress(t, 0.22, 0.42))
+  return {
+    headerOpacity: 1 - headerT,
+    panelY: reduced ? 0 : lerp(0, 55, cardT),
+    panelOpacity: 1 - cardT,
+    contentOpacity: 1 - cardT,
+  }
+}
+
+function isSolutionsHandoff(blend) {
+  if (blend.settled) return false
   return (
-    <PinnedStage
-      className={styles.section}
-      ariaLabel="Current Experience"
-      height={`calc(${OVERLAP_VH}vh + ${PIN_TRACK_VH}vh)`}
-      overlapVh={OVERLAP_VH}
-      startOffsetVh={0}
-      style={{ zIndex: 3 }}
-      cinematic={{
-        anchors: ANCHORS,
-        durations: DURATIONS,
-        duration: 1200,
-        reduced,
-      }}
-    >
-      {({ progress, isPinned, stepIndex, goToStep, animating }) => {
-        if (!isPinned) {
-          return <StackedFallback />
-        }
-
-        const p = clamp(progress, 0, 1)
-        const handoffT = rangeProgress(p, HANDOFF[0], HANDOFF[1])
-
-        return (
-          <CurrentFrame
-            p={p}
-            handoffT={handoffT}
-            reduced={reduced}
-            stepIndex={stepIndex}
-            goToStep={goToStep}
-            animating={animating}
-          />
-        )
-      }}
-    </PinnedStage>
+    (blend.from === CE_3 && blend.to === SOL_1) ||
+    (blend.from === SOL_1 && blend.to === CE_3)
   )
 }
 
-function CurrentFrame({ p, handoffT, reduced, stepIndex, goToStep, animating }) {
-  useEffect(() => {
-    setHandoff03to04(handoffT)
-  }, [handoffT])
+/** Exit progress 0 = fully on CE, 1 = fully handed to Solutions. */
+function solutionsExitT(blend) {
+  if (blend.settled) {
+    return blend.sceneIndex >= SOL_1 ? 1 : 0
+  }
+  if (blend.from === CE_3 && blend.to === SOL_1) return blend.t
+  if (blend.from === SOL_1 && blend.to === CE_3) return 1 - blend.t
+  if (blend.to >= SOL_1 || blend.from >= SOL_1) return 1
+  return 0
+}
 
-  const entrance = entranceMotion(p, reduced)
-  const exit = handoffExitMotion(handoffT, reduced)
-  const inHandoff = p > HANDOFF[0]
-  const inEntrance = p < 0.2
+/** Presence for §02→03 entrance only (not solutions exit). */
+function entrancePresence(blend) {
+  if (isSolutionsHandoff(blend)) {
+    // Fully entered while exiting to Solutions (exit motion owns leave).
+    return 1
+  }
+  if (blend.settled) {
+    return blend.sceneIndex >= CE_1 && blend.sceneIndex <= CE_3 ? 1 : 0
+  }
+  if (blend.from === WHY_4 && blend.to === CE_1) return blend.t
+  if (blend.from === CE_1 && blend.to === WHY_4) return 1 - blend.t
+  if (
+    (blend.from >= CE_1 && blend.from <= CE_3) ||
+    (blend.to >= CE_1 && blend.to <= CE_3)
+  ) {
+    return 1
+  }
+  return 0
+}
 
-  const layers = layerMotion(Math.max(p, 0.2))
-  const bullets = bulletOpacities(Math.max(p, 0.2))
-  const active = STATES[dominantStateIndex(Math.max(p, 0.2))]
+function stageMotion(blend, reduced) {
+  const exitT = solutionsExitT(blend)
+  if (exitT > 0.001) {
+    return exitToSolutions(exitT, reduced)
+  }
+  return entranceFromPresence(entrancePresence(blend), reduced)
+}
 
-  const headerOpacity = inEntrance
-    ? entrance.headerOpacity
-    : inHandoff
-      ? exit.headerOpacity
-      : 1
-  const panelY = inEntrance ? entrance.panelY : inHandoff ? exit.panelY : 0
-  const panelOpacity = inEntrance
-    ? entrance.panelOpacity
-    : inHandoff
-      ? exit.panelOpacity
-      : 1
-  const contentGate = inEntrance
-    ? entrance.contentOpacity
-    : inHandoff
-      ? exit.contentOpacity
-      : 1
+function isWhyHandoff(blend) {
+  return (
+    (!blend.settled &&
+      ((blend.from === WHY_4 && blend.to === CE_1) ||
+        (blend.from === CE_1 && blend.to === WHY_4))) ||
+    false
+  )
+}
 
-  // Arrows only navigate evidence states (steps 1–3). At the State 3 hold
-  // (progress === 0.64) handoff has not started yet — keep nav visible with next off.
-  const canPrev = stepIndex > 1 && stepIndex <= 3 && !animating && !inHandoff
-  const canNext = stepIndex >= 1 && stepIndex < 3 && !animating && !inHandoff
-  const showNav = !inEntrance && !inHandoff && stepIndex >= 1 && stepIndex <= 3
+function isInternalCe(blend) {
+  if (blend.settled) return false
+  return (
+    blend.from >= CE_1 &&
+    blend.from <= CE_3 &&
+    blend.to >= CE_1 &&
+    blend.to <= CE_3 &&
+    blend.from !== blend.to
+  )
+}
+
+/**
+ * At most two evidence layers — exiting + incoming — never a historical stack.
+ */
+function evidenceRelay(blend, reduced) {
+  if (blend.settled) {
+    const idx = stateIndexForScene(blend.sceneIndex)
+    if (idx < 0) return []
+    return [{ index: idx, opacity: 1, role: 'current' }]
+  }
+
+  // §02→03 entrance / reverse: only State 1, gated by entrance contentOpacity.
+  if (isWhyHandoff(blend)) {
+    return [{ index: 0, opacity: 1, role: 'current' }]
+  }
+
+  if (isInternalCe(blend)) {
+    const fromIdx = stateIndexForScene(blend.from)
+    const toIdx = stateIndexForScene(blend.to)
+    const t = reduced ? blend.t : easeInOutCubic(blend.t)
+    return [
+      { index: fromIdx, opacity: 1 - t, role: 'exiting' },
+      { index: toIdx, opacity: t, role: 'incoming' },
+    ]
+  }
+
+  // §03→04 handoff: hold State 3 evidence (exit motion owns leave).
+  if (isSolutionsHandoff(blend)) {
+    return [{ index: 2, opacity: 1, role: 'current' }]
+  }
+
+  const idx = stateIndexForScene(
+    blend.to >= CE_1 && blend.to <= CE_3 ? blend.to : blend.from,
+  )
+  if (idx < 0) return []
+  return [{ index: idx, opacity: 1, role: 'current' }]
+}
+
+function bulletRelay(blend, reduced) {
+  return evidenceRelay(blend, reduced).map(({ index, opacity, role }) => ({
+    index,
+    opacity,
+    role,
+    text: STATES[index].bullet,
+  }))
+}
+
+function trackerEmphasis(blend, reduced) {
+  const settledIdx = stateIndexForScene(blend.sceneIndex)
+  if (blend.settled) {
+    const state = STATES[Math.max(0, settledIdx)]
+    return {
+      activeSteps: state.activeSteps,
+      dottedAfter: state.dottedAfter,
+      emphasis: null,
+    }
+  }
+
+  if (isWhyHandoff(blend)) {
+    return {
+      activeSteps: STATES[0].activeSteps,
+      dottedAfter: STATES[0].dottedAfter,
+      emphasis: null,
+    }
+  }
+
+  if (isSolutionsHandoff(blend)) {
+    return {
+      activeSteps: STATES[2].activeSteps,
+      dottedAfter: STATES[2].dottedAfter,
+      emphasis: null,
+    }
+  }
+
+  if (isInternalCe(blend)) {
+    const fromState = STATES[stateIndexForScene(blend.from)]
+    const toState = STATES[stateIndexForScene(blend.to)]
+    const t = reduced ? blend.t : easeInOutCubic(blend.t)
+    const mix = (step) => {
+      const a = fromState.activeSteps.includes(step) ? 1 : 0.5
+      const b = toState.activeSteps.includes(step) ? 1 : 0.5
+      return lerp(a, b, t)
+    }
+    // Visual “active” set leans toward the destination after midpoint.
+    const activeSteps = t < 0.5 ? fromState.activeSteps : toState.activeSteps
+    return {
+      activeSteps,
+      dottedAfter: toState.dottedAfter,
+      emphasis: {
+        step: mix,
+        connector: (a, b) => {
+          const fromOn =
+            fromState.activeSteps.includes(a) &&
+            fromState.activeSteps.includes(b)
+              ? 1
+              : 0.5
+          const toOn =
+            toState.activeSteps.includes(a) && toState.activeSteps.includes(b)
+              ? 1
+              : 0.5
+          return lerp(fromOn, toOn, t)
+        },
+      },
+    }
+  }
+
+  const idx = Math.max(0, stateIndexForScene(blend.to))
+  return {
+    activeSteps: STATES[idx].activeSteps,
+    dottedAfter: STATES[idx].dottedAfter,
+    emphasis: null,
+  }
+}
+
+function CurrentExperience() {
+  const isMobile = useMediaQuery('(max-width: 767px)')
+  const reduced = useReducedMotion()
+  const blend = useSceneBlend()
+  const { animating, sceneIndex } = useNavigator()
+  const exitT = solutionsExitT(blend)
+  const enterPresence = entrancePresence(blend)
+  // sol-1+ internals are owned by Solutions — do not remount CE there.
+  const involved =
+    isSolutionsHandoff(blend) ||
+    (enterPresence > 0.001 && exitT < 0.999) ||
+    (!blend.settled &&
+      ((blend.to >= CE_1 && blend.to <= CE_3) ||
+        (blend.from >= CE_1 && blend.from <= CE_3)))
+
+  if (isMobile) {
+    return (
+      <section className={styles.section} aria-label="Current Experience">
+        <StackedFallback />
+      </section>
+    )
+  }
+
+  if (!involved || (exitT >= 0.999 && blend.settled)) {
+    return null
+  }
+
+  const motion = stageMotion(blend, reduced)
+  const layers = evidenceRelay(blend, reduced)
+  const bullets = bulletRelay(blend, reduced)
+  const tracker = trackerEmphasis(blend, reduced)
+
+  const onCeStage =
+    blend.settled && sceneIndex >= CE_1 && sceneIndex <= CE_3
+  const inInternal = isInternalCe(blend)
+  const showNav =
+    enterPresence > 0.95 &&
+    exitT < 0.001 &&
+    (onCeStage || inInternal) &&
+    !isWhyHandoff(blend) &&
+    !isSolutionsHandoff(blend)
+  const stateIdx = onCeStage
+    ? stateIndexForScene(sceneIndex)
+    : inInternal
+      ? stateIndexForScene(blend.to)
+      : 0
 
   return (
-    <>
-      <GradientStage />
+    <section
+      className={styles.phaseLayer}
+      aria-label="Current Experience"
+      style={{
+        pointerEvents: enterPresence > 0.5 && exitT < 0.5 ? 'auto' : 'none',
+      }}
+      aria-hidden={enterPresence < 0.05 || exitT > 0.95}
+    >
+      {/* Gradient: SharedStageBackground — content choreography only. */}
 
       <div className={styles.stack}>
-        <header className={styles.header} style={{ opacity: headerOpacity }}>
+        <header
+          className={styles.header}
+          style={{ opacity: motion.headerOpacity }}
+        >
           <h2 className={styles.title}>Current Experience</h2>
           <StepTracker
-            activeSteps={active.activeSteps}
-            dottedAfter={active.dottedAfter}
+            activeSteps={tracker.activeSteps}
+            dottedAfter={tracker.dottedAfter}
+            emphasis={tracker.emphasis}
           />
           <div className={styles.bulletStage} aria-live="polite">
-            {STATES.map((state, i) => (
+            {bullets.map(({ index, opacity, role, text }) => (
               <p
-                key={state.id}
+                key={STATES[index].id}
                 className={styles.bullet}
-                style={{
-                  opacity: inEntrance
-                    ? i === 0
-                      ? entrance.headerOpacity
-                      : 0
-                    : bullets[i],
-                }}
-                aria-hidden={
-                  (inEntrance
-                    ? i === 0
-                      ? entrance.headerOpacity
-                      : 0
-                    : bullets[i]) < 0.5
-                }
+                data-role={role}
+                style={{ opacity }}
+                aria-hidden={opacity < 0.5}
               >
-                {state.bullet}
+                {text}
               </p>
             ))}
           </div>
@@ -309,55 +430,40 @@ function CurrentFrame({ p, handoffT, reduced, stepIndex, goToStep, animating }) 
         <div
           className={styles.panel}
           style={{
-            opacity: panelOpacity,
-            transform: `translateY(${panelY}vh)`,
+            opacity: motion.panelOpacity,
+            transform: `translate3d(0, ${motion.panelY}vh, 0)`,
           }}
         >
-          <div
-            className={styles.layer}
-            style={{
-              opacity: layers[0].opacity * contentGate,
-              pointerEvents:
-                layers[0].opacity * contentGate > 0.5 ? 'auto' : 'none',
-            }}
-            aria-hidden={layers[0].opacity * contentGate < 0.05}
-          >
-            <EvidenceState1 />
-          </div>
-          <div
-            className={styles.layer}
-            style={{
-              opacity: layers[1].opacity * contentGate,
-              pointerEvents:
-                layers[1].opacity * contentGate > 0.5 ? 'auto' : 'none',
-            }}
-            aria-hidden={layers[1].opacity * contentGate < 0.05}
-          >
-            <EvidenceState2 />
-          </div>
-          <div
-            className={styles.layer}
-            style={{
-              opacity: layers[2].opacity * contentGate,
-              pointerEvents:
-                layers[2].opacity * contentGate > 0.5 ? 'auto' : 'none',
-            }}
-            aria-hidden={layers[2].opacity * contentGate < 0.05}
-          >
-            <EvidenceState3 />
-          </div>
+          {layers.map(({ index, opacity, role }) => {
+            const Evidence = EVIDENCE[index]
+            return (
+              <div
+                key={STATES[index].id}
+                className={styles.layer}
+                data-role={role}
+                style={{
+                  opacity: opacity * motion.contentOpacity,
+                  pointerEvents:
+                    opacity * motion.contentOpacity > 0.5 ? 'auto' : 'none',
+                }}
+                aria-hidden={opacity * motion.contentOpacity < 0.05}
+              >
+                <Evidence />
+              </div>
+            )
+          })}
 
-          {!inEntrance && !inHandoff && showNav && (
+          {showNav && (
             <CardNav
-              onPrev={() => goToStep(stepIndex - 1)}
-              onNext={() => goToStep(stepIndex + 1)}
-              disablePrev={!canPrev}
-              disableNext={!canNext}
+              onPrev={() => goPrev({ reduced })}
+              onNext={() => goNext({ reduced })}
+              disablePrev={animating || stateIdx <= 0}
+              disableNext={animating || stateIdx >= STATES.length - 1}
             />
           )}
         </div>
       </div>
-    </>
+    </section>
   )
 }
 
@@ -365,23 +471,24 @@ function StackedFallback() {
   return (
     <div className={styles.stacked}>
       <GradientStage className={styles.stackedBg} />
-      {STATES.map((state, i) => (
-        <div key={state.id} className={styles.stackedBlock}>
-          <header className={styles.header}>
-            <h2 className={styles.title}>Current Experience</h2>
-            <StepTracker
-              activeSteps={state.activeSteps}
-              dottedAfter={state.dottedAfter}
-            />
-            <p className={styles.bulletStatic}>{state.bullet}</p>
-          </header>
-          <div className={styles.panelStatic}>
-            {i === 0 && <EvidenceState1 />}
-            {i === 1 && <EvidenceState2 />}
-            {i === 2 && <EvidenceState3 />}
+      {STATES.map((state) => {
+        const Evidence = EVIDENCE[STATES.indexOf(state)]
+        return (
+          <div key={state.id} className={styles.stackedBlock}>
+            <header className={styles.header}>
+              <h2 className={styles.title}>Current Experience</h2>
+              <StepTracker
+                activeSteps={state.activeSteps}
+                dottedAfter={state.dottedAfter}
+              />
+              <p className={styles.bulletStatic}>{state.bullet}</p>
+            </header>
+            <div className={styles.panelStatic}>
+              <Evidence />
+            </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }
