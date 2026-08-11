@@ -2,6 +2,13 @@
   position: relative;
 }
 
+/* Absolute host inside the shared cinematic viewport (§03→04 entrance). */
+.phaseLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+}
+
 /* Real HTML text, sized from the shared --fs-* scale so each line renders at the
    size it is authored at in Figma and stays in proportion with the artwork and
    with the same-tier text in every other section. Scaling is `cqw`-based (never a

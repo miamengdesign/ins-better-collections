@@ -1,58 +1,44 @@
-import CardNav from '../../components/CardNav'
 import GradientStage from '../../components/GradientStage'
 import PhoneMockup from '../../components/PhoneMockup'
-import PinnedStage from '../../components/PinnedStage'
 import Stage from '../../components/Stage'
+import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { img } from '../../lib/assets'
-import { useHandoff03to04 } from '../../lib/handoff03to04'
-import { useSolutionsPushT } from '../../lib/handoff04to05'
 import {
-  clamp,
-  easeInOutCubic,
   easeInOutQuint,
   easeOutQuart,
   lerp,
   rangeProgress,
 } from '../../lib/motion'
+import { SCENE_INDEX } from '../../nav/scenes'
+import { useSceneBlend } from '../../nav/useNavigator'
 import styles from './Solutions.module.css'
 
 /**
- * Cinematic anchors (after §03→04 handoff has delivered sol1):
- *  0    — sol1 settled (handoff-driven entrance may still be finishing)
- *  0.33 — sol2
- *  0.66 — sol3
- *  1    — §04→05 push complete
- *
- * Arrows step among 0–2 only. Scroll also runs the push exit.
+ * Phase-1: §03→04 entrance + settled Solution 01 only.
+ * Internal states 2–3 and §04→05 remain for a later migration.
  */
-const ANCHORS = [0, 0.33, 0.66, 1]
-const DURATIONS = [1100, 1100, 1300]
 
-const PIN_TRACK_VH = 220
+const STATE_1 = {
+  id: 'sol1',
+  eyebrow: 'Solution 01',
+  heading: 'Reels Detail Enhancement',
+  badge: '✅ Interface Consistency',
+  explanation: (
+    <>
+      Users can easily find the <strong>Collection option</strong> in
+      <br />
+      the Reel <strong>detail view</strong>, keeping the experience
+      <br />
+      <strong>consistent</strong> across all content formats.
+    </>
+  ),
+  src: img('04 Solution asset/04 Solution 1 pic.png'),
+  alt: 'Reel detail view with a Collection save option',
+}
 
-const FADE_12 = [0.12, 0.28]
-const FADE_23 = [0.45, 0.61]
-const PUSH = [0.72, 1]
-
-const STATES = [
-  {
-    id: 'sol1',
-    eyebrow: 'Solution 01',
-    heading: 'Reels Detail Enhancement',
-    badge: '✅ Interface Consistency',
-    explanation: (
-      <>
-        Users can easily find the <strong>Collection option</strong> in
-        <br />
-        the Reel <strong>detail view</strong>, keeping the experience
-        <br />
-        <strong>consistent</strong> across all content formats.
-      </>
-    ),
-    src: img('04 Solution asset/04 Solution 1 pic.png'),
-    alt: 'Reel detail view with a Collection save option',
-  },
+const STATES_STATIC = [
+  STATE_1,
   {
     id: 'sol2',
     eyebrow: 'Solution 02',
@@ -89,62 +75,46 @@ const STATES = [
   },
 ]
 
+const CE_3 = SCENE_INDEX['ce-3']
+const SOL_1 = SCENE_INDEX['sol-1']
+
 /**
- * §03→04 entrance from shared handoff T (gradient stationary):
- *  0.35–0.55  upper text fades in
- *  0.50–0.75  light card enters from the right (soft settle)
- *  0.70–1.00  mockup content fades in
+ * §03→04 entrance presence 0→1 (reverse via 1−t). Gradient stays put.
+ *
+ *  Phase A–B  0.00–0.42  §03 card exit + upper fade (owned by CE)
+ *  Phase C    0.38–0.55  §04 upper content fades in (static position)
+ *  Phase D    0.52–0.78  §04 light card enters from the right (ease-out)
+ *  Phase E    0.72–1.00  mockup / card content fades in after settle
  */
-function handoffEnterMotion(t, reduced) {
-  const textT = easeInOutQuint(rangeProgress(t, 0.35, 0.55))
+function entranceFromPresence(presence, reduced) {
+  const textT = easeInOutQuint(rangeProgress(presence, 0.38, 0.55))
   const cardT = reduced
-    ? rangeProgress(t, 0.5, 0.75)
-    : easeOutQuart(rangeProgress(t, 0.5, 0.75))
-  const mockT = easeInOutQuint(rangeProgress(t, 0.7, 1))
+    ? rangeProgress(presence, 0.52, 0.78)
+    : easeOutQuart(rangeProgress(presence, 0.52, 0.78))
+  const mockT = easeInOutQuint(rangeProgress(presence, 0.72, 1))
   return {
     textOpacity: textT,
-    panelX: lerp(100, 0, cardT),
+    panelX: reduced ? 0 : lerp(100, 0, cardT),
     mockOpacity: mockT,
   }
 }
 
-/** In-place phone content crossfade — no translate/drift. */
-function layerMotion(p) {
-  if (p < FADE_12[0]) {
-    return [{ opacity: 1 }, { opacity: 0 }, { opacity: 0 }]
+function entrancePresence(blend) {
+  if (blend.settled) {
+    return blend.sceneIndex >= SOL_1 ? 1 : 0
   }
-  if (p < FADE_12[1]) {
-    const t = easeInOutCubic(rangeProgress(p, FADE_12[0], FADE_12[1]))
-    return [{ opacity: 1 - t }, { opacity: t }, { opacity: 0 }]
-  }
-  if (p < FADE_23[0]) {
-    return [{ opacity: 0 }, { opacity: 1 }, { opacity: 0 }]
-  }
-  if (p < FADE_23[1]) {
-    const t = easeInOutCubic(rangeProgress(p, FADE_23[0], FADE_23[1]))
-    return [{ opacity: 0 }, { opacity: 1 - t }, { opacity: t }]
-  }
-  return [{ opacity: 0 }, { opacity: 0 }, { opacity: 1 }]
-}
-
-function copyOpacities(p) {
-  return layerMotion(p).map((l) => l.opacity)
-}
-
-function panelPushX(p, sharedPushT) {
-  if (sharedPushT > 0.001) return lerp(0, 100, sharedPushT)
-  if (p >= PUSH[0]) {
-    return lerp(0, 100, easeInOutQuint(rangeProgress(p, PUSH[0], PUSH[1])))
-  }
+  if (blend.from === CE_3 && blend.to === SOL_1) return blend.t
+  if (blend.from === SOL_1 && blend.to === CE_3) return 1 - blend.t
+  if (blend.to >= SOL_1 || blend.from >= SOL_1) return 1
   return 0
 }
 
 function Solutions({ phase1Static = false } = {}) {
+  const isMobile = useMediaQuery('(max-width: 767px)')
   const reduced = useReducedMotion()
-  const handoffT = useHandoff03to04()
-  const sharedPushT = useSolutionsPushT()
+  const blend = useSceneBlend()
 
-  if (phase1Static) {
+  if (isMobile || phase1Static) {
     return (
       <Stage className={styles.section} aria-label="Solutions">
         <StackedFallback />
@@ -152,127 +122,70 @@ function Solutions({ phase1Static = false } = {}) {
     )
   }
 
-  return (
-    <PinnedStage
-      className={styles.section}
-      ariaLabel="Solutions"
-      height={`calc(100vh + ${PIN_TRACK_VH}vh)`}
-      overlapVh={100}
-      startOffsetVh={0}
-      style={{ zIndex: handoffT >= 0.999 ? 2 : 0 }}
-      cinematic={{
-        anchors: ANCHORS,
-        durations: DURATIONS,
-        duration: 1100,
-        reduced,
-      }}
-    >
-      {({ progress, isPinned, stepIndex, goToStep, animating }) => {
-        if (!isPinned) {
-          return <StackedFallback />
-        }
+  const presence = entrancePresence(blend)
+  const involved =
+    presence > 0.001 ||
+    (!blend.settled && (blend.to === SOL_1 || blend.from === SOL_1))
 
-        const p = clamp(progress, 0, 1)
-        const enter = handoffEnterMotion(handoffT, reduced)
-        const entering = handoffT < 0.999
-        const layers = layerMotion(p)
-        const copies = copyOpacities(p)
-        const pushX = panelPushX(p, sharedPushT)
-        const panelX = entering ? enter.panelX : pushX
-
-        const textOpacity = entering
-          ? enter.textOpacity
-          : copies[dominantCopy(p)]
-        const mockGate = entering ? enter.mockOpacity : 1
-
-        const inPush = p > PUSH[0]
-        const canPrev = stepIndex > 0 && stepIndex <= 2 && !animating && !entering && !inPush
-        const canNext = stepIndex < 2 && !animating && !entering && !inPush
-        const showNav = !entering && !inPush && stepIndex >= 0 && stepIndex <= 2
-
-        return (
-          <>
-            <GradientStage />
-
-            <div className={styles.left}>
-              {STATES.map((state, i) => {
-                const op = entering
-                  ? i === 0
-                    ? textOpacity
-                    : 0
-                  : copies[i]
-                return (
-                  <div
-                    key={state.id}
-                    className={styles.copyLayer}
-                    style={{ opacity: op }}
-                    aria-hidden={op < 0.5}
-                  >
-                    <p className={styles.eyebrow}>{state.eyebrow}</p>
-                    <h2 className={styles.heading}>{state.heading}</h2>
-                    <div className={styles.badgeGroup}>
-                      <span className={styles.badge}>{state.badge}</span>
-                      <p className={styles.explanation}>{state.explanation}</p>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-
-            <div
-              className={styles.right}
-              style={{ transform: `translateX(${panelX}%)` }}
-            >
-              {STATES.map((state, i) => (
-                <div
-                  key={state.id}
-                  className={styles.mockupLayer}
-                  style={{
-                    opacity: layers[i].opacity * mockGate,
-                    pointerEvents:
-                      layers[i].opacity * mockGate > 0.5 ? 'auto' : 'none',
-                  }}
-                  aria-hidden={layers[i].opacity * mockGate < 0.05}
-                >
-                  <div className={styles.mockup}>
-                    <PhoneMockup
-                      className={styles.phone}
-                      src={state.src}
-                      alt={state.alt}
-                    />
-                  </div>
-                </div>
-              ))}
-
-              {showNav && (
-                <CardNav
-                  onPrev={() => goToStep(stepIndex - 1)}
-                  onNext={() => goToStep(stepIndex + 1)}
-                  disablePrev={!canPrev}
-                  disableNext={!canNext}
-                />
-              )}
-            </div>
-          </>
-        )
-      }}
-    </PinnedStage>
-  )
-}
-
-function dominantCopy(p) {
-  const ops = copyOpacities(p)
-  let best = 0
-  for (let i = 1; i < ops.length; i += 1) {
-    if (ops[i] > ops[best]) best = i
+  if (!involved) {
+    return null
   }
-  return best
+
+  const motion = entranceFromPresence(presence, reduced)
+
+  return (
+    <section
+      className={styles.phaseLayer}
+      aria-label="Solutions"
+      style={{
+        pointerEvents: presence > 0.55 ? 'auto' : 'none',
+      }}
+      aria-hidden={presence < 0.05}
+    >
+      {/* Gradient: SharedStageBackground — content choreography only. */}
+
+      <div
+        className={styles.left}
+        style={{ opacity: motion.textOpacity }}
+      >
+        <div className={styles.copyLayer} style={{ opacity: 1 }}>
+          <p className={styles.eyebrow}>{STATE_1.eyebrow}</p>
+          <h2 className={styles.heading}>{STATE_1.heading}</h2>
+          <div className={styles.badgeGroup}>
+            <span className={styles.badge}>{STATE_1.badge}</span>
+            <p className={styles.explanation}>{STATE_1.explanation}</p>
+          </div>
+        </div>
+      </div>
+
+      <div
+        className={styles.right}
+        style={{
+          transform: `translate3d(${motion.panelX}%, 0, 0)`,
+        }}
+      >
+        <div
+          className={styles.mockupLayer}
+          style={{ opacity: motion.mockOpacity }}
+          aria-hidden={motion.mockOpacity < 0.05}
+        >
+          <div className={styles.mockup}>
+            <PhoneMockup
+              className={styles.phone}
+              src={STATE_1.src}
+              alt={STATE_1.alt}
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+  )
 }
 
 function StackedFallback() {
   return (
     <div className={styles.stacked}>
-      {STATES.map((state) => (
+      {STATES_STATIC.map((state) => (
         <div key={state.id} className={styles.stackedBlock}>
           <GradientStage className={styles.stackedBg} />
           <div className={styles.left}>
