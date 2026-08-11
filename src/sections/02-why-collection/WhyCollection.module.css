@@ -64,7 +64,7 @@
   width: 56cqw;
   margin: 0;
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: 300;
   font-size: var(--fs-48);
   line-height: var(--lh-auto);
   color: var(--color-white);
@@ -75,7 +75,11 @@
 }
 
 .statement strong {
-  font-weight: 700;
+  font-weight: 500;
+}
+
+.statementScene2 {
+  white-space: nowrap;
 }
 
 /* —— Mobile stacked fallback (PinnedStage disabled) —— */
@@ -106,7 +110,7 @@
   position: relative;
   z-index: 1;
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: 300;
   font-size: var(--fs-24);
   line-height: var(--lh-auto);
   color: var(--color-white);
@@ -114,7 +118,11 @@
 }
 
 .stackedStatement strong {
-  font-weight: 700;
+  font-weight: 500;
+}
+
+.stackedScene2Line {
+  white-space: nowrap;
 }
 
 .stackedScene2 {
