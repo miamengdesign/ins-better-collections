@@ -21,9 +21,10 @@ import styles from './WrapUp.module.css'
  *
  * Geometry from latest `references/svg/07 Wrapup {1,2}.svg` (1728×1117 → cqh),
  * path bbox tops (SVG primary):
- *  Scene 1 statement top ≈ 47.619cqh (path y≈531.9)
- *  Scene 2 statement top ≈ 39.875cqh (path y≈445.4)
- *  Scene 2 “If I had more time…” top ≈ 55.479cqh (path y≈619.7)
+ *  Scene 1 statement top ≈ 47.619cqh (path y≈531.9, bbox h≈81.9)
+ *  Scene 2 statement top ≈ 39.875cqh (path y≈445.4, bbox h≈81.9)
+ *  Scene 2 “If I had more time…” block top ≈ 55.477cqh (path y≈619.7)
+ *  Scene 2 stmt↔future gap ≈ 8.27cqh (619.7 − 527.3 on 1728×1117 frame)
  *  Scene 3 Tools/Quick Links ≈ 42.426cqh; footer ≈ 90.886cqh
  */
 
@@ -47,11 +48,9 @@ const SCENE3_EXIT_Y_CQH = -48
 
 const STATEMENT = (
   <>
-    This redesign does not add an entirely new system.
-    <br />
-    It <strong>strengthens the existing Collection experience</strong> by
-    <br />
-    making saving consistent and collaboration flexible over time.
+    This redesign does not add an entirely new system. It{' '}
+    <strong>strengthens the existing Collection experience</strong> by making
+    saving consistent and collaboration flexible over time.
   </>
 )
 

@@ -35,34 +35,34 @@
 /*
  * Closing statement. Layout `top` is the Scene 1 resting position; Scene 1→2
  * rises via transform translateY (cqh delta to Wrapup-2), never per-frame `top`.
- * Explicit <br>s match the reference line breaks; Regular with one Bold clause.
- * Latest Wrapup 1.svg: path y≈531.9–613.8 / x≈81–670 → fs-24, width ≈34.08cqw.
+ * Wrapup 1/2.svg: fs-24, width ≈34.08cqw; 3-line bbox h≈81.9px → lh≈1.1375em.
+ * Width-driven wrapping (no manual breaks) matches reference line rhythm.
  */
 .paragraph {
   position: absolute;
   left: var(--frame-margin);
-  width: 34.08cqw;
+  width: 34.0827cqw;
   z-index: 1;
   margin: 0;
   font-family: var(--font-display);
   font-weight: 400;
   font-size: var(--fs-24);
-  line-height: var(--lh-auto);
+  line-height: 1.1375;
   color: var(--color-panel);
   will-change: transform;
   pointer-events: none;
+  text-wrap: pretty;
 }
 
 .paragraph strong {
   font-weight: 700;
 }
 
-/* State-2 “If I had more time…” block — Wrapup 2.svg: top ≈55.48cqh, width ≈41.22cqw.
-   Scene 2→3 shares the same upward translateY as the statement (spacing preserved). */
+/* Wrapup 2.svg: block top ≈55.477cqh, width ≈41.213cqw; heading→body gap ≈0.75cqh. */
 .future {
   position: absolute;
   left: var(--frame-margin);
-  width: 41.22cqw;
+  width: 41.2133cqw;
   z-index: 1;
   will-change: transform, opacity;
   pointer-events: none;
@@ -73,18 +73,19 @@
   font-family: var(--font-display);
   font-weight: 700;
   font-size: var(--fs-16);
-  line-height: var(--lh-auto);
+  line-height: 1.1375;
   color: var(--color-panel);
 }
 
 .futureBody {
-  margin: 1.6cqh 0 0;
+  margin: 0.752cqh 0 0;
   font-family: var(--font-display);
   font-weight: 400;
   font-size: var(--fs-16);
-  line-height: var(--lh-auto);
+  line-height: 1.1375;
   color: var(--color-panel);
   opacity: 0.92;
+  text-wrap: pretty;
 }
 
 /*
