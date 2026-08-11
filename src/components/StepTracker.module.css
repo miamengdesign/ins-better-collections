@@ -13,12 +13,13 @@
 }
 
 .step {
-  color: var(--color-step-inactive);
+  color: var(--color-white);
+  opacity: 0.5;
   white-space: nowrap;
 }
 
 .step.active {
-  color: var(--color-white);
+  opacity: 1;
 }
 
 /* Line + arrowhead (not a plain rule) between steps. */

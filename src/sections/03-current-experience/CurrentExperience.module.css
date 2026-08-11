@@ -10,16 +10,17 @@
 .stack {
   position: absolute;
   inset: 0;
-  display: flex;
-  flex-direction: column;
   z-index: 1;
 }
 
 .header {
-  flex-shrink: 0;
-  padding: var(--frame-margin) var(--frame-margin) 2.3872cqw;
+  position: relative;
+  z-index: 2;
+  padding: var(--frame-margin) var(--frame-margin) 0;
   display: flex;
   flex-direction: column;
+  /* Header stays put — panel grows up underneath the former gap. */
+  pointer-events: none;
 }
 
 .title {
@@ -82,14 +83,18 @@
 }
 
 /*
- * Evidence canvas — spatially stable across states. SVG panel path starts at
- * y=276 with 80px corner radius and fill white @ 0.93. Contents crossfade in
- * stacked `.layer`s; the panel itself only moves on the §03→04 exit tail.
+ * Evidence canvas — bottom edge fixed to the viewport bottom; top edge set from
+ * the SVG panel path (y=276 / 1117) so the panel is taller and closer to the
+ * bullet above, without moving the header text. Contents crossfade in stacked
+ * `.layer`s; the panel itself only moves on the §03→04 exit tail.
  */
 .panel {
-  position: relative;
-  flex: 1;
-  min-height: 0;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 24.709cqh; /* 276/1117 — Figma panel top */
+  z-index: 1;
   background: var(--panel-fill);
   border-top-left-radius: var(--panel-radius);
   border-top-right-radius: var(--panel-radius);
@@ -140,13 +145,15 @@
 
 /* —— State 2: two grouped composites (phone + callouts baked in) ——
    Frame placements from `03 Current Experience 2.svg`:
-   left phone x=244 / right phone x=966 on 1728; clusters extend to callouts.
-   Sizes keep phone height ≈ 534.8/1117 of the frame (~47.9cqh). */
+   left phone x=244 / right phone x=966 on 1728; both phones share top y≈377.
+   Top-align so “Create New Collection” / “Choose Who to Share with” share a
+   baseline and neither title is clipped by the panel edge. */
 
 .evidenceState2 {
   gap: 3.5cqw;
-  padding: 2cqh 4cqw 3cqh;
-  align-items: flex-end;
+  padding: 2.6cqh 4cqw 2cqh;
+  align-items: flex-start;
+  justify-content: center;
 }
 
 .group1 {
@@ -155,6 +162,7 @@
   flex-shrink: 0;
   display: block;
   object-fit: contain;
+  object-position: top center;
 }
 
 .group2 {
@@ -163,7 +171,7 @@
   flex-shrink: 0;
   display: block;
   object-fit: contain;
-  margin-bottom: 4cqh;
+  object-position: top center;
 }
 
 /* —— State 3: single combined phone + callout composite ——
