@@ -1,3 +1,4 @@
+import CardNav from '../../components/CardNav'
 import GradientStage from '../../components/GradientStage'
 import PhoneMockup from '../../components/PhoneMockup'
 import Stage from '../../components/Stage'
@@ -5,40 +6,53 @@ import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { img } from '../../lib/assets'
 import {
+  easeInOutCubic,
   easeInOutQuint,
   easeOutQuart,
   lerp,
   rangeProgress,
 } from '../../lib/motion'
+import { goNext, goPrev } from '../../nav/navigatorStore'
 import { SCENE_INDEX } from '../../nav/scenes'
-import { useSceneBlend } from '../../nav/useNavigator'
+import { useNavigator, useSceneBlend } from '../../nav/useNavigator'
 import styles from './Solutions.module.css'
 
 /**
- * Phase-1: §03→04 entrance + settled Solution 01 only.
- * Internal states 2–3 and §04→05 remain for a later migration.
+ * §04 Solutions — entrance from ce-3, then internal states 1→2→3.
+ * Light card + phone body resting rectangle stay fixed; content crossfades.
+ * §04→05 handoff is intentionally not implemented yet.
  */
 
-const STATE_1 = {
-  id: 'sol1',
-  eyebrow: 'Solution 01',
-  heading: 'Reels Detail Enhancement',
-  badge: '✅ Interface Consistency',
-  explanation: (
-    <>
-      Users can easily find the <strong>Collection option</strong> in
-      <br />
-      the Reel <strong>detail view</strong>, keeping the experience
-      <br />
-      <strong>consistent</strong> across all content formats.
-    </>
-  ),
-  src: img('04 Solution asset/04 Solution 1 pic.png'),
-  alt: 'Reel detail view with a Collection save option',
-}
+/**
+ * Phone-body alignment within each composite PNG (measured):
+ * dense opaque phone columns are 37..1686 (1650px) on every asset; canvases
+ * differ only because callouts extend further right. Trim so the phone body
+ * maps to one shared stage rectangle.
+ */
+const PHONE_BODY_LEFT = 37
+const PHONE_BODY_WIDTH = 1650
+/** Sol-1 canvas height — stage aspect uses this so sol-1 size is unchanged. */
+const PHONE_STAGE_HEIGHT = 3657
 
-const STATES_STATIC = [
-  STATE_1,
+const STATES = [
+  {
+    id: 'sol1',
+    eyebrow: 'Solution 01',
+    heading: 'Reels Detail Enhancement',
+    badge: '✅ Interface Consistency',
+    explanation: (
+      <>
+        Users can easily find the <strong>Collection option</strong> in
+        <br />
+        the Reel <strong>detail view</strong>, keeping the experience
+        <br />
+        <strong>consistent</strong> across all content formats.
+      </>
+    ),
+    src: img('04 Solution asset/04 Solution 1 pic.png'),
+    alt: 'Reel detail view with a Collection save option',
+    canvasWidth: 2420,
+  },
   {
     id: 'sol2',
     eyebrow: 'Solution 02',
@@ -55,6 +69,7 @@ const STATES_STATIC = [
     ),
     src: img('04 Solution asset/04 Solution 2 pic.png'),
     alt: 'New collection flow with multi-friend selection',
+    canvasWidth: 2544,
   },
   {
     id: 'sol3',
@@ -72,11 +87,19 @@ const STATES_STATIC = [
     ),
     src: img('04 Solution asset/04 Solution 3 pic.png'),
     alt: 'Manage collection share sheet with collaborators',
+    canvasWidth: 2672,
   },
 ]
 
 const CE_3 = SCENE_INDEX['ce-3']
 const SOL_1 = SCENE_INDEX['sol-1']
+const SOL_3 = SCENE_INDEX['sol-3']
+
+/** 0..2 for Solutions states; -1 outside. */
+function stateIndexForScene(sceneIndex) {
+  if (sceneIndex >= SOL_1 && sceneIndex <= SOL_3) return sceneIndex - SOL_1
+  return -1
+}
 
 /**
  * §03→04 entrance presence 0→1 (reverse via 1−t). Gradient stays put.
@@ -99,6 +122,25 @@ function entranceFromPresence(presence, reduced) {
   }
 }
 
+function isEntranceHandoff(blend) {
+  if (blend.settled) return false
+  return (
+    (blend.from === CE_3 && blend.to === SOL_1) ||
+    (blend.from === SOL_1 && blend.to === CE_3)
+  )
+}
+
+function isInternalSol(blend) {
+  if (blend.settled) return false
+  return (
+    blend.from >= SOL_1 &&
+    blend.from <= SOL_3 &&
+    blend.to >= SOL_1 &&
+    blend.to <= SOL_3 &&
+    blend.from !== blend.to
+  )
+}
+
 function entrancePresence(blend) {
   if (blend.settled) {
     return blend.sceneIndex >= SOL_1 ? 1 : 0
@@ -109,10 +151,43 @@ function entrancePresence(blend) {
   return 0
 }
 
+/**
+ * At most two content layers — exiting + incoming — never a historical stack.
+ */
+function contentRelay(blend, reduced) {
+  if (blend.settled) {
+    const idx = stateIndexForScene(blend.sceneIndex)
+    if (idx < 0) return []
+    return [{ index: idx, opacity: 1, role: 'current' }]
+  }
+
+  // §03→04 entrance / reverse: only State 1, gated by entrance opacities.
+  if (isEntranceHandoff(blend)) {
+    return [{ index: 0, opacity: 1, role: 'current' }]
+  }
+
+  if (isInternalSol(blend)) {
+    const fromIdx = stateIndexForScene(blend.from)
+    const toIdx = stateIndexForScene(blend.to)
+    const t = reduced ? blend.t : easeInOutCubic(blend.t)
+    return [
+      { index: fromIdx, opacity: 1 - t, role: 'exiting' },
+      { index: toIdx, opacity: t, role: 'incoming' },
+    ]
+  }
+
+  const idx = stateIndexForScene(
+    blend.to >= SOL_1 && blend.to <= SOL_3 ? blend.to : blend.from,
+  )
+  if (idx < 0) return []
+  return [{ index: idx, opacity: 1, role: 'current' }]
+}
+
 function Solutions({ phase1Static = false } = {}) {
   const isMobile = useMediaQuery('(max-width: 767px)')
   const reduced = useReducedMotion()
   const blend = useSceneBlend()
+  const { animating, sceneIndex } = useNavigator()
 
   if (isMobile || phase1Static) {
     return (
@@ -125,13 +200,28 @@ function Solutions({ phase1Static = false } = {}) {
   const presence = entrancePresence(blend)
   const involved =
     presence > 0.001 ||
-    (!blend.settled && (blend.to === SOL_1 || blend.from === SOL_1))
+    (!blend.settled && (blend.to >= SOL_1 || blend.from >= SOL_1))
 
   if (!involved) {
     return null
   }
 
   const motion = entranceFromPresence(presence, reduced)
+  const layers = contentRelay(blend, reduced)
+
+  const onSolStage =
+    blend.settled && sceneIndex >= SOL_1 && sceneIndex <= SOL_3
+  const inInternal = isInternalSol(blend)
+  const showNav =
+    presence > 0.95 &&
+    motion.panelX < 0.5 &&
+    (onSolStage || inInternal) &&
+    !isEntranceHandoff(blend)
+  const stateIdx = onSolStage
+    ? stateIndexForScene(sceneIndex)
+    : inInternal
+      ? stateIndexForScene(blend.to)
+      : 0
 
   return (
     <section
@@ -148,14 +238,25 @@ function Solutions({ phase1Static = false } = {}) {
         className={styles.left}
         style={{ opacity: motion.textOpacity }}
       >
-        <div className={styles.copyLayer} style={{ opacity: 1 }}>
-          <p className={styles.eyebrow}>{STATE_1.eyebrow}</p>
-          <h2 className={styles.heading}>{STATE_1.heading}</h2>
-          <div className={styles.badgeGroup}>
-            <span className={styles.badge}>{STATE_1.badge}</span>
-            <p className={styles.explanation}>{STATE_1.explanation}</p>
-          </div>
-        </div>
+        {layers.map(({ index, opacity, role }) => {
+          const state = STATES[index]
+          return (
+            <div
+              key={state.id}
+              className={styles.copyLayer}
+              data-role={role}
+              style={{ opacity }}
+              aria-hidden={opacity < 0.5}
+            >
+              <p className={styles.eyebrow}>{state.eyebrow}</p>
+              <h2 className={styles.heading}>{state.heading}</h2>
+              <div className={styles.badgeGroup}>
+                <span className={styles.badge}>{state.badge}</span>
+                <p className={styles.explanation}>{state.explanation}</p>
+              </div>
+            </div>
+          )
+        })}
       </div>
 
       <div
@@ -165,18 +266,45 @@ function Solutions({ phase1Static = false } = {}) {
         }}
       >
         <div
-          className={styles.mockupLayer}
-          style={{ opacity: motion.mockOpacity }}
+          className={styles.mockupStage}
+          style={{
+            opacity: motion.mockOpacity,
+            aspectRatio: `${PHONE_BODY_WIDTH} / ${PHONE_STAGE_HEIGHT}`,
+          }}
           aria-hidden={motion.mockOpacity < 0.05}
         >
-          <div className={styles.mockup}>
-            <PhoneMockup
-              className={styles.phone}
-              src={STATE_1.src}
-              alt={STATE_1.alt}
-            />
-          </div>
+          {layers.map(({ index, opacity, role }) => {
+            const state = STATES[index]
+            const trimX = PHONE_BODY_LEFT / state.canvasWidth
+            return (
+              <div
+                key={state.id}
+                className={styles.mockupLayer}
+                data-role={role}
+                style={{ opacity }}
+                aria-hidden={opacity < 0.05}
+              >
+                <PhoneMockup
+                  className={styles.phone}
+                  src={state.src}
+                  alt={state.alt}
+                  style={{
+                    '--phone-trim-x': String(trimX),
+                  }}
+                />
+              </div>
+            )
+          })}
         </div>
+
+        {showNav && (
+          <CardNav
+            onPrev={() => goPrev({ reduced })}
+            onNext={() => goNext({ reduced })}
+            disablePrev={animating || stateIdx <= 0}
+            disableNext={animating || stateIdx >= STATES.length - 1}
+          />
+        )}
       </div>
     </section>
   )
@@ -185,7 +313,7 @@ function Solutions({ phase1Static = false } = {}) {
 function StackedFallback() {
   return (
     <div className={styles.stacked}>
-      {STATES_STATIC.map((state) => (
+      {STATES.map((state) => (
         <div key={state.id} className={styles.stackedBlock}>
           <GradientStage className={styles.stackedBg} />
           <div className={styles.left}>
@@ -197,12 +325,24 @@ function StackedFallback() {
             </div>
           </div>
           <div className={styles.right}>
-            <div className={styles.mockup}>
-              <PhoneMockup
-                className={styles.phone}
-                src={state.src}
-                alt={state.alt}
-              />
+            <div
+              className={styles.mockupStage}
+              style={{
+                aspectRatio: `${PHONE_BODY_WIDTH} / ${PHONE_STAGE_HEIGHT}`,
+              }}
+            >
+              <div className={styles.mockupLayer}>
+                <PhoneMockup
+                  className={styles.phone}
+                  src={state.src}
+                  alt={state.alt}
+                  style={{
+                    '--phone-trim-x': String(
+                      PHONE_BODY_LEFT / state.canvasWidth,
+                    ),
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>

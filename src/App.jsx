@@ -12,7 +12,7 @@ import WrapUp from './sections/07-wrap-up/WrapUp'
 import { useMediaQuery } from './hooks/useMediaQuery'
 
 /**
- * Phase 1: navigator drives Hero → Why → CE → Solutions state 1.
+ * Phase 1: navigator drives Hero → Why → CE → Solutions states 1–3.
  * §§05–07 remain static tail content until a later migration.
  */
 function App() {
@@ -55,7 +55,7 @@ function StaticTail() {
       aria-hidden={!unlocked}
       inert={!unlocked || undefined}
     >
-      {/* Solutions lives in CinematicRoot (sol-1). Tail starts at Prototype. */}
+      {/* Solutions lives in CinematicRoot (sol-1..3). Tail starts at Prototype. */}
       <Prototype phase1Static />
       <BehindTheWork phase1Static />
       <WrapUp phase1Static />

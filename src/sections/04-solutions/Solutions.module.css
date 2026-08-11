@@ -149,40 +149,50 @@
   overflow: hidden;
 }
 
-/* Stacked mockups — opacity crossfade only; phone body stays fixed. */
-.mockupLayer {
-  position: absolute;
-  inset: 0;
-  will-change: opacity;
-}
-
 /*
- * Match Section 05’s rendered phone size. Prototype uses
- *   height: min(50.984cqw, 78.8646cqh)
- * for a pure-phone PNG (1724×3524). Solution pics bake in a side callout so
- * they are wider; sizing by that same height keeps the phone itself at the
- * Prototype’s visual size while `width: auto` preserves each asset’s aspect.
+ * Fixed phone-body resting rectangle (shared by states 1–3).
+ * Runtime assets share opaque phone cols 37..1686 (1650px) but different
+ * canvas widths (callouts extend right). Stage aspect = 1650 / 3657 so the
+ * visible phone matches the approved sol-1 size; images trim via
+ * --phone-trim-x so the body aligns. Callouts may paint outside the stage.
  *
- * Centred in the light panel on both axes (Solutions states 1–3 share this).
+ * Height matches Section 05 / Prototype: min(50.984cqw, 78.8646cqh).
+ * Centred in the light panel; card geometry never moves on internal relays.
  */
-.mockup {
+.mockupStage {
   position: absolute;
   top: 50%;
   left: 50%;
   translate: -50% -50%;
   height: min(50.984cqw, 78.8646cqh);
-  width: max-content;
+  width: auto;
   max-width: 92%;
+  overflow: visible;
+  will-change: opacity;
 }
 
-/* No drop shadow: the frame sits the mockup flat on the panel. Scoped under
-   .mockup so it outranks PhoneMockup's own filter regardless of sheet order. */
-.mockup .phone {
+/* Stacked mockups — opacity crossfade only; phone body stays fixed. */
+.mockupLayer {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  will-change: opacity;
+  pointer-events: none;
+}
+
+/* No drop shadow. Trim shifts the composite so phone-body left hits stage left
+   (translate % is relative to the image itself — no layout reads). */
+.mockupStage .phone {
+  position: absolute;
+  top: 0;
+  left: 0;
   display: block;
   height: 100%;
   width: auto;
-  max-width: 100%;
+  max-width: none;
   filter: none;
+  transform: translate3d(calc(var(--phone-trim-x, 0) * -100%), 0, 0);
+  transform-origin: left top;
 }
 
 /* —— Mobile stacked fallback —— */

@@ -350,14 +350,13 @@ function CurrentExperience() {
   const { animating, sceneIndex } = useNavigator()
   const exitT = solutionsExitT(blend)
   const enterPresence = entrancePresence(blend)
+  // sol-1+ internals are owned by Solutions — do not remount CE there.
   const involved =
     isSolutionsHandoff(blend) ||
     (enterPresence > 0.001 && exitT < 0.999) ||
     (!blend.settled &&
       ((blend.to >= CE_1 && blend.to <= CE_3) ||
-        (blend.from >= CE_1 && blend.from <= CE_3) ||
-        blend.to === SOL_1 ||
-        blend.from === SOL_1))
+        (blend.from >= CE_1 && blend.from <= CE_3)))
 
   if (isMobile) {
     return (

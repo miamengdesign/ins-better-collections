@@ -5,7 +5,7 @@ import { useSceneBlend } from './useNavigator'
 import styles from './SharedStageBackground.module.css'
 
 const WHY_TITLE = SCENE_INDEX['why-title']
-const BAND_LAST = SCENE_INDEX['sol-1']
+const BAND_LAST = SCENE_INDEX['sol-3']
 
 /**
  * Stationary brand gradient for the Why ↔ Current Experience ↔ Solutions band.
