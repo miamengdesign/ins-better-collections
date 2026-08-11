@@ -35,34 +35,33 @@
 /*
  * Closing statement. Layout `top` is the Scene 1 resting position; Scene 1→2
  * rises via transform translateY (cqh delta to Wrapup-2), never per-frame `top`.
- * Wrapup 1/2.svg: fs-24, width ≈34.08cqw; 3-line bbox h≈81.9px → lh≈1.1375em.
- * Width-driven wrapping (no manual breaks) matches reference line rhythm.
+ * Wrapup 1/2.svg: fs-24 (1.3889cqw), width 589px → 34.0856cqw, lh 1.1375em.
+ * Editorial line breaks authored in markup — not responsive wrapping.
  */
 .paragraph {
   position: absolute;
   left: var(--frame-margin);
-  width: 34.0827cqw;
+  width: 34.0856cqw;
   z-index: 1;
   margin: 0;
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: 300;
   font-size: var(--fs-24);
   line-height: 1.1375;
   color: var(--color-panel);
   will-change: transform;
   pointer-events: none;
-  text-wrap: pretty;
 }
 
 .paragraph strong {
-  font-weight: 700;
+  font-weight: 500;
 }
 
-/* Wrapup 2.svg: block top ≈55.477cqh, width ≈41.213cqw; heading→body gap ≈0.75cqh. */
+/* Wrapup 2.svg: future block top 616px, width 713px → 41.2616cqw; heading→body 16px → 1.4324cqh. */
 .future {
   position: absolute;
   left: var(--frame-margin);
-  width: 41.2133cqw;
+  width: 41.2616cqw;
   z-index: 1;
   will-change: transform, opacity;
   pointer-events: none;
@@ -71,21 +70,24 @@
 .futureHeading {
   margin: 0;
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 500;
   font-size: var(--fs-16);
   line-height: 1.1375;
   color: var(--color-panel);
 }
 
 .futureBody {
-  margin: 0.752cqh 0 0;
+  margin: 1.4324cqh 0 0;
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: 300;
   font-size: var(--fs-16);
   line-height: 1.1375;
   color: var(--color-panel);
   opacity: 0.92;
-  text-wrap: pretty;
+}
+
+.futureBody strong {
+  font-weight: 500;
 }
 
 /*
@@ -198,19 +200,32 @@
 .paragraphStatic {
   margin: 0;
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: 300;
   font-size: var(--fs-24);
-  line-height: var(--lh-auto);
+  line-height: 1.1375;
   color: var(--color-panel);
-  max-width: 34.08cqw;
+  max-width: 34.0856cqw;
 }
 
 .paragraphStatic strong {
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .futureStatic {
-  width: min(41.22cqw, 100%);
+  width: min(41.2616cqw, 100%);
+}
+
+.futureStatic .futureHeading {
+  font-weight: 500;
+}
+
+.futureStatic .futureBody {
+  margin-top: 1.4324cqh;
+  font-weight: 300;
+}
+
+.futureStatic .futureBody strong {
+  font-weight: 500;
 }
 
 .listsStatic {
