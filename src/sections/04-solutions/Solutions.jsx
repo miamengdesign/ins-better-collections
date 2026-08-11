@@ -18,9 +18,8 @@ import { useNavigator, useSceneBlend } from '../../nav/useNavigator'
 import styles from './Solutions.module.css'
 
 /**
- * §04 Solutions — entrance from ce-3, then internal states 1→2→3.
- * Light card + phone body resting rectangle stay fixed; content crossfades.
- * §04→05 handoff is intentionally not implemented yet.
+ * §04 Solutions — entrance from ce-3, internal states 1→2→3, exit push to §05.
+ * Light card + phone body stay fixed during internals; §04→05 is a physical push.
  */
 
 /**
@@ -94,6 +93,7 @@ const STATES = [
 const CE_3 = SCENE_INDEX['ce-3']
 const SOL_1 = SCENE_INDEX['sol-1']
 const SOL_3 = SCENE_INDEX['sol-3']
+const PROTO = SCENE_INDEX['proto']
 
 /** 0..2 for Solutions states; -1 outside. */
 function stateIndexForScene(sceneIndex) {
@@ -130,6 +130,25 @@ function isEntranceHandoff(blend) {
   )
 }
 
+function isProtoHandoff(blend) {
+  if (blend.settled) return false
+  return (
+    (blend.from === SOL_3 && blend.to === PROTO) ||
+    (blend.from === PROTO && blend.to === SOL_3)
+  )
+}
+
+/** 0 = fully on §04, 1 = fully pushed off for §05. Shared with Prototype. */
+function protoPushT(blend) {
+  if (blend.settled) {
+    return blend.sceneIndex >= PROTO ? 1 : 0
+  }
+  if (blend.from === SOL_3 && blend.to === PROTO) return blend.t
+  if (blend.from === PROTO && blend.to === SOL_3) return 1 - blend.t
+  if (blend.to >= PROTO || blend.from >= PROTO) return 1
+  return 0
+}
+
 function isInternalSol(blend) {
   if (blend.settled) return false
   return (
@@ -142,13 +161,43 @@ function isInternalSol(blend) {
 }
 
 function entrancePresence(blend) {
+  if (isProtoHandoff(blend)) {
+    // Fully entered while the physical push owns leave / return.
+    return 1
+  }
   if (blend.settled) {
-    return blend.sceneIndex >= SOL_1 ? 1 : 0
+    return blend.sceneIndex >= SOL_1 && blend.sceneIndex <= SOL_3 ? 1 : 0
   }
   if (blend.from === CE_3 && blend.to === SOL_1) return blend.t
   if (blend.from === SOL_1 && blend.to === CE_3) return 1 - blend.t
-  if (blend.to >= SOL_1 || blend.from >= SOL_1) return 1
+  if (
+    (blend.from >= SOL_1 && blend.from <= SOL_3) ||
+    (blend.to >= SOL_1 && blend.to <= SOL_3)
+  ) {
+    return 1
+  }
   return 0
+}
+
+/**
+ * §04→05 push owns panel X (locked with Prototype). Copy fades after push starts.
+ */
+function stageMotion(blend, reduced) {
+  const presence = entrancePresence(blend)
+  const enter = entranceFromPresence(presence, reduced)
+  const push = protoPushT(blend)
+
+  if (push > 0.001) {
+    const pushEased = reduced ? push : easeInOutQuint(push)
+    const copyFade = easeInOutQuint(rangeProgress(push, 0.12, 0.42))
+    return {
+      textOpacity: enter.textOpacity * (1 - copyFade),
+      panelX: lerp(0, 100, pushEased),
+      mockOpacity: enter.mockOpacity,
+    }
+  }
+
+  return enter
 }
 
 /**
@@ -164,6 +213,11 @@ function contentRelay(blend, reduced) {
   // §03→04 entrance / reverse: only State 1, gated by entrance opacities.
   if (isEntranceHandoff(blend)) {
     return [{ index: 0, opacity: 1, role: 'current' }]
+  }
+
+  // §04→05 push / reverse: hold State 3 (physical panel motion owns leave).
+  if (isProtoHandoff(blend)) {
+    return [{ index: 2, opacity: 1, role: 'current' }]
   }
 
   if (isInternalSol(blend)) {
@@ -198,15 +252,19 @@ function Solutions({ phase1Static = false } = {}) {
   }
 
   const presence = entrancePresence(blend)
+  const push = protoPushT(blend)
   const involved =
-    presence > 0.001 ||
-    (!blend.settled && (blend.to >= SOL_1 || blend.from >= SOL_1))
+    isProtoHandoff(blend) ||
+    (presence > 0.001 && push < 0.999) ||
+    (!blend.settled &&
+      ((blend.to >= SOL_1 && blend.to <= SOL_3) ||
+        (blend.from >= SOL_1 && blend.from <= SOL_3)))
 
-  if (!involved) {
+  if (!involved || (push >= 0.999 && blend.settled)) {
     return null
   }
 
-  const motion = entranceFromPresence(presence, reduced)
+  const motion = stageMotion(blend, reduced)
   const layers = contentRelay(blend, reduced)
 
   const onSolStage =
@@ -214,9 +272,11 @@ function Solutions({ phase1Static = false } = {}) {
   const inInternal = isInternalSol(blend)
   const showNav =
     presence > 0.95 &&
+    push < 0.001 &&
     motion.panelX < 0.5 &&
     (onSolStage || inInternal) &&
-    !isEntranceHandoff(blend)
+    !isEntranceHandoff(blend) &&
+    !isProtoHandoff(blend)
   const stateIdx = onSolStage
     ? stateIndexForScene(sceneIndex)
     : inInternal
@@ -228,9 +288,9 @@ function Solutions({ phase1Static = false } = {}) {
       className={styles.phaseLayer}
       aria-label="Solutions"
       style={{
-        pointerEvents: presence > 0.55 ? 'auto' : 'none',
+        pointerEvents: presence > 0.55 && push < 0.5 ? 'auto' : 'none',
       }}
-      aria-hidden={presence < 0.05}
+      aria-hidden={presence < 0.05 || push > 0.95}
     >
       {/* Gradient: SharedStageBackground — content choreography only. */}
 
@@ -302,7 +362,8 @@ function Solutions({ phase1Static = false } = {}) {
             onPrev={() => goPrev({ reduced })}
             onNext={() => goNext({ reduced })}
             disablePrev={animating || stateIdx <= 0}
-            disableNext={animating || stateIdx >= STATES.length - 1}
+            /* State 3 next advances into §04→05 via the same goNext path. */
+            disableNext={animating}
           />
         )}
       </div>

@@ -5,10 +5,10 @@ import { useSceneBlend } from './useNavigator'
 import styles from './SharedStageBackground.module.css'
 
 const WHY_TITLE = SCENE_INDEX['why-title']
-const BAND_LAST = SCENE_INDEX['sol-3']
+const BAND_LAST = SCENE_INDEX['proto']
 
 /**
- * Stationary brand gradient for the Why ↔ Current Experience ↔ Solutions band.
+ * Stationary brand gradient for the Why ↔ CE ↔ Solutions ↔ Prototype band.
  * Opacity may fade when entering/leaving the band from Hero; position never
  * animates (no translate / page-flip during handoffs or internals).
  */
