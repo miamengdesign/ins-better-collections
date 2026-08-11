@@ -2,16 +2,100 @@
   position: relative;
 }
 
+/* Full-viewport gradient — stationary for the life of the pinned stage. */
+.gradient {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+/*
+ * Heading interpolates from the large centered opening state (--heading-t: 0)
+ * to the persistent small upper-left label (--heading-t: 1). Frame positions
+ * match the `02 Why Collections` references (center ~44% / label at --frame-margin).
+ */
 .heading {
   position: absolute;
-  left: 50%;
-  top: 44%;
-  transform: translate(-50%, -50%);
-  width: 80cqw;
-  text-align: center;
+  z-index: 2;
+  left: calc(50% + (var(--frame-margin) - 50%) * var(--heading-t, 0));
+  top: calc(44% + (var(--frame-margin) - 44%) * var(--heading-t, 0));
+  width: max-content;
+  max-width: 90cqw;
+  margin: 0;
+  text-align: left;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: var(--fs-96);
+  font-size: calc(var(--fs-96) + (var(--fs-16) - var(--fs-96)) * var(--heading-t, 0));
   line-height: var(--lh-auto);
   color: var(--color-white);
+  transform: translate(
+    calc(-50% * (1 - var(--heading-t, 0))),
+    calc(-50% * (1 - var(--heading-t, 0)))
+  );
+  transform-origin: left top;
+  will-change: transform, opacity, font-size, left, top;
+  pointer-events: none;
+}
+
+/*
+ * Narrative statements — left frame margin; `top` / `font-size` / `opacity` are
+ * set inline from scroll progress so previous + active can share the stage
+ * (matching `02 Why Collections 3/4` geometry).
+ */
+.statement {
+  position: absolute;
+  z-index: 1;
+  left: var(--frame-margin);
+  width: 56cqw;
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: var(--lh-auto);
+  color: var(--color-white);
+  text-align: left;
+  transform-origin: left top;
+  will-change: top, opacity, font-size;
+}
+
+.statement strong {
+  font-weight: 700;
+}
+
+/* —— Mobile stacked fallback (PinnedStage disabled) —— */
+
+.stacked {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 4cqh;
+  padding: var(--frame-margin);
+  overflow: auto;
+}
+
+.stackedHeading {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--fs-48);
+  line-height: var(--lh-auto);
+  color: var(--color-white);
+}
+
+.stackedStatement {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--fs-24);
+  line-height: var(--lh-auto);
+  color: var(--color-white);
+  max-width: 90cqw;
+}
+
+.stackedStatement strong {
+  font-weight: 700;
 }

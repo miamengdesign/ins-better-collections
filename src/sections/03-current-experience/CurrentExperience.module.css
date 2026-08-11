@@ -10,15 +10,17 @@
 .stack {
   position: absolute;
   inset: 0;
-  display: flex;
-  flex-direction: column;
+  z-index: 1;
 }
 
 .header {
-  flex-shrink: 0;
-  padding: var(--frame-margin) var(--frame-margin) 2.3872cqw;
+  position: relative;
+  z-index: 2;
+  padding: var(--frame-margin) var(--frame-margin) 0;
   display: flex;
   flex-direction: column;
+  /* Header stays put — panel grows up underneath the former gap. */
+  pointer-events: none;
 }
 
 .title {
@@ -30,11 +32,43 @@
   text-align: left;
 }
 
+/* Stacked bullets occupy one stable slot; only opacity crossfades.
+   Pulled slightly upward (tighter margin under the tracker) so the sentence
+   clears the panel with more breathing room once the panel top moves down. */
+.bulletStage {
+  position: relative;
+  margin-top: 1.6cqw;
+  min-height: calc(var(--fs-24) * var(--lh-auto) * 2);
+}
+
 .bullet {
+  position: absolute;
+  inset: 0 auto auto 0;
   display: flex;
   align-items: flex-start;
   gap: 0.95cqw;
-  margin-top: 2.9103cqw;
+  padding-left: 1.1308cqw;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-24);
+  font-weight: 500;
+  line-height: var(--lh-auto);
+  color: var(--color-white);
+  max-width: 60cqw;
+  text-align: left;
+  pointer-events: none;
+}
+
+.bullet::before {
+  content: '•';
+  line-height: inherit;
+}
+
+.bulletStatic {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.95cqw;
+  margin-top: 1.6cqw;
   padding-left: 1.1308cqw;
   font-family: var(--font-display);
   font-size: var(--fs-24);
@@ -45,23 +79,56 @@
   text-align: left;
 }
 
-.bullet::before {
+.bulletStatic::before {
   content: '•';
   line-height: inherit;
 }
 
+/*
+ * Evidence canvas — bottom edge fixed to the viewport bottom; top edge set to
+ * leave a clear gap under the problem sentence. Width, radius, and 93% fill
+ * unchanged. Contents crossfade in stacked `.layer`s; the panel itself only
+ * moves on the §03→04 exit tail.
+ */
 .panel {
-  flex: 1;
-  min-height: 0;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* Slightly shorter than the previous 21.5cqh top — top edge moves down,
+     bottom stays locked to the viewport. */
+  top: 24cqh;
+  z-index: 1;
   background: var(--panel-fill);
   border-top-left-radius: var(--panel-radius);
   border-top-right-radius: var(--panel-radius);
+  overflow: hidden;
+  will-change: transform, opacity;
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  will-change: opacity;
+}
+
+.evidence {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+/* —— State 1: three phones + callout (approved static layout) —— */
+
+.evidenceState1 {
   gap: 4cqw;
   padding: 3cqh 6cqw;
-  overflow: hidden;
 }
 
 .phone {
@@ -80,19 +147,83 @@
   align-self: center;
 }
 
-.calloutWide {
-  width: 28cqw;
-  align-self: flex-end;
-  margin-bottom: 2cqw;
+/* —— State 2: two grouped composites (phone + callouts baked in) ——
+   Frame placements from `03 Current Experience 2.svg`:
+   left phone x=244 / right phone x=966 on 1728; both phones share top y≈377.
+   Top-align so “Create New Collection” / “Choose Who to Share with” share a
+   baseline and neither title is clipped by the panel edge. */
+
+.evidenceState2 {
+  gap: 3.5cqw;
+  /* Extra top padding nudges both mockups (and their baked-in callouts) down
+     together without changing scale or horizontal placement. */
+  padding: 5cqh 4cqw 2cqh;
+  align-items: flex-start;
+  justify-content: center;
 }
 
-.calloutSm {
-  width: 18cqw;
+.group1 {
+  width: 38cqw;
+  height: auto;
+  flex-shrink: 0;
+  display: block;
+  object-fit: contain;
+  object-position: top center;
 }
 
-.group {
+.group2 {
+  width: 34cqw;
+  height: auto;
+  flex-shrink: 0;
+  display: block;
+  object-fit: contain;
+  object-position: top center;
+}
+
+/* —— State 3: single combined phone + callout composite ——
+   SVG phone at x=442 y=413 w=246; composite spans through callout (~x=1223). */
+
+.evidenceState3 {
+  padding: 3cqh 8cqw;
+}
+
+.state3Pic {
+  width: 46cqw;
+  height: auto;
+  display: block;
+  object-fit: contain;
+}
+
+/* —— Mobile stacked fallback —— */
+
+.stacked {
+  position: relative;
+  width: 100%;
+}
+
+.stackedBg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.stackedBlock {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.panelStatic {
+  flex: 1;
+  min-height: 50vh;
+  background: var(--panel-fill);
+  border-top-left-radius: var(--panel-radius);
+  border-top-right-radius: var(--panel-radius);
+  overflow: hidden;
+  display: flex;
   align-items: center;
-  gap: 1cqw;
+  justify-content: center;
 }

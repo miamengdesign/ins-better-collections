@@ -1,0 +1,49 @@
+.cue {
+  position: absolute;
+  left: 50%;
+  bottom: 2.8%;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 0.4em 1.2em;
+  /* Mask the cue baked into the Hero artwork so only this live element breathes. */
+  background: #ffffff;
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: clamp(11px, 0.95vw, 16px);
+  letter-spacing: 0.01em;
+  color: #b0b0b0;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.arrow {
+  display: inline-block;
+  margin-right: 0.25em;
+}
+
+.breathe {
+  animation: cue-breathe 4s ease-in-out infinite;
+}
+
+.static {
+  opacity: 1;
+  animation: none;
+}
+
+@keyframes cue-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .breathe {
+    opacity: 1;
+    animation: none;
+  }
+}
