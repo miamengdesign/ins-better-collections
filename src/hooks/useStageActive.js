@@ -21,6 +21,7 @@ function republish() {
     const next = id === bestId
     if (meta.active !== next) {
       meta.active = next
+      // Sync notify path so consumers can read activity without waiting on paint.
       meta.notify(next)
     }
   }
@@ -39,8 +40,18 @@ function upsert(id, partial) {
   republish()
 }
 
+/** Slight slack so subpixel sticky layout still counts as “visibly pinned”. */
+function isTrackStuck(el) {
+  const rect = el.getBoundingClientRect()
+  const vh = window.innerHeight
+  return rect.top <= 8 && rect.bottom >= vh - 8
+}
+
 /**
  * True while this track is the frontmost stuck cinematic stage.
+ *
+ * Stuck is re-checked on scroll, resize, and wheel so the first deliberate
+ * swipe after a section becomes visible is not lost to a stale inactive flag.
  */
 export function useStageActive(trackRef, { enabled = true, zIndex = 0 } = {}) {
   const id = useId()
@@ -61,6 +72,7 @@ export function useStageActive(trackRef, { enabled = true, zIndex = 0 } = {}) {
   useEffect(() => {
     if (!enabled) {
       upsert(id, { stuck: false, enabled: false })
+      setActive(false)
       return undefined
     }
 
@@ -70,18 +82,19 @@ export function useStageActive(trackRef, { enabled = true, zIndex = 0 } = {}) {
         upsert(id, { stuck: false })
         return
       }
-      const rect = el.getBoundingClientRect()
-      const vh = window.innerHeight
-      const stuck = rect.top <= 2 && rect.bottom >= vh - 2
-      upsert(id, { stuck, enabled: true, zIndex })
+      upsert(id, { stuck: isTrackStuck(el), enabled: true, zIndex })
     }
 
     update()
     window.addEventListener('scroll', update, { passive: true })
     window.addEventListener('resize', update)
+    // Wheel can pin a stage without a scroll event in some edge cases; keep
+    // stuck/active in sync so the playhead can take the next gesture.
+    window.addEventListener('wheel', update, { passive: true })
     return () => {
       window.removeEventListener('scroll', update)
       window.removeEventListener('resize', update)
+      window.removeEventListener('wheel', update)
     }
   }, [trackRef, enabled, zIndex, id])
 

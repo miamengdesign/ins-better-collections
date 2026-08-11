@@ -3,6 +3,7 @@ import { useCinematicPlayhead, useStageActive } from '../hooks/useCinematicPlayh
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import { useReducedMotion } from '../hooks/useReducedMotion'
 import { useScrollProgress } from '../hooks/useScrollProgress'
+import { WHEEL_INTENT_THRESHOLD } from '../lib/wheelIntent'
 import Stage from './Stage'
 import styles from './PinnedStage.module.css'
 
@@ -55,7 +56,7 @@ function PinnedStage({
     reduced: cinematic?.reduced ?? reduced,
     duration: cinematic?.duration ?? 1100,
     durations: cinematic?.durations,
-    threshold: cinematic?.threshold ?? 48,
+    threshold: cinematic?.threshold ?? WHEEL_INTENT_THRESHOLD,
     enabled: !isMobile && !!cinematic,
   })
 
