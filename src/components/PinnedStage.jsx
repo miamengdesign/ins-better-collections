@@ -65,7 +65,14 @@ function PinnedStage({
     return (
       <Stage className={className} aria-label={ariaLabel} data-pinned="false" {...rest}>
         {typeof children === 'function'
-          ? children({ progress: 0, isPinned: false, stepIndex: 0, animating: false })
+          ? children({
+              progress: 0,
+              isPinned: false,
+              stepIndex: 0,
+              animating: false,
+              goToStep: () => false,
+              stepCount: 0,
+            })
           : children}
       </Stage>
     )
@@ -95,6 +102,8 @@ function PinnedStage({
                 stepIndex: cine.stepIndex,
                 animating: cine.animating,
                 stageActive,
+                goToStep: cine.goToStep,
+                stepCount: cine.stepCount,
               })
             : children}
         </div>

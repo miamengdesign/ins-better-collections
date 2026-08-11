@@ -142,11 +142,11 @@
   overflow: hidden;
 }
 
-/* Each solution mockup fills the panel and is centred; only opacity/drift change. */
+/* Stacked mockups — opacity crossfade only; phone body stays fixed. */
 .mockupLayer {
   position: absolute;
   inset: 0;
-  will-change: transform, opacity;
+  will-change: opacity;
 }
 
 /*

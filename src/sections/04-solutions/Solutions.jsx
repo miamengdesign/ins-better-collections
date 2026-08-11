@@ -1,28 +1,37 @@
+import CardNav from '../../components/CardNav'
 import GradientStage from '../../components/GradientStage'
 import PhoneMockup from '../../components/PhoneMockup'
 import PinnedStage from '../../components/PinnedStage'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { img } from '../../lib/assets'
+import { useHandoff03to04 } from '../../lib/handoff03to04'
 import { useSolutionsPushT } from '../../lib/handoff04to05'
 import {
   clamp,
   easeInOutCubic,
   easeInOutQuint,
-  easeOutBack,
+  easeOutQuart,
   lerp,
   rangeProgress,
 } from '../../lib/motion'
 import styles from './Solutions.module.css'
 
-const PIN_TRACK_VH = 240
+/**
+ * Cinematic anchors (after §03→04 handoff has delivered sol1):
+ *  0    — sol1 settled (handoff-driven entrance may still be finishing)
+ *  0.33 — sol2
+ *  0.66 — sol3
+ *  1    — §04→05 push complete
+ *
+ * Arrows step among 0–2 only. Scroll also runs the push exit.
+ */
+const ANCHORS = [0, 0.33, 0.66, 1]
+const DURATIONS = [1100, 1100, 1300]
 
-/** Cinematic steps: enter → sol1 → sol2 → sol3 → push complete. */
-const ANCHORS = [0, 0.15, 0.42, 0.72, 1]
-const DURATIONS = [1100, 1100, 1100, 1300]
+const PIN_TRACK_VH = 220
 
-const ENTER = [0, 0.15]
-const FADE_12 = [0.28, 0.42]
-const FADE_23 = [0.58, 0.72]
+const FADE_12 = [0.12, 0.28]
+const FADE_23 = [0.45, 0.61]
 const PUSH = [0.72, 1]
 
 const STATES = [
@@ -79,74 +88,59 @@ const STATES = [
   },
 ]
 
-/** Mockup layer opacities + subtle drift (mirrors §03 evidence crossfade). */
-function layerMotion(p, reduced) {
-  const drift = reduced ? 0 : 12
+/**
+ * §03→04 entrance from shared handoff T (gradient stationary):
+ *  0.35–0.55  upper text fades in
+ *  0.50–0.75  light card enters from the right (soft settle)
+ *  0.70–1.00  mockup content fades in
+ */
+function handoffEnterMotion(t, reduced) {
+  const textT = easeInOutQuint(rangeProgress(t, 0.35, 0.55))
+  const cardT = reduced
+    ? rangeProgress(t, 0.5, 0.75)
+    : easeOutQuart(rangeProgress(t, 0.5, 0.75))
+  const mockT = easeInOutQuint(rangeProgress(t, 0.7, 1))
+  return {
+    textOpacity: textT,
+    panelX: lerp(100, 0, cardT),
+    mockOpacity: mockT,
+  }
+}
 
+/** In-place phone content crossfade — no translate/drift. */
+function layerMotion(p) {
   if (p < FADE_12[0]) {
-    return [
-      { opacity: 1, x: 0, y: 0 },
-      { opacity: 0, x: drift, y: drift },
-      { opacity: 0, x: drift, y: drift },
-    ]
+    return [{ opacity: 1 }, { opacity: 0 }, { opacity: 0 }]
   }
   if (p < FADE_12[1]) {
     const t = easeInOutCubic(rangeProgress(p, FADE_12[0], FADE_12[1]))
-    return [
-      { opacity: 1 - t, x: reduced ? 0 : lerp(0, -drift, t), y: reduced ? 0 : lerp(0, -drift, t) },
-      { opacity: t, x: reduced ? 0 : lerp(drift, 0, t), y: reduced ? 0 : lerp(drift, 0, t) },
-      { opacity: 0, x: drift, y: drift },
-    ]
+    return [{ opacity: 1 - t }, { opacity: t }, { opacity: 0 }]
   }
   if (p < FADE_23[0]) {
-    return [
-      { opacity: 0, x: -drift, y: -drift },
-      { opacity: 1, x: 0, y: 0 },
-      { opacity: 0, x: drift, y: drift },
-    ]
+    return [{ opacity: 0 }, { opacity: 1 }, { opacity: 0 }]
   }
   if (p < FADE_23[1]) {
     const t = easeInOutCubic(rangeProgress(p, FADE_23[0], FADE_23[1]))
-    return [
-      { opacity: 0, x: -drift, y: -drift },
-      { opacity: 1 - t, x: reduced ? 0 : lerp(0, -drift, t), y: reduced ? 0 : lerp(0, -drift, t) },
-      { opacity: t, x: reduced ? 0 : lerp(drift, 0, t), y: reduced ? 0 : lerp(drift, 0, t) },
-    ]
+    return [{ opacity: 0 }, { opacity: 1 - t }, { opacity: t }]
   }
-  return [
-    { opacity: 0, x: -drift, y: -drift },
-    { opacity: 0, x: -drift, y: -drift },
-    { opacity: 1, x: 0, y: 0 },
-  ]
+  return [{ opacity: 0 }, { opacity: 0 }, { opacity: 1 }]
 }
 
 function copyOpacities(p) {
-  return layerMotion(p, true).map((l) => l.opacity)
+  return layerMotion(p).map((l) => l.opacity)
 }
 
-/**
- * Light-panel X as a pure function of local `p`, with §04→05 push optionally
- * driven by the shared handoff playhead (keeps Prototype locked).
- */
-function panelX(p, reduced, sharedPushT) {
-  if (p < ENTER[1]) {
-    const raw = rangeProgress(p, ENTER[0], ENTER[1])
-    const t = reduced ? easeInOutCubic(raw) : easeOutBack(raw)
-    return lerp(100, 0, t)
-  }
-  // Prefer the shared push playhead once the handoff has started.
-  if (sharedPushT > 0.001) {
-    return lerp(0, 100, sharedPushT)
-  }
+function panelPushX(p, sharedPushT) {
+  if (sharedPushT > 0.001) return lerp(0, 100, sharedPushT)
   if (p >= PUSH[0]) {
-    const t = rangeProgress(p, PUSH[0], PUSH[1])
-    return lerp(0, 100, easeInOutQuint(t))
+    return lerp(0, 100, easeInOutQuint(rangeProgress(p, PUSH[0], PUSH[1])))
   }
   return 0
 }
 
 function Solutions() {
   const reduced = useReducedMotion()
+  const handoffT = useHandoff03to04()
   const sharedPushT = useSolutionsPushT()
 
   return (
@@ -156,7 +150,7 @@ function Solutions() {
       height={`calc(100vh + ${PIN_TRACK_VH}vh)`}
       overlapVh={100}
       startOffsetVh={0}
-      style={{ zIndex: 2 }}
+      style={{ zIndex: handoffT >= 0.999 ? 2 : 0 }}
       cinematic={{
         anchors: ANCHORS,
         durations: DURATIONS,
@@ -164,52 +158,70 @@ function Solutions() {
         reduced,
       }}
     >
-      {({ progress, isPinned }) => {
+      {({ progress, isPinned, stepIndex, goToStep, animating }) => {
         if (!isPinned) {
           return <StackedFallback />
         }
 
         const p = clamp(progress, 0, 1)
-        const layers = layerMotion(p, reduced)
+        const enter = handoffEnterMotion(handoffT, reduced)
+        const entering = handoffT < 0.999
+        const layers = layerMotion(p)
         const copies = copyOpacities(p)
-        const x = panelX(p, reduced, sharedPushT)
+        const pushX = panelPushX(p, sharedPushT)
+        const panelX = entering ? enter.panelX : pushX
+
+        const textOpacity = entering
+          ? enter.textOpacity
+          : copies[dominantCopy(p)]
+        const mockGate = entering ? enter.mockOpacity : 1
+
+        const canPrev = stepIndex > 0 && stepIndex < 3 && !animating && !entering
+        const canNext = stepIndex < 2 && !animating && !entering
 
         return (
           <>
             <GradientStage />
 
             <div className={styles.left}>
-              {STATES.map((state, i) => (
-                <div
-                  key={state.id}
-                  className={styles.copyLayer}
-                  style={{ opacity: copies[i] }}
-                  aria-hidden={copies[i] < 0.5}
-                >
-                  <p className={styles.eyebrow}>{state.eyebrow}</p>
-                  <h2 className={styles.heading}>{state.heading}</h2>
-                  <div className={styles.badgeGroup}>
-                    <span className={styles.badge}>{state.badge}</span>
-                    <p className={styles.explanation}>{state.explanation}</p>
+              {STATES.map((state, i) => {
+                const op = entering
+                  ? i === 0
+                    ? textOpacity
+                    : 0
+                  : copies[i]
+                return (
+                  <div
+                    key={state.id}
+                    className={styles.copyLayer}
+                    style={{ opacity: op }}
+                    aria-hidden={op < 0.5}
+                  >
+                    <p className={styles.eyebrow}>{state.eyebrow}</p>
+                    <h2 className={styles.heading}>{state.heading}</h2>
+                    <div className={styles.badgeGroup}>
+                      <span className={styles.badge}>{state.badge}</span>
+                      <p className={styles.explanation}>{state.explanation}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
 
             <div
               className={styles.right}
-              style={{ transform: `translateX(${x}%)` }}
+              style={{ transform: `translateX(${panelX}%)` }}
             >
               {STATES.map((state, i) => (
                 <div
                   key={state.id}
                   className={styles.mockupLayer}
                   style={{
-                    opacity: layers[i].opacity,
-                    transform: `translate(${layers[i].x}px, ${layers[i].y}px)`,
-                    pointerEvents: layers[i].opacity > 0.5 ? 'auto' : 'none',
+                    opacity: layers[i].opacity * mockGate,
+                    pointerEvents:
+                      layers[i].opacity * mockGate > 0.5 ? 'auto' : 'none',
                   }}
-                  aria-hidden={layers[i].opacity < 0.05}
+                  aria-hidden={layers[i].opacity * mockGate < 0.05}
                 >
                   <div className={styles.mockup}>
                     <PhoneMockup
@@ -220,6 +232,15 @@ function Solutions() {
                   </div>
                 </div>
               ))}
+
+              {!entering && stepIndex < 3 && (
+                <CardNav
+                  onPrev={() => goToStep(stepIndex - 1)}
+                  onNext={() => goToStep(stepIndex + 1)}
+                  disablePrev={!canPrev}
+                  disableNext={!canNext}
+                />
+              )}
             </div>
           </>
         )
@@ -228,7 +249,15 @@ function Solutions() {
   )
 }
 
-/** Mobile: three stacked static solution groups in reading order. */
+function dominantCopy(p) {
+  const ops = copyOpacities(p)
+  let best = 0
+  for (let i = 1; i < ops.length; i += 1) {
+    if (ops[i] > ops[best]) best = i
+  }
+  return best
+}
+
 function StackedFallback() {
   return (
     <div className={styles.stacked}>

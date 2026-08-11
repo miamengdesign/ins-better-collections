@@ -1,26 +1,23 @@
+import { useEffect } from 'react'
 import PinnedStage from '../../components/PinnedStage'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { img } from '../../lib/assets'
-import { clamp, lerp } from '../../lib/motion'
+import { useExit05to06 } from '../../lib/handoff05to06'
+import { setHandoff06to07 } from '../../lib/handoff06to07'
+import { clamp, easeInOutQuint, lerp, rangeProgress } from '../../lib/motion'
 import styles from './BehindTheWork.module.css'
 
 /**
- * Scroll-driven two-state stage (overrides the older timer-driven §06 note):
- * State 1 stays put underneath; State 2 is only an opacity fade of the dark
- * project-gradient overlay + black scrim + centered statement. Sketches never move.
- *
- * Layer order (matches `references/svg/06 Behind 2`):
- *   collage → multicolor gradient @ 70% → black @ 70% → statement
+ * Anchors:
+ *  0 — State 1 (sketches)
+ *  0.55 — State 2 overlays + statement settled (slow cloth-like cover)
+ *  1 — §06→07 handoff complete (statement gone; 07 takes over)
  */
-
-/** Extra scroll distance after the sticky viewport for the State 1→2 fade. */
-const PIN_TRACK_VH = 100
-
-/** Each overlay layer settles at 70% — never fully opaque. */
+const PIN_TRACK_VH = 160
+const OVERLAP_VH = 120
 const OVERLAY_MAX = 0.7
-
-const ANCHORS = [0, 1]
-const DURATIONS = [1200]
+const ANCHORS = [0, 0.55, 1]
+const DURATIONS = [2400, 2400]
 
 const STATEMENT =
   'Before narrowing the scope, I mapped issues across discovery, creation, sharing, and organization.'
@@ -28,8 +25,6 @@ const STATEMENT =
 function Collage() {
   return (
     <div className={styles.collage} aria-hidden="true">
-      {/* Painted back-to-front in the Figma frame's own stacking order: pic3, pic1,
-          pic2, pic4 — each sheet overlaps the one before it. */}
       <img className={styles.pic3} src={img('06 Behind asset/06 Behind 1 pic3.png')} alt="" />
       <img className={styles.pic1} src={img('06 Behind asset/06 Behind 1 pic1.png')} alt="" />
       <img className={styles.pic2} src={img('06 Behind asset/06 Behind 1 pic2.png')} alt="" />
@@ -47,7 +42,6 @@ function State1Copy() {
   )
 }
 
-/** Gradient then black — two separate 70% layers, not a single GradientStage. */
 function State2Overlays({ opacity }) {
   return (
     <>
@@ -65,52 +59,93 @@ function State2Overlays({ opacity }) {
   )
 }
 
+/**
+ * Slow cloth-like cover for State 2 (p 0→0.55):
+ * overlays ease up first; statement fades in only after layers are established.
+ */
+function state2Motion(p) {
+  const cover = rangeProgress(p, 0, 0.55)
+  const overlayT = easeInOutQuint(rangeProgress(cover, 0, 0.72))
+  const statementT = easeInOutQuint(rangeProgress(cover, 0.55, 1))
+  return {
+    overlayOpacity: lerp(0, OVERLAY_MAX, overlayT),
+    statementOpacity: statementT,
+  }
+}
+
+/** p 0.55→1: statement fades very slowly, then handoff to §07. */
+function exitTo07Motion(p) {
+  const t = rangeProgress(p, 0.55, 1)
+  // Statement leaves first and slowly; §07 bg/text follow via handoffT.
+  const statementOut = easeInOutQuint(rangeProgress(t, 0, 0.55))
+  return {
+    handoffT: t,
+    statementOpacity: 1 - statementOut,
+    overlayOpacity: OVERLAY_MAX,
+    stageOpacity: 1 - easeInOutQuint(rangeProgress(t, 0.45, 1)),
+  }
+}
+
 function BehindTheWork() {
   const reduced = useReducedMotion()
+  const enterFrom05 = useExit05to06()
 
   return (
     <PinnedStage
       className={styles.section}
       ariaLabel="Behind the Work"
-      height={`calc(100vh + ${PIN_TRACK_VH}vh)`}
+      height={`calc(${OVERLAP_VH}vh + ${PIN_TRACK_VH}vh)`}
+      overlapVh={OVERLAP_VH}
       startOffsetVh={0}
+      style={{ zIndex: 3 }}
       cinematic={{
         anchors: ANCHORS,
         durations: DURATIONS,
-        duration: 1200,
+        duration: 2400,
         reduced,
       }}
     >
       {({ progress, isPinned }) => {
         if (!isPinned) {
-          // Mobile: pin disabled — show the reachable end state (overlay + statement).
           return <StaticEndState />
         }
 
         const p = clamp(progress, 0, 1)
-        const t = reduced ? (p >= 0.5 ? 1 : 0) : p
-        const overlayOpacity = lerp(0, OVERLAY_MAX, t)
-        const statementOpacity = t
-
         return (
-          <>
-            <Collage />
-            <State1Copy />
-            <State2Overlays opacity={overlayOpacity} />
-            <p
-              className={styles.statement}
-              style={{ opacity: statementOpacity }}
-            >
-              {STATEMENT}
-            </p>
-          </>
+          <BehindFrame p={p} reduced={reduced} enterFrom05={enterFrom05} />
         )
       }}
     </PinnedStage>
   )
 }
 
-/** Mobile / unpinned: State 2 fully visible over the unchanged collage. */
+function BehindFrame({ p, reduced, enterFrom05 }) {
+  const s2 = state2Motion(p)
+  const exit = exitTo07Motion(p)
+  const inExit = p > 0.55
+
+  const overlayOpacity = inExit ? exit.overlayOpacity : s2.overlayOpacity
+  const statementOpacity = inExit ? exit.statementOpacity : s2.statementOpacity
+  // Appear under §05 as its gradient fades (enterFrom05).
+  const reveal = reduced ? 1 : easeInOutQuint(enterFrom05)
+  const stageOpacity = (inExit ? exit.stageOpacity : 1) * Math.max(reveal, 0.001)
+
+  useEffect(() => {
+    setHandoff06to07(inExit ? exit.handoffT : 0)
+  }, [inExit, exit.handoffT])
+
+  return (
+    <div style={{ opacity: stageOpacity }}>
+      <Collage />
+      <State1Copy />
+      <State2Overlays opacity={overlayOpacity} />
+      <p className={styles.statement} style={{ opacity: statementOpacity }}>
+        {STATEMENT}
+      </p>
+    </div>
+  )
+}
+
 function StaticEndState() {
   return (
     <>

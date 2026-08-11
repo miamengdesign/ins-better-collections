@@ -9,9 +9,16 @@
   line-height: var(--lh-auto);
 }
 
-/* "Back to top" copy never animates — only the arrow well moves. */
+/* "Back to top" copy never animates position — only weight on hover. */
 .label {
   display: inline;
+  font-weight: 400;
+  transition: font-weight 150ms ease-out;
+}
+
+.button:hover .label,
+.button:focus-visible .label {
+  font-weight: 700;
 }
 
 /*
