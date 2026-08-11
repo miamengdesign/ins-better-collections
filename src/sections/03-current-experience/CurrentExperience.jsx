@@ -198,6 +198,7 @@ function CurrentExperience() {
       className={styles.section}
       ariaLabel="Current Experience"
       height={`${PIN_TRACK_VH}vh`}
+      style={{ zIndex: 2 }}
     >
       {({ progress, isPinned }) => {
         if (!isPinned) {
