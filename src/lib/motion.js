@@ -22,6 +22,10 @@ export function easeInCubic(t) {
   return t ** 3
 }
 
+export function easeInOutCubic(t) {
+  return t < 0.5 ? 4 * t * t * t : 1 - ((-2 * t + 2) ** 3) / 2
+}
+
 /**
  * Exit opacity curve from the animation spec: `1 → 0.35 → 0` across `t ∈ [0,1]`.
  */

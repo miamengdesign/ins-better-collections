@@ -12,6 +12,7 @@
   inset: 0;
   display: flex;
   flex-direction: column;
+  z-index: 1;
 }
 
 .header {
@@ -30,7 +31,37 @@
   text-align: left;
 }
 
+/* Stacked bullets occupy one stable slot; only opacity crossfades. */
+.bulletStage {
+  position: relative;
+  margin-top: 2.9103cqw;
+  min-height: calc(var(--fs-24) * var(--lh-auto) * 2);
+}
+
 .bullet {
+  position: absolute;
+  inset: 0 auto auto 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.95cqw;
+  padding-left: 1.1308cqw;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-24);
+  font-weight: 500;
+  line-height: var(--lh-auto);
+  color: var(--color-white);
+  max-width: 60cqw;
+  text-align: left;
+  pointer-events: none;
+}
+
+.bullet::before {
+  content: '•';
+  line-height: inherit;
+}
+
+.bulletStatic {
   display: flex;
   align-items: flex-start;
   gap: 0.95cqw;
@@ -45,23 +76,50 @@
   text-align: left;
 }
 
-.bullet::before {
+.bulletStatic::before {
   content: '•';
   line-height: inherit;
 }
 
+/*
+ * Evidence canvas — spatially stable across states. SVG panel path starts at
+ * y=276 with 80px corner radius and fill white @ 0.93. Contents crossfade in
+ * stacked `.layer`s; the panel itself only moves on the §03→04 exit tail.
+ */
 .panel {
+  position: relative;
   flex: 1;
   min-height: 0;
   background: var(--panel-fill);
   border-top-left-radius: var(--panel-radius);
   border-top-right-radius: var(--panel-radius);
+  overflow: hidden;
+  will-change: transform, opacity;
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  will-change: transform, opacity;
+}
+
+.evidence {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+/* —— State 1: three phones + callout (approved static layout) —— */
+
+.evidenceState1 {
   gap: 4cqw;
   padding: 3cqh 6cqw;
-  overflow: hidden;
 }
 
 .phone {
@@ -80,19 +138,78 @@
   align-self: center;
 }
 
-.calloutWide {
-  width: 28cqw;
-  align-self: flex-end;
-  margin-bottom: 2cqw;
+/* —— State 2: two grouped composites (phone + callouts baked in) ——
+   Frame placements from `03 Current Experience 2.svg`:
+   left phone x=244 / right phone x=966 on 1728; clusters extend to callouts.
+   Sizes keep phone height ≈ 534.8/1117 of the frame (~47.9cqh). */
+
+.evidenceState2 {
+  gap: 3.5cqw;
+  padding: 2cqh 4cqw 3cqh;
+  align-items: flex-end;
 }
 
-.calloutSm {
-  width: 18cqw;
+.group1 {
+  width: 38cqw;
+  height: auto;
+  flex-shrink: 0;
+  display: block;
+  object-fit: contain;
 }
 
-.group {
+.group2 {
+  width: 34cqw;
+  height: auto;
+  flex-shrink: 0;
+  display: block;
+  object-fit: contain;
+  margin-bottom: 4cqh;
+}
+
+/* —— State 3: single combined phone + callout composite ——
+   SVG phone at x=442 y=413 w=246; composite spans through callout (~x=1223). */
+
+.evidenceState3 {
+  padding: 3cqh 8cqw;
+}
+
+.state3Pic {
+  width: 46cqw;
+  height: auto;
+  display: block;
+  object-fit: contain;
+}
+
+/* —— Mobile stacked fallback —— */
+
+.stacked {
+  position: relative;
+  width: 100%;
+}
+
+.stackedBg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.stackedBlock {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.panelStatic {
+  flex: 1;
+  min-height: 50vh;
+  background: var(--panel-fill);
+  border-top-left-radius: var(--panel-radius);
+  border-top-right-radius: var(--panel-radius);
+  overflow: hidden;
+  display: flex;
   align-items: center;
-  gap: 1cqw;
+  justify-content: center;
 }
