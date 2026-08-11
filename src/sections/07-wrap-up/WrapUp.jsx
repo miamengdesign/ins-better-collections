@@ -19,11 +19,15 @@ import styles from './WrapUp.module.css'
 /**
  * §07 Wrap Up — Scene 1 entrance → Scene 2 rise → Scene 3 final composition.
  *
- * Geometry from references (1728×1117 → cqh), measured from PNG text bands:
- *  Scene 1 statement top ≈ 43.903cqh
- *  Scene 2 statement top ≈ 20.850cqh
- *  Scene 2 “If I had more time…” top ≈ 61.853cqh
- *  Scene 3 Tools/Quick Links ≈ 42.426cqh; footer ≈ 90.886cqh
+ * Wrap 1/2 geometry from `references/png/07 Wrapup {1,2}.png` (6912×4468 → /4),
+ * cross-checked with SVG. Ink-density verified Thin/Medium spans.
+ *
+ *  Statement fs-24, lh --lh-auto (31px pitch); longest line 589.5px → 34.115cqw
+ *  Scene 1 top 529.75px → 47.426cqh; Scene 2 top 443.25px → 39.682cqh
+ *  Rise Δ = −86.5px → −7.744cqh
+ *  Future block fs-24 (heading Medium, body Thin); top 616.25px → 55.170cqh
+ *  Future width 714px → 41.319cqw; heading→body = one lh step (no extra margin)
+ *  Scene 3 untouched
  */
 
 const WRAP_1 = SCENE_INDEX['wrap-1']
@@ -31,9 +35,9 @@ const WRAP_2 = SCENE_INDEX['wrap-2']
 const WRAP_3 = SCENE_INDEX['wrap-3']
 const BEHIND_2 = SCENE_INDEX['behind-2']
 
-const S1_STATEMENT_TOP = 43.903
-const S2_STATEMENT_TOP = 20.85
-const S2_FUTURE_TOP = 61.853
+const S1_STATEMENT_TOP = (529.75 / 1117) * 100
+const S2_STATEMENT_TOP = (443.25 / 1117) * 100
+const S2_FUTURE_TOP = (616.25 / 1117) * 100
 const S3_LISTS_TOP = 42.426
 const S3_FOOTER_TOP = 90.886
 /** Scene 1→2 rise delta — transform only. */
@@ -44,18 +48,28 @@ const STATEMENT_RISE_CQH = S2_STATEMENT_TOP - S1_STATEMENT_TOP
  */
 const SCENE3_EXIT_Y_CQH = -48
 
+/**
+ * Editorial line breaks + highlight from 07 Wrapup 1/2 PNG ink bands.
+ * Medium: “existing Collection experience” only.
+ */
 const STATEMENT = (
   <>
     This redesign does not add an entirely new system.
     <br />
-    It <strong>strengthens the existing Collection experience</strong> by
+    It strengthens the <strong>existing Collection experience</strong> by
     <br />
     making saving consistent and collaboration flexible over time.
   </>
 )
 
-const FUTURE_BODY =
-  'I would validate the redesigned flow with users and explore shared notes, smarter collection organization and clearer collaboration permissions.'
+/** Future body — all Thin; no Medium spans in the reference. */
+const FUTURE_BODY = (
+  <>
+    I would validate the redesigned flow with users and explore shared notes,
+    <br />
+    smarter collection organization and clearer collaboration permissions.
+  </>
+)
 
 const TOOLS = ['Figma', 'Claude Code', 'Cursor', 'ChatGPT Codex', 'Github', 'Vercel']
 
@@ -220,7 +234,7 @@ function WrapChrome({
           </div>
 
           <div className={styles.quickCol}>
-            <p className={styles.listTitle}>Quick Link:</p>
+            <p className={styles.listTitle}>Links:</p>
             <ul className={`${styles.list} ${styles.quickLink}`}>
               <li>
                 <a
@@ -373,7 +387,7 @@ function MobileStack() {
           </ul>
         </div>
         <div>
-          <p className={styles.listTitle}>Quick Link:</p>
+          <p className={styles.listTitle}>Links:</p>
           <ul className={`${styles.list} ${styles.quickLink}`}>
             <li>
               <a href={PROTOTYPE_URL} target="_blank" rel="noopener noreferrer">

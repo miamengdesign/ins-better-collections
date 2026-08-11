@@ -41,10 +41,8 @@ const STATES = [
     badge: '✅ Interface Consistency',
     explanation: (
       <>
-        Users can easily find the <strong>Collection option</strong> in
-        <br />
-        the Reel <strong>detail view</strong>, keeping the experience
-        <br />
+        Users can easily find the <strong>Collection option</strong> in the Reel{' '}
+        <strong>detail view</strong>, keeping the experience{' '}
         <strong>consistent</strong> across all content formats.
       </>
     ),
@@ -59,10 +57,8 @@ const STATES = [
     badge: '✅ Multi-User Collaboration',
     explanation: (
       <>
-        Users can now create a new collection and <strong>share</strong> it
-        <br />
-        with <strong>multiple</strong> friends. The <strong>selection count</strong>
-        <br />
+        Users can now create a new collection and <strong>share</strong> it with{' '}
+        <strong>multiple</strong> friends. The <strong>selection count</strong>{' '}
         helps them clearly see how many people are added.
       </>
     ),
@@ -77,11 +73,9 @@ const STATES = [
     badge: '✅ Collaboration Consistency',
     explanation: (
       <>
-        Sharing an <strong>existing</strong> collection is now simple—users
-        <br />
-        can view current collaborators and <strong>add new ones</strong>
-        <br />
-        whenever they like.
+        Sharing an <strong>existing</strong> collection is now simple—users can
+        view current collaborators and <strong>add new ones</strong> whenever they
+        like.
       </>
     ),
     src: img('04 Solution asset/04 Solution 3 pic.png'),

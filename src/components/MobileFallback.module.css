@@ -1,0 +1,76 @@
+/*
+ * Phone fallback — `references/svg/Phone.svg` (402×874), PNG visual check.
+ * Full-viewport gradient; message centered in the screen; footer pinned low.
+ */
+
+.screen {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
+  color: var(--color-panel);
+}
+
+.gradient {
+  position: absolute;
+  inset: 0;
+}
+
+/*
+ * Center copy — path bbox center ≈ (200.5, 432.4) → 49.88% × 49.47%.
+ * fs-14 at the 402px reference width (ink height ≈ 12px).
+ */
+.message {
+  position: absolute;
+  left: 50%;
+  top: 49.47%;
+  z-index: 1;
+  margin: 0;
+  max-width: calc(100% - 2 * 6.144vw);
+  transform: translate(-50%, -50%);
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: calc(14 / 402 * 100vw);
+  line-height: var(--lh-auto);
+  text-align: center;
+  color: var(--color-panel);
+  pointer-events: none;
+}
+
+/*
+ * Footer — left path x≈24.7 (6.144vw); right path ends ≈374.7 (93.2vw).
+ * Shared baseline center y ≈ 93.94% → bottom inset ≈ 5.58% of frame height.
+ * fs-12 at the 402px reference width — slightly lighter than the centered message.
+ */
+.footer {
+  position: absolute;
+  left: calc(6.144vw + env(safe-area-inset-left, 0px));
+  right: calc(6.219vw + env(safe-area-inset-right, 0px));
+  bottom: calc(5.58dvh + env(safe-area-inset-bottom, 0px));
+  z-index: 1;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4vw;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: calc(12 / 402 * 100vw);
+  line-height: var(--lh-auto);
+  color: var(--color-panel);
+  pointer-events: none;
+}
+
+.footerLeft {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+}
+
+.footerRight {
+  flex: 0 0 auto;
+  text-align: right;
+  white-space: nowrap;
+}

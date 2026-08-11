@@ -33,35 +33,40 @@
 }
 
 /*
- * Closing statement. Layout `top` is the Scene 1 resting position; Scene 1→2
- * rises via transform translateY (cqh delta to Wrapup-2), never per-frame `top`.
- * Explicit <br>s match the reference line breaks; Regular with one Bold clause.
+ * Closing statement. Layout `top` is Scene 1 resting position; Scene 1→2
+ * rises via transform translateY (cqh delta), never per-frame `top`.
+ * 07 Wrapup 1/2.png: fs-24, lh --lh-auto (31px pitch), width 589.5px → 34.115cqw.
+ * Editorial <br> + nowrap — no browser soft-wrap.
+ * Base Thin (300) / highlight Medium (500).
  */
 .paragraph {
   position: absolute;
   left: var(--frame-margin);
-  right: var(--frame-margin);
+  width: 34.115cqw;
   z-index: 1;
   margin: 0;
   font-family: var(--font-display);
-  font-weight: 400;
-  font-size: var(--fs-48);
+  font-weight: 300;
+  font-size: var(--fs-24);
   line-height: var(--lh-auto);
   color: var(--color-panel);
+  white-space: nowrap;
   will-change: transform;
   pointer-events: none;
 }
 
 .paragraph strong {
-  font-weight: 700;
+  font-weight: 500;
 }
 
-/* State-2 “If I had more time…” block — Wrapup 2 PNG/SVG: top ≈61.85cqh, width ≈41.4cqw.
-   Scene 2→3 shares the same upward translateY as the statement (spacing preserved). */
+/*
+ * Wrapup 2.png future block: top 616.25px → 55.170cqh, width 714px → 41.319cqw.
+ * Heading + body both fs-24; heading Medium, body Thin; one lh step between them.
+ */
 .future {
   position: absolute;
   left: var(--frame-margin);
-  width: 41.37cqw;
+  width: 41.319cqw;
   z-index: 1;
   will-change: transform, opacity;
   pointer-events: none;
@@ -70,20 +75,21 @@
 .futureHeading {
   margin: 0;
   font-family: var(--font-display);
-  font-weight: 700;
-  font-size: var(--fs-16);
+  font-weight: 500;
+  font-size: var(--fs-24);
   line-height: var(--lh-auto);
   color: var(--color-panel);
+  white-space: nowrap;
 }
 
 .futureBody {
-  margin: 1.6cqh 0 0;
+  margin: 0;
   font-family: var(--font-display);
-  font-weight: 400;
-  font-size: var(--fs-16);
+  font-weight: 300;
+  font-size: var(--fs-24);
   line-height: var(--lh-auto);
   color: var(--color-panel);
-  opacity: 0.92;
+  white-space: nowrap;
 }
 
 /*
@@ -196,18 +202,32 @@
 .paragraphStatic {
   margin: 0;
   font-family: var(--font-display);
-  font-weight: 400;
-  font-size: var(--fs-48);
+  font-weight: 300;
+  font-size: var(--fs-24);
   line-height: var(--lh-auto);
   color: var(--color-panel);
+  max-width: 34.115cqw;
 }
 
 .paragraphStatic strong {
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .futureStatic {
-  width: min(41.37cqw, 100%);
+  width: min(41.319cqw, 100%);
+}
+
+.futureStatic .futureHeading {
+  font-weight: 500;
+  font-size: var(--fs-24);
+  line-height: var(--lh-auto);
+}
+
+.futureStatic .futureBody {
+  margin-top: 0;
+  font-weight: 300;
+  font-size: var(--fs-24);
+  line-height: var(--lh-auto);
 }
 
 .listsStatic {

@@ -75,16 +75,17 @@
 }
 
 /* 451 of the frame wide with a 10px radius. Body copy is Regular and only the
-   emphasised phrases are Bold. At the reference's 20px the 430px content width
-   sets the copy in the same three lines the export breaks it into. */
+   emphasised phrases are Bold. Inner content width ≈430px (24.88cqw); wrapping
+   is fluid — no forced line breaks — so line rhythm stays natural at every
+   viewport scale. */
 .explanation {
   position: relative;
   font-family: var(--font-display);
   font-weight: 400;
   font-size: var(--fs-20);
-  line-height: var(--lh-ui);
+  line-height: var(--lh-auto);
   width: 26.0995cqw;
-  padding: 0.4126cqw 0.6076cqw 0.2587cqw;
+  padding: 0.5787cqw 0.6076cqw 0.5201cqw;
   border-radius: 0.5787cqw;
   background:
     linear-gradient(
@@ -98,6 +99,10 @@
     rgba(255, 255, 255, 0.05);
   color: var(--color-white);
   box-sizing: border-box;
+  text-wrap: pretty;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
 }
 
 /* The stroke is the brand gradient, not a flat colour — drawn as a masked ring so

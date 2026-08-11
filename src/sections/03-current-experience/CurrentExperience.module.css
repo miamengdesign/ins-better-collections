@@ -155,36 +155,38 @@
 }
 
 /* —— State 2: two grouped composites (phone + callouts baked in) ——
-   Frame placements from `03 Current Experience 2.svg`:
-   left phone x=244 / right phone x=966 on 1728; both phones share top y≈377.
-   Top-align so “Create New Collection” / “Choose Who to Share with” share a
-   baseline and neither title is clipped by the panel edge. */
+   Frame placements from `03 Current Experience 2.svg` (1728×1117):
+   left phone x=178 / right phone x=1008; both phones share top y≈403
+   (aligned with CE1 phone tops). Group bounds ≈178–937.5 and 1008–1646.5.
+   Panel top stays 24cqh; padding-top = (403/1117)*100 − 24 ≈ 12.08cqh. */
 
 .evidenceState2 {
-  gap: 3.5cqw;
-  /* Extra top padding nudges both mockups (and their baked-in callouts) down
-     together without changing scale or horizontal placement. */
-  padding: 5cqh 4cqw 2cqh;
+  gap: 4.08cqw;
+  /* Base resting line y≈403; nudged up ~1cqh for approved State-2 placement. */
+  padding: 11.08cqh 4cqw 2cqh;
   align-items: flex-start;
   justify-content: center;
 }
 
 .group1 {
-  width: 38cqw;
+  width: 43.95cqw;
   height: auto;
   flex-shrink: 0;
   display: block;
   object-fit: contain;
   object-position: top center;
+  /* Match State-1 PhoneMockup depth (PhoneMockup.module.css). */
+  filter: drop-shadow(0 1.2cqw 2.4cqw rgba(0, 0, 0, 0.18));
 }
 
 .group2 {
-  width: 34cqw;
+  width: 36.95cqw;
   height: auto;
   flex-shrink: 0;
   display: block;
   object-fit: contain;
   object-position: top center;
+  filter: drop-shadow(0 1.2cqw 2.4cqw rgba(0, 0, 0, 0.18));
 }
 
 /* —— State 3: single combined phone + callout composite ——
@@ -199,6 +201,8 @@
   height: auto;
   display: block;
   object-fit: contain;
+  /* Match State-1 PhoneMockup depth (PhoneMockup.module.css). */
+  filter: drop-shadow(0 1.2cqw 2.4cqw rgba(0, 0, 0, 0.18));
 }
 
 /* —— Mobile stacked fallback —— */

@@ -2,6 +2,7 @@ import GestureController from './nav/GestureController'
 import CinematicRoot from './nav/CinematicRoot'
 import { useNavigator } from './nav/useNavigator'
 import tailStyles from './nav/Tail.module.css'
+import MobileFallback from './components/MobileFallback'
 import Hero from './sections/01-hero/Hero'
 import WhyCollection from './sections/02-why-collection/WhyCollection'
 import CurrentExperience from './sections/03-current-experience/CurrentExperience'
@@ -14,22 +15,14 @@ import { useMediaQuery } from './hooks/useMediaQuery'
 /**
  * Phase 1: navigator drives Hero → … → Behind 1–2 → Wrap Up Scenes 1–3.
  * wrap-3 is the terminal cinematic scene (no empty static-tail unlock).
+ *
+ * Phone viewports render one static fallback only — no cinematic stack.
  */
 function App() {
   const isMobile = useMediaQuery('(max-width: 767px)')
 
   if (isMobile) {
-    return (
-      <>
-        <Hero />
-        <WhyCollection />
-        <CurrentExperience />
-        <Solutions />
-        <Prototype />
-        <BehindTheWork />
-        <WrapUp />
-      </>
-    )
+    return <MobileFallback />
   }
 
   return (

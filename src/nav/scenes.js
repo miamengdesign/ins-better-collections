@@ -9,10 +9,9 @@
 export const SCENES = [
   { id: 'hero', label: 'Hero', enterMs: 0 },
   { id: 'why-title', label: 'Why Collection — title', enterMs: 1200 },
-  { id: 'why-1', label: 'Why Collection — statement 1', enterMs: 1100 },
-  { id: 'why-2', label: 'Why Collection — statement 2', enterMs: 1100 },
-  { id: 'why-3', label: 'Why Collection — statement 3', enterMs: 1100 },
-  { id: 'why-4', label: 'Why Collection — statement 4', enterMs: 1100 },
+  { id: 'why-1', label: 'Why Collection — scene 1', enterMs: 1100 },
+  { id: 'why-2', label: 'Why Collection — scene 2', enterMs: 1100 },
+  { id: 'why-3', label: 'Why Collection — scene 3', enterMs: 1100 },
   {
     id: 'ce-1',
     label: 'Current Experience — state 1',
