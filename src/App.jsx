@@ -12,8 +12,8 @@ import WrapUp from './sections/07-wrap-up/WrapUp'
 import { useMediaQuery } from './hooks/useMediaQuery'
 
 /**
- * Phase 1: navigator drives Hero → Why → CE → Solutions → Prototype → Behind 1–2.
- * §07 remains static tail content until a later migration.
+ * Phase 1: navigator drives Hero → … → Behind 1–2 → Wrap Up Scene 1.
+ * Wrap scenes 2–3 remain deferred (no StaticTail content yet).
  */
 function App() {
   const isMobile = useMediaQuery('(max-width: 767px)')
@@ -42,6 +42,7 @@ function App() {
         <Solutions />
         <Prototype />
         <BehindTheWork />
+        <WrapUp />
       </CinematicRoot>
       <StaticTail />
     </>
@@ -57,8 +58,11 @@ function StaticTail() {
       aria-hidden={!unlocked}
       inert={!unlocked || undefined}
     >
-      {/* Behind lives in CinematicRoot (behind-1). Tail starts at Wrap Up. */}
-      <WrapUp phase1Static />
+      {/*
+        Wrap Up Scene 1 lives in CinematicRoot (wrap-1).
+        Scenes 2–3 / footer extras stay out of the tree until migrated —
+        prevents any flash of later Wrap content during §06→07.
+      */}
     </div>
   )
 }

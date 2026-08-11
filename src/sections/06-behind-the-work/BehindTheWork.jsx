@@ -12,18 +12,19 @@ import {
   rangeProgress,
 } from '../../lib/motion'
 import { exit05to06T } from '../../nav/exit05to06'
+import { exit06to07T } from '../../nav/exit06to07'
 import { SCENE_INDEX } from '../../nav/scenes'
 import { useSceneBlend } from '../../nav/useNavigator'
 import styles from './BehindTheWork.module.css'
 
 /**
- * §06 Behind the Work — entrance to State 1, then dark-cloth veil to State 2.
+ * §06 Behind the Work — entrance → State 1 → veil State 2 → layered exit to Wrap 1.
  * One physical sketch collage stays mounted; overlays/statement are opacity only.
- * §06→07 remains for a later migration.
  */
 
 const BEHIND_1 = SCENE_INDEX['behind-1']
 const BEHIND_2 = SCENE_INDEX['behind-2']
+const WRAP_1 = SCENE_INDEX['wrap-1']
 const OVERLAY_MAX = 0.7
 const PIN_TRACK_VH = 160
 const OVERLAP_VH = 120
@@ -86,33 +87,30 @@ function State2Overlays({ opacity }) {
   )
 }
 
-/**
- * Phase D — §06 State 1 composition fades in after §05 card/copy/gradient
- * are underway (shared exit05to06T playhead).
- */
 function revealFromExit(exitT, reduced) {
   if (reduced) return rangeProgress(exitT, 0.55, 1)
   return easeInOutQuint(rangeProgress(exitT, 0.55, 1))
 }
 
-/**
- * behind-1 → behind-2 veil playhead 0→1 (reverse via 1−t).
- * Sketches never move; only overlay + statement opacities change.
- */
 function state2CoverT(blend) {
   if (blend.settled) {
+    // Fully veiled through wrap handoff ownership; unmount gates visibility.
     return blend.sceneIndex >= BEHIND_2 ? 1 : 0
   }
   if (blend.from === BEHIND_1 && blend.to === BEHIND_2) return blend.t
   if (blend.from === BEHIND_2 && blend.to === BEHIND_1) return 1 - blend.t
-  if (blend.to >= BEHIND_2 || blend.from >= BEHIND_2) return 1
+  // Keep veil fully on during §06→07 (and reverse into behind-2).
+  if (
+    blend.to >= BEHIND_2 ||
+    blend.from >= BEHIND_2 ||
+    blend.to === WRAP_1 ||
+    blend.from === WRAP_1
+  ) {
+    return 1
+  }
   return 0
 }
 
-/**
- * Phase A  0.00–0.72  multicolor + black overlays build to 70%
- * Phase B  0.55–1.00  centered statement fades in after veil is established
- */
 function veilMotion(cover, reduced) {
   const overlayT = reduced
     ? rangeProgress(cover, 0, 0.72)
@@ -123,6 +121,25 @@ function veilMotion(cover, reduced) {
   return {
     overlayOpacity: lerp(0, OVERLAY_MAX, overlayT),
     statementOpacity: statementT,
+  }
+}
+
+/**
+ * §06→07 layered exit (exitT 0→1, reverse via 1−t):
+ *  Phase A  0.00–0.42  centered statement fades VERY slowly
+ *  Phase B+ 0.40–0.72  collage + veil give way (after statement is mostly gone)
+ *  (Wrap Up owns §07 bg / beat / text on the same playhead.)
+ */
+function exitToWrapMotion(exitT, reduced) {
+  const statementOut = reduced
+    ? rangeProgress(exitT, 0, 0.42)
+    : easeInOutQuint(rangeProgress(exitT, 0, 0.42))
+  const stageOut = reduced
+    ? rangeProgress(exitT, 0.4, 0.72)
+    : easeInOutQuint(rangeProgress(exitT, 0.4, 0.72))
+  return {
+    statementGate: 1 - statementOut,
+    stageOpacity: 1 - stageOut,
   }
 }
 
@@ -156,39 +173,49 @@ function State1Frame() {
 
 function CinematicBehind({ reduced }) {
   const blend = useSceneBlend()
-  const exitT = exit05to06T(blend)
+  const enterT = exit05to06T(blend)
   const cover = state2CoverT(blend)
+  const exitT = exit06to07T(blend)
   const involved =
-    exitT > 0.001 ||
+    (enterT > 0.001 && exitT < 0.999) ||
     cover > 0.001 ||
+    exitT > 0.001 ||
     (!blend.settled &&
       ((blend.to >= BEHIND_1 && blend.to <= BEHIND_2) ||
-        (blend.from >= BEHIND_1 && blend.from <= BEHIND_2))) ||
+        (blend.from >= BEHIND_1 && blend.from <= BEHIND_2) ||
+        blend.to === WRAP_1 ||
+        blend.from === WRAP_1)) ||
     (blend.settled &&
       blend.sceneIndex >= BEHIND_1 &&
       blend.sceneIndex <= BEHIND_2)
 
-  if (!involved) {
+  if (!involved || (exitT >= 0.999 && blend.settled)) {
     return null
   }
 
-  const reveal = revealFromExit(exitT, reduced)
+  const reveal = revealFromExit(enterT, reduced)
   const veil = veilMotion(cover, reduced)
+  const leave = exitToWrapMotion(exitT, reduced)
+  const statementOpacity =
+    exitT > 0.001
+      ? veil.statementOpacity * leave.statementGate
+      : veil.statementOpacity
+  const stageOpacity = reveal * leave.stageOpacity
 
   return (
     <section
       className={styles.phaseLayer}
       aria-label="Behind the Work"
-      style={{ opacity: Math.max(reveal, 0.001) }}
-      aria-hidden={reveal < 0.05}
+      style={{ opacity: Math.max(stageOpacity, 0.001) }}
+      aria-hidden={stageOpacity < 0.05}
     >
-      {/* One physical collage — stationary under both states. */}
+      {/* One physical collage — stationary under both states + exit. */}
       <State1Frame />
       <State2Overlays opacity={veil.overlayOpacity} />
       <p
         className={styles.statement}
-        style={{ opacity: veil.statementOpacity }}
-        aria-hidden={veil.statementOpacity < 0.05}
+        style={{ opacity: statementOpacity }}
+        aria-hidden={statementOpacity < 0.05}
       >
         {STATEMENT}
       </p>

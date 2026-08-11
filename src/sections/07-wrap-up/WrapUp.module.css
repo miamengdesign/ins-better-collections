@@ -3,6 +3,20 @@
   color: var(--color-white);
 }
 
+/* Absolute host inside the shared cinematic viewport (§06→07 entrance). */
+.phaseLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+}
+
+.bgSlot {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  will-change: opacity;
+}
+
 /* Fixed across all three Wrapup states — SVG path bbox y≈84.8 / x≈80.3. */
 .eyebrow {
   position: absolute;
