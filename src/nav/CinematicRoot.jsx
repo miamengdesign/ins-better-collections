@@ -1,4 +1,5 @@
 import styles from './CinematicRoot.module.css'
+import SharedStageBackground from './SharedStageBackground'
 import { useNavigator } from './useNavigator'
 
 /**
@@ -14,7 +15,10 @@ function CinematicRoot({ children }) {
       data-cinematic-root="true"
       data-unlocked={unlocked ? 'true' : 'false'}
     >
-      <div className={styles.canvas}>{children}</div>
+      <div className={styles.canvas}>
+        <SharedStageBackground />
+        {children}
+      </div>
     </div>
   )
 }

@@ -164,7 +164,7 @@ function relayLayers(blend, reduced) {
     }
   }
 
-  // why-4 held during §02→03 handoff fade (stage opacity handles leave).
+  // why-4 held during §02→03 handoff (content opacity handles leave — no stack).
   if (fromIdx === 3 || toIdx === 3) {
     return {
       headingT: 1,
@@ -175,16 +175,21 @@ function relayLayers(blend, reduced) {
   return { headingT: fromIdx < 0 && toIdx < 0 ? 0 : 1, layers: [] }
 }
 
-/** Stage opacity during hero enter / §02→03 leave. */
-function stageOpacity(blend) {
+/**
+ * Content-only opacity (gradient lives on SharedStageBackground).
+ * §02→03 Phase A: why content fades early; reverse fades why back in late.
+ */
+function contentOpacity(blend) {
   if (blend.settled) {
     return blend.sceneIndex >= CE_1 ? 0 : blend.sceneIndex >= WHY_TITLE ? 1 : 0
   }
+  // Phase A forward: §02 active content slowly fades out.
   if (blend.from === WHY_4 && blend.to === CE_1) {
-    return 1 - easeInOutQuint(Math.min(1, Math.max(0, blend.t / 0.28)))
+    return 1 - easeInOutQuint(Math.min(1, Math.max(0, blend.t / 0.22)))
   }
+  // Phase A reverse: §02 content returns after CE has exited.
   if (blend.from === CE_1 && blend.to === WHY_4) {
-    return easeInOutQuint(Math.min(1, Math.max(0, (blend.t - 0.72) / 0.28)))
+    return easeInOutQuint(Math.min(1, Math.max(0, (blend.t - 0.78) / 0.22)))
   }
   if (blend.from < WHY_TITLE && blend.to === WHY_TITLE) {
     return easeInOutQuint(Math.min(1, Math.max(0, (blend.t - 0.35) / 0.65)))
@@ -210,12 +215,14 @@ function WhyCollection() {
     )
   }
 
-  const opacity = stageOpacity(blend)
-  const show =
-    opacity > 0.001 ||
-    (!blend.settled &&
-      (blend.to >= WHY_TITLE || blend.from >= WHY_TITLE) &&
-      (blend.to < CE_1 || blend.from < CE_1 || blend.to === CE_1 || blend.from === CE_1))
+  const opacity = contentOpacity(blend)
+  const whyInvolved =
+    !blend.settled &&
+    ((blend.from >= WHY_TITLE && blend.from <= WHY_4) ||
+      (blend.to >= WHY_TITLE && blend.to <= WHY_4) ||
+      blend.from === CE_1 ||
+      blend.to === CE_1)
+  const show = opacity > 0.001 || whyInvolved
 
   if (!show) return null
 
@@ -228,7 +235,7 @@ function WhyCollection() {
       style={{ opacity, pointerEvents: opacity < 0.05 ? 'none' : 'auto' }}
       aria-hidden={opacity < 0.05}
     >
-      <GradientStage className={styles.gradient} />
+      {/* Gradient: SharedStageBackground — content layers only here. */}
 
       <h2
         className={styles.heading}

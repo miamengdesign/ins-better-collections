@@ -59,29 +59,33 @@ function EvidenceState1() {
 }
 
 /**
- * §02→03 handoff local timeline t∈[0,1] (gradient stays put):
- *  0.00–0.28  why already fading (owned by WhyCollection)
- *  0.18–0.42  CE header / tracker / bullet fade in
- *  0.42–0.52  short pause
- *  0.52–0.78  light card rises from below
- *  0.72–1.00  mockups / content fade in
+ * Single §02→03 presence timeline (presence 0→1 enter, 1→0 exit via 1−t).
+ * Gradient is SharedStageBackground — never animated here.
+ *
+ *  Phase A  0.00–0.22  why content fade (owned by WhyCollection)
+ *  Phase B  0.22–0.42  CE upper content fades in (title / tracker / bullet)
+ *  Phase C  0.42–0.52  short visual pause
+ *  Phase D  0.52–0.78  light evidence card rises (ease-out, no bounce)
+ *  Phase E  0.78–1.00  mockups + callout fade in after card is settled
  */
-function entranceFromHandoff(t, reduced) {
-  const headerT = easeInOutQuint(rangeProgress(t, 0.18, 0.42))
-  const pauseHold = t >= 0.42
+function entranceFromPresence(presence, reduced) {
+  const headerT = easeInOutQuint(rangeProgress(presence, 0.22, 0.42))
   const cardT = reduced
-    ? rangeProgress(t, 0.52, 0.78)
-    : easeOutQuart(rangeProgress(t, 0.52, 0.78))
-  const contentT = easeInOutQuint(rangeProgress(t, 0.72, 1))
+    ? rangeProgress(presence, 0.52, 0.78)
+    : easeOutQuart(rangeProgress(presence, 0.52, 0.78))
+  const contentT = easeInOutQuint(rangeProgress(presence, 0.78, 1))
+  const cardRising = presence >= 0.52
+
   return {
     headerOpacity: headerT,
-    panelY: reduced ? 0 : lerp(48, 0, cardT),
-    panelOpacity: pauseHold ? lerp(0.15, 1, Math.max(cardT, 0.001)) : 0,
+    panelY: reduced ? 0 : lerp(36, 0, cardT),
+    panelOpacity: cardRising ? lerp(0.2, 1, Math.max(cardT, 0.001)) : 0,
     contentOpacity: contentT,
   }
 }
 
-function handoffT(blend) {
+/** Presence: 0 = pre-entrance, 1 = fully settled State 1. Reverse uses 1−t. */
+function entrancePresence(blend) {
   if (blend.settled) {
     return blend.sceneIndex >= CE_1 ? 1 : 0
   }
@@ -95,9 +99,9 @@ function CurrentExperience() {
   const isMobile = useMediaQuery('(max-width: 767px)')
   const reduced = useReducedMotion()
   const blend = useSceneBlend()
-  const t = handoffT(blend)
-  const show =
-    t > 0.001 ||
+  const presence = entrancePresence(blend)
+  const involved =
+    presence > 0.001 ||
     (!blend.settled && (blend.to === CE_1 || blend.from === CE_1))
 
   if (isMobile) {
@@ -108,25 +112,22 @@ function CurrentExperience() {
     )
   }
 
-  if (!show) {
+  if (!involved) {
     return null
   }
 
-  const motion = entranceFromHandoff(t, reduced)
+  const motion = entranceFromPresence(presence, reduced)
 
   return (
     <section
       className={styles.phaseLayer}
       aria-label="Current Experience"
       style={{
-        opacity: t > 0 ? 1 : 0,
-        pointerEvents: t > 0.5 ? 'auto' : 'none',
+        pointerEvents: presence > 0.5 ? 'auto' : 'none',
       }}
-      aria-hidden={t < 0.05}
+      aria-hidden={presence < 0.05}
     >
-      {/* Shared gradient is owned by Why while both overlap; once why is gone
-          CE paints its own stationary copy so the tail unlock still looks right. */}
-      <GradientStage />
+      {/* Gradient: SharedStageBackground — content choreography only. */}
 
       <div className={styles.stack}>
         <header
@@ -149,7 +150,7 @@ function CurrentExperience() {
           className={styles.panel}
           style={{
             opacity: motion.panelOpacity,
-            transform: `translateY(${motion.panelY}vh)`,
+            transform: `translate3d(0, ${motion.panelY}vh, 0)`,
           }}
         >
           <div

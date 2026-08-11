@@ -1,0 +1,8 @@
+/* Fixed under section content — never translated during handoffs. */
+.bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  will-change: opacity;
+}
