@@ -220,7 +220,7 @@ function WrapChrome({
           </div>
 
           <div className={styles.quickCol}>
-            <p className={styles.listTitle}>Quick Link:</p>
+            <p className={styles.listTitle}>Links:</p>
             <ul className={`${styles.list} ${styles.quickLink}`}>
               <li>
                 <a
