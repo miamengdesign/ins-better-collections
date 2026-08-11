@@ -1,17 +1,35 @@
+import { useReducedMotion } from '../hooks/useReducedMotion'
 import styles from './BackToTop.module.css'
 
-/** Static for this pass — the arrow's continuous upward-rolling loop is added later. */
+/**
+ * Footer control: smooth-scrolls to Section 01 Hero. "Back to top" text is
+ * static; only the `⇡` runs a continuous upward conveyor loop (two clipped
+ * copies, 50% phase offset). Reduced motion keeps a single static arrow.
+ */
 function BackToTop({ className = '' }) {
+  const reduced = useReducedMotion()
+
   const scrollToHero = () => {
-    document.getElementById('hero')?.scrollIntoView({ behavior: 'smooth' })
+    document.getElementById('hero')?.scrollIntoView({
+      behavior: reduced ? 'auto' : 'smooth',
+    })
   }
 
   return (
-    <button type="button" className={`${styles.button} ${className}`} onClick={scrollToHero}>
-      <span className={styles.arrow} aria-hidden="true">
-        ⇡
+    <button
+      type="button"
+      className={`${styles.button} ${className}`}
+      onClick={scrollToHero}
+      aria-label="Back to top"
+    >
+      <span
+        className={`${styles.arrowWell} ${reduced ? styles.arrowStatic : ''}`}
+        aria-hidden="true"
+      >
+        <span className={`${styles.arrow} ${styles.arrowA}`}>⇡</span>
+        {!reduced && <span className={`${styles.arrow} ${styles.arrowB}`}>⇡</span>}
       </span>
-      <span>Back to top</span>
+      <span className={styles.label}>Back to top</span>
     </button>
   )
 }
