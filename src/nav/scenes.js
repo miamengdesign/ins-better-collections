@@ -1,5 +1,5 @@
 /**
- * Phase-1 cinematic scene graph (Hero → Why Collection → §02→03 handoff).
+ * Phase-1 cinematic scene graph (Hero → Why → CE states 1–3).
  * Later sections append here in future migrations.
  */
 
@@ -17,6 +17,16 @@ export const SCENES = [
     id: 'ce-1',
     label: 'Current Experience — state 1',
     enterMs: 2600, // full §02→03 handoff choreography
+  },
+  {
+    id: 'ce-2',
+    label: 'Current Experience — state 2',
+    enterMs: 1100,
+  },
+  {
+    id: 'ce-3',
+    label: 'Current Experience — state 3',
+    enterMs: 1100,
   },
 ]
 

@@ -5,24 +5,24 @@ import { useSceneBlend } from './useNavigator'
 import styles from './SharedStageBackground.module.css'
 
 const WHY_TITLE = SCENE_INDEX['why-title']
-const CE_1 = SCENE_INDEX['ce-1']
+const CE_LAST = SCENE_INDEX['ce-3']
 
 /**
  * Stationary brand gradient for the Why ↔ Current Experience band.
  * Opacity may fade when entering/leaving the band from Hero; position never
- * animates (no translate / page-flip during §02→§03).
+ * animates (no translate / page-flip during §02→§03 or CE internals).
  */
 function sharedOpacity(blend) {
   if (blend.settled) {
-    return blend.sceneIndex >= WHY_TITLE && blend.sceneIndex <= CE_1 ? 1 : 0
+    return blend.sceneIndex >= WHY_TITLE && blend.sceneIndex <= CE_LAST ? 1 : 0
   }
 
   const { from, to, t } = blend
-  const inBand = (i) => i >= WHY_TITLE && i <= CE_1
+  const inBand = (i) => i >= WHY_TITLE && i <= CE_LAST
   const fromIn = inBand(from)
   const toIn = inBand(to)
 
-  // why ↔ ce (and why internals): fully on, never moves.
+  // why ↔ ce (and internals): fully on, never moves.
   if (fromIn && toIn) return 1
 
   // Hero → why: fade in with the stage (gradient stays put once visible).
