@@ -111,7 +111,7 @@ function WrapUp() {
       height={`calc(${OVERLAP_VH}vh + ${PIN_TRACK_VH}vh)`}
       overlapVh={OVERLAP_VH}
       startOffsetVh={0}
-      style={{ zIndex: from06 >= 0.999 ? 2 : 0 }}
+      style={{ zIndex: from06 >= 0.999 ? 6 : 0 }}
       cinematic={{
         anchors: ANCHORS,
         durations: DURATIONS,

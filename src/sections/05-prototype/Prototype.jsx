@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import GradientStage from '../../components/GradientStage'
 import PinnedStage from '../../components/PinnedStage'
 import { PROTOTYPE_URL } from '../../config/links'
@@ -43,6 +43,8 @@ function exitMotion(p) {
 
 function Prototype() {
   const reduced = useReducedMotion()
+  // Yield wheel capture to Behind the Work once the exit timeline finishes.
+  const [zIndex, setZIndex] = useState(4)
 
   return (
     <PinnedStage
@@ -51,7 +53,7 @@ function Prototype() {
       height={`calc(${OVERLAP_VH}vh + ${PIN_TRACK_VH}vh)`}
       overlapVh={OVERLAP_VH}
       startOffsetVh={0}
-      style={{ zIndex: 4 }}
+      style={{ zIndex }}
       cinematic={{
         anchors: ANCHORS,
         durations: DURATIONS,
@@ -62,14 +64,19 @@ function Prototype() {
       {({ progress, isPinned }) => {
         const p = isPinned ? clamp(progress, 0, 1) : 1
         return (
-          <PrototypeFrame p={p} reduced={reduced} isPinned={isPinned} />
+          <PrototypeFrame
+            p={p}
+            reduced={reduced}
+            isPinned={isPinned}
+            setZIndex={setZIndex}
+          />
         )
       }}
     </PinnedStage>
   )
 }
 
-function PrototypeFrame({ p, reduced, isPinned }) {
+function PrototypeFrame({ p, reduced, isPinned, setZIndex }) {
   const entering = p < 0.45
   const exit = exitMotion(p)
   const x = entering ? pushEnterX(p) : exit.panelX
@@ -83,6 +90,10 @@ function PrototypeFrame({ p, reduced, isPinned }) {
       ? 1
       : 0
     : exit.gradientOpacity
+
+  useEffect(() => {
+    setZIndex(isPinned && p < 0.999 ? 4 : 1)
+  }, [p, isPinned, setZIndex])
 
   useEffect(() => {
     if (!isPinned) {

@@ -176,8 +176,10 @@ function Solutions() {
           : copies[dominantCopy(p)]
         const mockGate = entering ? enter.mockOpacity : 1
 
-        const canPrev = stepIndex > 0 && stepIndex < 3 && !animating && !entering
-        const canNext = stepIndex < 2 && !animating && !entering
+        const inPush = p > PUSH[0]
+        const canPrev = stepIndex > 0 && stepIndex <= 2 && !animating && !entering && !inPush
+        const canNext = stepIndex < 2 && !animating && !entering && !inPush
+        const showNav = !entering && !inPush && stepIndex >= 0 && stepIndex <= 2
 
         return (
           <>
@@ -233,7 +235,7 @@ function Solutions() {
                 </div>
               ))}
 
-              {!entering && stepIndex < 3 && (
+              {showNav && (
                 <CardNav
                   onPrev={() => goToStep(stepIndex - 1)}
                   onNext={() => goToStep(stepIndex + 1)}

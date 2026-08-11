@@ -3,7 +3,7 @@ import PinnedStage from '../../components/PinnedStage'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { img } from '../../lib/assets'
 import { useExit05to06 } from '../../lib/handoff05to06'
-import { setHandoff06to07 } from '../../lib/handoff06to07'
+import { setHandoff06to07, useHandoff06to07 } from '../../lib/handoff06to07'
 import { clamp, easeInOutQuint, lerp, rangeProgress } from '../../lib/motion'
 import styles from './BehindTheWork.module.css'
 
@@ -89,6 +89,11 @@ function exitTo07Motion(p) {
 function BehindTheWork() {
   const reduced = useReducedMotion()
   const enterFrom05 = useExit05to06()
+  const exitTo07 = useHandoff06to07()
+
+  // z stack: under Prototype while §05 exits → front for State 2 → yield to Wrap Up.
+  const zIndex =
+    exitTo07 >= 0.999 ? 2 : enterFrom05 >= 0.999 ? 5 : 3
 
   return (
     <PinnedStage
@@ -97,7 +102,7 @@ function BehindTheWork() {
       height={`calc(${OVERLAP_VH}vh + ${PIN_TRACK_VH}vh)`}
       overlapVh={OVERLAP_VH}
       startOffsetVh={0}
-      style={{ zIndex: 3 }}
+      style={{ zIndex }}
       cinematic={{
         anchors: ANCHORS,
         durations: DURATIONS,

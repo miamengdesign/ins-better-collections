@@ -239,7 +239,7 @@ function CurrentFrame({ p, handoffT, reduced, stepIndex, goToStep, animating }) 
 
   const entrance = entranceMotion(p, reduced)
   const exit = handoffExitMotion(handoffT, reduced)
-  const inHandoff = p >= HANDOFF[0]
+  const inHandoff = p > HANDOFF[0]
   const inEntrance = p < 0.2
 
   const layers = layerMotion(Math.max(p, 0.2))
@@ -263,9 +263,11 @@ function CurrentFrame({ p, handoffT, reduced, stepIndex, goToStep, animating }) 
       ? exit.contentOpacity
       : 1
 
-  // Arrows only navigate evidence states (steps 1–3).
-  const canPrev = stepIndex > 1 && !animating
-  const canNext = stepIndex >= 1 && stepIndex < 3 && !animating
+  // Arrows only navigate evidence states (steps 1–3). At the State 3 hold
+  // (progress === 0.64) handoff has not started yet — keep nav visible with next off.
+  const canPrev = stepIndex > 1 && stepIndex <= 3 && !animating && !inHandoff
+  const canNext = stepIndex >= 1 && stepIndex < 3 && !animating && !inHandoff
+  const showNav = !inEntrance && !inHandoff && stepIndex >= 1 && stepIndex <= 3
 
   return (
     <>
@@ -345,7 +347,7 @@ function CurrentFrame({ p, handoffT, reduced, stepIndex, goToStep, animating }) 
             <EvidenceState3 />
           </div>
 
-          {!inEntrance && !inHandoff && (
+          {!inEntrance && !inHandoff && showNav && (
             <CardNav
               onPrev={() => goToStep(stepIndex - 1)}
               onNext={() => goToStep(stepIndex + 1)}
