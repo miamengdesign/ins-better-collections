@@ -19,7 +19,7 @@ import { useNavigator, useSceneBlend } from '../../nav/useNavigator'
 import styles from './CurrentExperience.module.css'
 
 /**
- * §03 Current Experience — entrance from why-4, then internal states 1→2→3.
+ * §03 Current Experience — entrance from why-3, then internal states 1→2→3.
  * Panel geometry stays fixed during internal relays (opacity crossfade only).
  */
 
@@ -47,7 +47,7 @@ const STATES = [
   },
 ]
 
-const WHY_4 = SCENE_INDEX['why-4']
+const WHY_3 = SCENE_INDEX['why-3']
 const CE_1 = SCENE_INDEX['ce-1']
 const CE_3 = SCENE_INDEX['ce-3']
 const SOL_1 = SCENE_INDEX['sol-1']
@@ -191,8 +191,8 @@ function entrancePresence(blend) {
   if (blend.settled) {
     return blend.sceneIndex >= CE_1 && blend.sceneIndex <= CE_3 ? 1 : 0
   }
-  if (blend.from === WHY_4 && blend.to === CE_1) return blend.t
-  if (blend.from === CE_1 && blend.to === WHY_4) return 1 - blend.t
+  if (blend.from === WHY_3 && blend.to === CE_1) return blend.t
+  if (blend.from === CE_1 && blend.to === WHY_3) return 1 - blend.t
   if (
     (blend.from >= CE_1 && blend.from <= CE_3) ||
     (blend.to >= CE_1 && blend.to <= CE_3)
@@ -213,8 +213,8 @@ function stageMotion(blend, reduced) {
 function isWhyHandoff(blend) {
   return (
     (!blend.settled &&
-      ((blend.from === WHY_4 && blend.to === CE_1) ||
-        (blend.from === CE_1 && blend.to === WHY_4))) ||
+      ((blend.from === WHY_3 && blend.to === CE_1) ||
+        (blend.from === CE_1 && blend.to === WHY_3))) ||
     false
   )
 }
