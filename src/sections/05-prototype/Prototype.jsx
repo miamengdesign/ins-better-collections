@@ -11,28 +11,39 @@ import {
   lerp,
   rangeProgress,
 } from '../../lib/motion'
+import { exit05to06T } from '../../nav/exit05to06'
 import { SCENE_INDEX } from '../../nav/scenes'
 import { useSceneBlend } from '../../nav/useNavigator'
 import styles from './Prototype.module.css'
 
 /**
- * §05 Prototype — physical push entrance from sol-3 (shared timeline).
+ * §05 Prototype — push entrance from sol-3; layered exit to behind-1.
  * Mockup is the sole clickable target (PROTOTYPE_URL).
  * "Tap here to start" lives in the mockup artwork as instructional text only.
- * §05→06 is intentionally not implemented yet.
  */
 
 const SOL_3 = SCENE_INDEX['sol-3']
 const PROTO = SCENE_INDEX['proto']
+const BEHIND_1 = SCENE_INDEX['behind-1']
 
-/** Same 0→1 push playhead Solutions uses (sol-3 ↔ proto). */
-function handoffPresence(blend) {
+/** 0→1 presence for §04→05 push (sol-3 ↔ proto). */
+function pushPresence(blend) {
   if (blend.settled) {
-    return blend.sceneIndex >= PROTO ? 1 : 0
+    if (blend.sceneIndex === PROTO) return 1
+    // Past Prototype: treat push as complete so exit motion owns leave.
+    if (blend.sceneIndex >= BEHIND_1) return 1
+    return 0
   }
   if (blend.from === SOL_3 && blend.to === PROTO) return blend.t
   if (blend.from === PROTO && blend.to === SOL_3) return 1 - blend.t
-  if (blend.to >= PROTO || blend.from >= PROTO) return 1
+  if (
+    blend.to === PROTO ||
+    blend.from === PROTO ||
+    blend.to >= BEHIND_1 ||
+    blend.from >= BEHIND_1
+  ) {
+    return 1
+  }
   return 0
 }
 
@@ -41,12 +52,30 @@ function handoffPresence(blend) {
  *  Phase A  0.00–1.00  panel translateX −100% → 0 (locked with §04 push-out)
  *  Phase B  0.48–0.78  Prototype copy fades in after push is well underway
  */
-function motionFromPresence(presence, reduced) {
+function enterFromSol(presence, reduced) {
   const pushEased = reduced ? presence : easeInOutQuint(presence)
   const textT = easeInOutQuint(rangeProgress(presence, 0.48, 0.78))
   return {
     panelX: lerp(-100, 0, pushEased),
     textOpacity: textT,
+  }
+}
+
+/**
+ * §05→06 layered exit (exitT 0→1, reverse via 1−t):
+ *  Phase A  0.00–0.35  Prototype card exits LEFT
+ *  Phase B  0.22–0.50  §05 copy slowly fades (after card is clearly leaving)
+ *  Phase C  (SharedStageBackground) gradient opacity fade
+ *  Phase D  (BehindTheWork) collage reveal
+ */
+function exitToBehind(exitT, reduced) {
+  const cardT = reduced
+    ? rangeProgress(exitT, 0, 0.35)
+    : easeInOutQuint(rangeProgress(exitT, 0, 0.35))
+  const textT = easeInOutQuint(rangeProgress(exitT, 0.22, 0.5))
+  return {
+    panelX: lerp(0, -110, cardT),
+    textOpacity: 1 - textT,
   }
 }
 
@@ -76,28 +105,39 @@ function Prototype({ phase1Static = false } = {}) {
 
 function CinematicPrototype({ reduced }) {
   const blend = useSceneBlend()
-  const presence = handoffPresence(blend)
+  const push = pushPresence(blend)
+  const exitT = exit05to06T(blend)
   const involved =
-    presence > 0.001 ||
-    (!blend.settled && (blend.to === PROTO || blend.from === PROTO))
+    (push > 0.001 && exitT < 0.999) ||
+    exitT > 0.001 ||
+    (!blend.settled &&
+      (blend.to === PROTO ||
+        blend.from === PROTO ||
+        blend.to === BEHIND_1 ||
+        blend.from === BEHIND_1))
 
-  if (!involved) {
+  if (!involved || (exitT >= 0.999 && blend.settled)) {
     return null
   }
 
-  const motion = motionFromPresence(presence, reduced)
-  const interactive = presence > 0.92 && blend.settled
+  const motion =
+    exitT > 0.001
+      ? exitToBehind(exitT, reduced)
+      : enterFromSol(push, reduced)
+
+  const interactive =
+    exitT < 0.001 && push > 0.92 && blend.settled && blend.sceneIndex === PROTO
 
   return (
     <section
       className={styles.phaseLayer}
       aria-label="Prototype"
       style={{
-        pointerEvents: presence > 0.55 ? 'auto' : 'none',
+        pointerEvents: push > 0.55 && exitT < 0.5 ? 'auto' : 'none',
       }}
-      aria-hidden={presence < 0.05}
+      aria-hidden={push < 0.05 || exitT > 0.95}
     >
-      {/* Gradient: SharedStageBackground — stays put; no local GradientStage. */}
+      {/* Gradient: SharedStageBackground — Phase C opacity only. */}
 
       <div
         className={styles.panel}
