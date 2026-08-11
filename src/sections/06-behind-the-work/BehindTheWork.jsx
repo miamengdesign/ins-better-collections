@@ -1,22 +1,33 @@
 import { useEffect } from 'react'
 import PinnedStage from '../../components/PinnedStage'
 import Stage from '../../components/Stage'
+import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { img } from '../../lib/assets'
-import { useExit05to06 } from '../../lib/handoff05to06'
-import { setHandoff06to07, useHandoff06to07 } from '../../lib/handoff06to07'
-import { clamp, easeInOutQuint, lerp, rangeProgress } from '../../lib/motion'
+import { setHandoff06to07 } from '../../lib/handoff06to07'
+import {
+  clamp,
+  easeInOutQuint,
+  lerp,
+  rangeProgress,
+} from '../../lib/motion'
+import { exit05to06T } from '../../nav/exit05to06'
+import { exit06to07T } from '../../nav/exit06to07'
+import { SCENE_INDEX } from '../../nav/scenes'
+import { useSceneBlend } from '../../nav/useNavigator'
 import styles from './BehindTheWork.module.css'
 
 /**
- * Anchors:
- *  0 — State 1 (sketches)
- *  0.55 — State 2 overlays + statement settled (slow cloth-like cover)
- *  1 — §06→07 handoff complete (statement gone; 07 takes over)
+ * §06 Behind the Work — entrance → State 1 → veil State 2 → layered exit to Wrap 1.
+ * One physical sketch collage stays mounted; overlays/statement are opacity only.
  */
+
+const BEHIND_1 = SCENE_INDEX['behind-1']
+const BEHIND_2 = SCENE_INDEX['behind-2']
+const WRAP_1 = SCENE_INDEX['wrap-1']
+const OVERLAY_MAX = 0.7
 const PIN_TRACK_VH = 160
 const OVERLAP_VH = 120
-const OVERLAY_MAX = 0.7
 const ANCHORS = [0, 0.55, 1]
 const DURATIONS = [2400, 2400]
 
@@ -26,10 +37,26 @@ const STATEMENT =
 function Collage() {
   return (
     <div className={styles.collage} aria-hidden="true">
-      <img className={styles.pic3} src={img('06 Behind asset/06 Behind 1 pic3.png')} alt="" />
-      <img className={styles.pic1} src={img('06 Behind asset/06 Behind 1 pic1.png')} alt="" />
-      <img className={styles.pic2} src={img('06 Behind asset/06 Behind 1 pic2.png')} alt="" />
-      <img className={styles.pic4} src={img('06 Behind asset/06 Behind 1 pic4.png')} alt="" />
+      <img
+        className={styles.pic3}
+        src={img('06 Behind asset/06 Behind 1 pic3.png')}
+        alt=""
+      />
+      <img
+        className={styles.pic1}
+        src={img('06 Behind asset/06 Behind 1 pic1.png')}
+        alt=""
+      />
+      <img
+        className={styles.pic2}
+        src={img('06 Behind asset/06 Behind 1 pic2.png')}
+        alt=""
+      />
+      <img
+        className={styles.pic4}
+        src={img('06 Behind asset/06 Behind 1 pic4.png')}
+        alt=""
+      />
     </div>
   )
 }
@@ -60,10 +87,181 @@ function State2Overlays({ opacity }) {
   )
 }
 
+function revealFromExit(exitT, reduced) {
+  if (reduced) return rangeProgress(exitT, 0.55, 1)
+  return easeInOutQuint(rangeProgress(exitT, 0.55, 1))
+}
+
+function state2CoverT(blend) {
+  if (blend.settled) {
+    // Fully veiled through wrap handoff ownership; unmount gates visibility.
+    return blend.sceneIndex >= BEHIND_2 ? 1 : 0
+  }
+  if (blend.from === BEHIND_1 && blend.to === BEHIND_2) return blend.t
+  if (blend.from === BEHIND_2 && blend.to === BEHIND_1) return 1 - blend.t
+  // Keep veil fully on during §06→07 and any Wrap scene ownership.
+  if (
+    blend.to >= BEHIND_2 ||
+    blend.from >= BEHIND_2 ||
+    blend.to >= WRAP_1 ||
+    blend.from >= WRAP_1
+  ) {
+    return 1
+  }
+  return 0
+}
+
+function veilMotion(cover, reduced) {
+  const overlayT = reduced
+    ? rangeProgress(cover, 0, 0.72)
+    : easeInOutQuint(rangeProgress(cover, 0, 0.72))
+  const statementT = reduced
+    ? rangeProgress(cover, 0.55, 1)
+    : easeInOutQuint(rangeProgress(cover, 0.55, 1))
+  return {
+    overlayOpacity: lerp(0, OVERLAY_MAX, overlayT),
+    statementOpacity: statementT,
+  }
+}
+
 /**
- * Slow cloth-like cover for State 2 (p 0→0.55):
- * overlays ease up first; statement fades in only after layers are established.
+ * §06→07 layered exit (exitT 0→1, reverse via 1−t):
+ *  Phase A  0.00–0.42  centered statement fades VERY slowly
+ *  Phase B+ 0.40–0.72  collage + veil give way (after statement is mostly gone)
+ *  (Wrap Up owns §07 bg / beat / text on the same playhead.)
  */
+function exitToWrapMotion(exitT, reduced) {
+  const statementOut = reduced
+    ? rangeProgress(exitT, 0, 0.42)
+    : easeInOutQuint(rangeProgress(exitT, 0, 0.42))
+  const stageOut = reduced
+    ? rangeProgress(exitT, 0.4, 0.72)
+    : easeInOutQuint(rangeProgress(exitT, 0.4, 0.72))
+  return {
+    statementGate: 1 - statementOut,
+    stageOpacity: 1 - stageOut,
+  }
+}
+
+function BehindTheWork({ phase1Static = false } = {}) {
+  const isMobile = useMediaQuery('(max-width: 767px)')
+  const reduced = useReducedMotion()
+
+  if (isMobile) {
+    return <MobilePinnedBehind reduced={reduced} />
+  }
+
+  if (phase1Static) {
+    return (
+      <Stage className={styles.section} aria-label="Behind the Work">
+        <State1Frame />
+      </Stage>
+    )
+  }
+
+  return <CinematicBehind reduced={reduced} />
+}
+
+function State1Frame() {
+  return (
+    <>
+      <Collage />
+      <State1Copy />
+    </>
+  )
+}
+
+function CinematicBehind({ reduced }) {
+  const blend = useSceneBlend()
+  const enterT = exit05to06T(blend)
+  const cover = state2CoverT(blend)
+  const exitT = exit06to07T(blend)
+  const wrapInternal =
+    !blend.settled && blend.from >= WRAP_1 && blend.to >= WRAP_1
+  const involved =
+    (enterT > 0.001 && exitT < 0.999) ||
+    cover > 0.001 ||
+    exitT > 0.001 ||
+    (!blend.settled &&
+      ((blend.to >= BEHIND_1 && blend.to <= BEHIND_2) ||
+        (blend.from >= BEHIND_1 && blend.from <= BEHIND_2) ||
+        blend.to === WRAP_1 ||
+        blend.from === WRAP_1)) ||
+    (blend.settled &&
+      blend.sceneIndex >= BEHIND_1 &&
+      blend.sceneIndex <= BEHIND_2)
+
+  // Stay unmounted on wrap-1/2 (settled or internal); remount for reverse to behind-2.
+  if (!involved || (exitT >= 0.999 && (blend.settled || wrapInternal))) {
+    return null
+  }
+
+  const reveal = revealFromExit(enterT, reduced)
+  const veil = veilMotion(cover, reduced)
+  const leave = exitToWrapMotion(exitT, reduced)
+  const statementOpacity =
+    exitT > 0.001
+      ? veil.statementOpacity * leave.statementGate
+      : veil.statementOpacity
+  const stageOpacity = reveal * leave.stageOpacity
+
+  return (
+    <section
+      className={styles.phaseLayer}
+      aria-label="Behind the Work"
+      style={{ opacity: Math.max(stageOpacity, 0.001) }}
+      aria-hidden={stageOpacity < 0.05}
+    >
+      {/* One physical collage — stationary under both states + exit. */}
+      <State1Frame />
+      <State2Overlays opacity={veil.overlayOpacity} />
+      <p
+        className={styles.statement}
+        style={{ opacity: statementOpacity }}
+        aria-hidden={statementOpacity < 0.05}
+      >
+        {STATEMENT}
+      </p>
+    </section>
+  )
+}
+
+/** Mobile keeps the legacy pinned stage (includes State 2 for stacked scroll). */
+function MobilePinnedBehind({ reduced }) {
+  return (
+    <PinnedStage
+      className={styles.section}
+      ariaLabel="Behind the Work"
+      height={`calc(${OVERLAP_VH}vh + ${PIN_TRACK_VH}vh)`}
+      overlapVh={OVERLAP_VH}
+      startOffsetVh={0}
+      cinematic={{
+        anchors: ANCHORS,
+        durations: DURATIONS,
+        duration: 2400,
+        reduced,
+      }}
+    >
+      {({ progress, isPinned }) => {
+        if (!isPinned) {
+          return (
+            <>
+              <State1Frame />
+              <State2Overlays opacity={OVERLAY_MAX} />
+              <p className={styles.statement} style={{ opacity: 1 }}>
+                {STATEMENT}
+              </p>
+            </>
+          )
+        }
+
+        const p = clamp(progress, 0, 1)
+        return <MobileBehindFrame p={p} />
+      }}
+    </PinnedStage>
+  )
+}
+
 function state2Motion(p) {
   const cover = rangeProgress(p, 0, 0.55)
   const overlayT = easeInOutQuint(rangeProgress(cover, 0, 0.72))
@@ -74,10 +272,8 @@ function state2Motion(p) {
   }
 }
 
-/** p 0.55→1: statement fades very slowly, then handoff to §07. */
 function exitTo07Motion(p) {
   const t = rangeProgress(p, 0.55, 1)
-  // Statement leaves first and slowly; §07 bg/text follow via handoffT.
   const statementOut = easeInOutQuint(rangeProgress(t, 0, 0.55))
   return {
     handoffT: t,
@@ -87,62 +283,13 @@ function exitTo07Motion(p) {
   }
 }
 
-function BehindTheWork({ phase1Static = false } = {}) {
-  const reduced = useReducedMotion()
-  const enterFrom05 = useExit05to06()
-  const exitTo07 = useHandoff06to07()
-
-  // z stack: under Prototype while §05 exits → front for State 2 → yield to Wrap Up.
-  const zIndex =
-    exitTo07 >= 0.999 ? 2 : enterFrom05 >= 0.999 ? 5 : 3
-
-  if (phase1Static) {
-    return (
-      <Stage className={styles.section} aria-label="Behind the Work">
-        <StaticEndState />
-      </Stage>
-    )
-  }
-
-  return (
-    <PinnedStage
-      className={styles.section}
-      ariaLabel="Behind the Work"
-      height={`calc(${OVERLAP_VH}vh + ${PIN_TRACK_VH}vh)`}
-      overlapVh={OVERLAP_VH}
-      startOffsetVh={0}
-      style={{ zIndex }}
-      cinematic={{
-        anchors: ANCHORS,
-        durations: DURATIONS,
-        duration: 2400,
-        reduced,
-      }}
-    >
-      {({ progress, isPinned }) => {
-        if (!isPinned) {
-          return <StaticEndState />
-        }
-
-        const p = clamp(progress, 0, 1)
-        return (
-          <BehindFrame p={p} reduced={reduced} enterFrom05={enterFrom05} />
-        )
-      }}
-    </PinnedStage>
-  )
-}
-
-function BehindFrame({ p, reduced, enterFrom05 }) {
+function MobileBehindFrame({ p }) {
   const s2 = state2Motion(p)
   const exit = exitTo07Motion(p)
   const inExit = p > 0.55
-
   const overlayOpacity = inExit ? exit.overlayOpacity : s2.overlayOpacity
   const statementOpacity = inExit ? exit.statementOpacity : s2.statementOpacity
-  // Appear under §05 as its gradient fades (enterFrom05).
-  const reveal = reduced ? 1 : easeInOutQuint(enterFrom05)
-  const stageOpacity = (inExit ? exit.stageOpacity : 1) * Math.max(reveal, 0.001)
+  const stageOpacity = inExit ? exit.stageOpacity : 1
 
   useEffect(() => {
     setHandoff06to07(inExit ? exit.handoffT : 0)
@@ -150,26 +297,12 @@ function BehindFrame({ p, reduced, enterFrom05 }) {
 
   return (
     <div style={{ opacity: stageOpacity }}>
-      <Collage />
-      <State1Copy />
+      <State1Frame />
       <State2Overlays opacity={overlayOpacity} />
       <p className={styles.statement} style={{ opacity: statementOpacity }}>
         {STATEMENT}
       </p>
     </div>
-  )
-}
-
-function StaticEndState() {
-  return (
-    <>
-      <Collage />
-      <State1Copy />
-      <State2Overlays opacity={OVERLAY_MAX} />
-      <p className={styles.statement} style={{ opacity: 1 }}>
-        {STATEMENT}
-      </p>
-    </>
   )
 }
 

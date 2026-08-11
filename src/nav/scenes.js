@@ -1,6 +1,6 @@
 /**
- * Phase-1 cinematic scene graph (Hero → Why → CE → Solutions 1–3).
- * §04→05 handoff remains for a later migration.
+ * Phase-1 cinematic scene graph
+ * (Hero → Why → CE → Solutions 1–3 → Prototype → Behind 1–2 → Wrap 1–3).
  */
 
 /** @typedef {{ id: string, label: string, enterMs: number }} SceneDef */
@@ -42,6 +42,36 @@ export const SCENES = [
     id: 'sol-3',
     label: 'Solutions — state 3',
     enterMs: 1100,
+  },
+  {
+    id: 'proto',
+    label: 'Prototype',
+    enterMs: 1600, // §04→05 physical panel push
+  },
+  {
+    id: 'behind-1',
+    label: 'Behind the Work — state 1',
+    enterMs: 2200, // §05→06 layered exit → collage
+  },
+  {
+    id: 'behind-2',
+    label: 'Behind the Work — state 2',
+    enterMs: 2000, // dark-cloth veil + statement
+  },
+  {
+    id: 'wrap-1',
+    label: 'Wrap Up — scene 1',
+    enterMs: 2600, // §06→07: statement out → bg → beat → text
+  },
+  {
+    id: 'wrap-2',
+    label: 'Wrap Up — scene 2',
+    enterMs: 1600, // statement rises; “If I had more time…” fades in
+  },
+  {
+    id: 'wrap-3',
+    label: 'Wrap Up — scene 3',
+    enterMs: 1800, // Wrap-2 exits up; Tools / Quick Links / footer settle
   },
 ]
 

@@ -3,6 +3,15 @@
   background: #f2f0ee;
 }
 
+/* Absolute host inside the shared cinematic viewport (§05→06 entrance). */
+.phaseLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: #f2f0ee;
+  will-change: opacity;
+}
+
 .text {
   position: absolute;
   left: var(--frame-margin);

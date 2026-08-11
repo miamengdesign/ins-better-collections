@@ -3,6 +3,20 @@
   color: var(--color-white);
 }
 
+/* Absolute host inside the shared cinematic viewport (§06→07 entrance). */
+.phaseLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+}
+
+.bgSlot {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  will-change: opacity;
+}
+
 /* Fixed across all three Wrapup states — SVG path bbox y≈84.8 / x≈80.3. */
 .eyebrow {
   position: absolute;
@@ -19,7 +33,8 @@
 }
 
 /*
- * Closing statement. Tops are scroll-driven (S1 43.9cqh → S2 20.85cqh → exits).
+ * Closing statement. Layout `top` is the Scene 1 resting position; Scene 1→2
+ * rises via transform translateY (cqh delta to Wrapup-2), never per-frame `top`.
  * Explicit <br>s match the reference line breaks; Regular with one Bold clause.
  */
 .paragraph {
@@ -33,7 +48,7 @@
   font-size: var(--fs-48);
   line-height: var(--lh-auto);
   color: var(--color-panel);
-  will-change: top, opacity;
+  will-change: transform;
   pointer-events: none;
 }
 
@@ -41,13 +56,14 @@
   font-weight: 700;
 }
 
-/* State-2 “If I had more time…” block — SVG path bbox y≈690.9, width ≈41.4cqw. */
+/* State-2 “If I had more time…” block — Wrapup 2 PNG/SVG: top ≈61.85cqh, width ≈41.4cqw.
+   Scene 2→3 shares the same upward translateY as the statement (spacing preserved). */
 .future {
   position: absolute;
   left: var(--frame-margin);
   width: 41.37cqw;
   z-index: 1;
-  will-change: top, opacity;
+  will-change: transform, opacity;
   pointer-events: none;
 }
 
@@ -72,7 +88,7 @@
 
 /*
  * State-3 Tools | Quick Link row. SVG: Tools x≈80 / Quick Link x≈865 (50.07cqw),
- * shared top ≈42.4cqh.
+ * shared top ≈42.4cqh. Opacity-only entrance; resting `top` is layout, not animated.
  */
 .lists {
   position: absolute;
@@ -82,7 +98,7 @@
   display: flex;
   flex-direction: row;
   align-items: flex-start;
-  will-change: top;
+  will-change: opacity;
 }
 
 .toolsCol {
@@ -132,6 +148,7 @@
 /*
  * Footer — SVG byline / Back to top / copyright share y≈1015 (90.89cqh).
  * Space-between keeps Back to top centered between the side labels.
+ * Opacity-only entrance; resting `top` is layout, not animated.
  */
 .footer {
   position: absolute;
@@ -147,7 +164,7 @@
   font-size: var(--fs-14);
   line-height: var(--lh-auto);
   color: var(--color-panel);
-  will-change: top;
+  will-change: opacity;
 }
 
 .copyright {

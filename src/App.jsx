@@ -12,8 +12,8 @@ import WrapUp from './sections/07-wrap-up/WrapUp'
 import { useMediaQuery } from './hooks/useMediaQuery'
 
 /**
- * Phase 1: navigator drives Hero → Why → CE → Solutions states 1–3.
- * §§05–07 remain static tail content until a later migration.
+ * Phase 1: navigator drives Hero → … → Behind 1–2 → Wrap Up Scenes 1–3.
+ * wrap-3 is the terminal cinematic scene (no empty static-tail unlock).
  */
 function App() {
   const isMobile = useMediaQuery('(max-width: 767px)')
@@ -40,6 +40,9 @@ function App() {
         <WhyCollection />
         <CurrentExperience />
         <Solutions />
+        <Prototype />
+        <BehindTheWork />
+        <WrapUp />
       </CinematicRoot>
       <StaticTail />
     </>
@@ -55,10 +58,10 @@ function StaticTail() {
       aria-hidden={!unlocked}
       inert={!unlocked || undefined}
     >
-      {/* Solutions lives in CinematicRoot (sol-1..3). Tail starts at Prototype. */}
-      <Prototype phase1Static />
-      <BehindTheWork phase1Static />
-      <WrapUp phase1Static />
+      {/*
+        Full Wrap Up (wrap-1..3) lives in CinematicRoot.
+        StaticTail stays empty — no post-cinematic blank scroll region.
+      */}
     </div>
   )
 }
