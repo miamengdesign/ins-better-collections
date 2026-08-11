@@ -1,15 +1,14 @@
 import GradientStage from '../../components/GradientStage'
 import PinnedStage from '../../components/PinnedStage'
+import { HERO_EXIT_VH, HERO_TRACK_VH } from '../../config/layout'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import {
   clamp,
   easeInCubic,
   easeOutCubic,
-  exitOpacity,
   lerp,
   rangeProgress,
 } from '../../lib/motion'
-import { HERO_EXIT_VH, HERO_TRACK_VH } from '../../config/layout'
 import styles from './WhyCollection.module.css'
 
 /**
@@ -36,19 +35,75 @@ const STATEMENTS = [
   </>,
 ]
 
-/** Progress windows from ANIMATION_SPEC.md §02 (enterStart, enterEnd, holdEnd, exitEnd). */
-const WINDOWS = [
-  { enter: [0.15, 0.2], holdEnd: 0.35, exitEnd: 0.4 },
-  { enter: [0.35, 0.4], holdEnd: 0.55, exitEnd: 0.6 },
-  { enter: [0.55, 0.6], holdEnd: 0.75, exitEnd: 0.8 },
-  { enter: [0.75, 0.8], holdEnd: 1.0, exitEnd: null },
-]
+/**
+ * Geometry from `references/svg/02 Why Collections {2,3,4}.svg` on the 1728×1117
+ * frame. Tops are `cqh` (= % of frame height). Font sizes map to the type scale:
+ * active = 48, previous = 24 (path bounds 106.8 vs 53.4).
+ */
+const GEO = {
+  /** Frame 3/4 previous-statement band (y ≈ 187.9). */
+  previousTop: (187.9 / 1117) * 100,
+  /** Frame 3/4 active-statement band (y ≈ 592.9). */
+  activeTop: (592.9 / 1117) * 100,
+  /** Enter from below the active band. */
+  enterTop: (592.9 / 1117) * 100 + 10,
+  /** Leave upward past the previous band when superseded. */
+  dismissTop: (187.9 / 1117) * 100 - 4,
+  activeFont: 48,
+  previousFont: 24,
+  enterFont: 48 * 0.7,
+  dismissFont: 24 * 0.9,
+  activeOpacity: 1,
+  /** Dimmed-but-legible previous, matching refs 3/4. */
+  previousOpacity: 0.38,
+  enterOpacity: 0,
+  dismissOpacity: 0,
+}
 
 /**
- * Track length after the Hero-exit dead zone. Long enough for the five content
- * holds in the default progress table without feeling rushed.
+ * Progress windows. After a statement is read it settles into the previous slot
+ * and stays visible for the entire hold of the next statement — it only dismisses
+ * once a newer statement makes it no longer the immediate predecessor.
+ *
+ * | stmt | enter           | active hold     | → previous      | previous hold   | dismiss         |
  */
+const WINDOWS = [
+  { enter: [0.15, 0.2], activeEnd: 0.35, previousEnd: 0.55, dismissEnd: 0.6 },
+  { enter: [0.35, 0.4], activeEnd: 0.55, previousEnd: 0.75, dismissEnd: 0.8 },
+  { enter: [0.55, 0.6], activeEnd: 0.75, previousEnd: 1.0, dismissEnd: null },
+  { enter: [0.75, 0.8], activeEnd: 1.0, previousEnd: null, dismissEnd: null },
+]
+
 const PIN_TRACK_VH = 420
+
+const ACTIVE = {
+  top: GEO.activeTop,
+  font: GEO.activeFont,
+  opacity: GEO.activeOpacity,
+}
+const PREVIOUS = {
+  top: GEO.previousTop,
+  font: GEO.previousFont,
+  opacity: GEO.previousOpacity,
+}
+const ENTER = {
+  top: GEO.enterTop,
+  font: GEO.enterFont,
+  opacity: GEO.enterOpacity,
+}
+const DISMISS = {
+  top: GEO.dismissTop,
+  font: GEO.dismissFont,
+  opacity: GEO.dismissOpacity,
+}
+
+function mix(a, b, t) {
+  return {
+    top: lerp(a.top, b.top, t),
+    font: lerp(a.font, b.font, t),
+    opacity: lerp(a.opacity, b.opacity, t),
+  }
+}
 
 function headingMotion(p, reduced) {
   if (p <= 0.08) return { t: 0 }
@@ -57,41 +112,69 @@ function headingMotion(p, reduced) {
   return { t: reduced ? raw : easeInCubic(raw) }
 }
 
-function statementMotion(p, window, reduced) {
+/**
+ * Continuous scroll-driven style for one statement. Previous statements settle
+ * into the upper dimmed slot and remain there — they do not snap to opacity 0
+ * when the next statement becomes active.
+ */
+function statementMotion(p, index, reduced) {
+  const window = WINDOWS[index]
   const [enterStart, enterEnd] = window.enter
-  const { holdEnd, exitEnd } = window
+  const { activeEnd, previousEnd, dismissEnd } = window
 
   if (p < enterStart) {
-    return { opacity: 0, y: 24, scale: 0.7, visible: false }
+    return { ...ENTER, phase: 'pending' }
   }
 
+  // Entering: rise into the active slot.
   if (p < enterEnd) {
     const raw = rangeProgress(p, enterStart, enterEnd)
     const t = reduced ? raw : easeOutCubic(raw)
+    if (reduced) return { ...ACTIVE, opacity: t, phase: 'entering' }
+    return { ...mix(ENTER, ACTIVE, t), phase: 'entering' }
+  }
+
+  // Active hold.
+  if (previousEnd == null || p <= activeEnd) {
+    return { ...ACTIVE, phase: 'active' }
+  }
+
+  // Transition active → previous while the next statement enters.
+  const next = WINDOWS[index + 1]
+  const handoffEnd = next ? next.enter[1] : activeEnd
+  if (p < handoffEnd) {
+    const raw = rangeProgress(p, activeEnd, handoffEnd)
+    const t = reduced ? raw : easeInCubic(raw)
+    if (reduced) {
+      return {
+        ...PREVIOUS,
+        opacity: lerp(ACTIVE.opacity, PREVIOUS.opacity, t),
+        phase: 'to-previous',
+      }
+    }
+    return { ...mix(ACTIVE, PREVIOUS, t), phase: 'to-previous' }
+  }
+
+  // Previous hold — stay visible above the active statement.
+  if (dismissEnd == null || p <= previousEnd) {
+    return { ...PREVIOUS, phase: 'previous' }
+  }
+
+  // Dismiss only once a newer statement supersedes this as predecessor.
+  if (p >= dismissEnd) {
+    return { ...DISMISS, phase: 'gone' }
+  }
+
+  const raw = rangeProgress(p, previousEnd, dismissEnd)
+  const t = reduced ? raw : easeInCubic(raw)
+  if (reduced) {
     return {
-      opacity: t,
-      y: reduced ? 0 : lerp(24, 0, t),
-      scale: reduced ? 1 : lerp(0.7, 1, t),
-      visible: true,
+      ...DISMISS,
+      opacity: lerp(PREVIOUS.opacity, DISMISS.opacity, t),
+      phase: 'dismissing',
     }
   }
-
-  if (exitEnd == null || p <= holdEnd) {
-    return { opacity: 1, y: 0, scale: 1, visible: true }
-  }
-
-  if (p >= exitEnd) {
-    return { opacity: 0, y: -24, scale: 0.85, visible: false }
-  }
-
-  const raw = rangeProgress(p, holdEnd, exitEnd)
-  const t = reduced ? raw : easeInCubic(raw)
-  return {
-    opacity: reduced ? 1 - t : exitOpacity(t),
-    y: reduced ? 0 : lerp(0, -24, t),
-    scale: reduced ? 1 : lerp(1, 0.85, t),
-    visible: true,
-  }
+  return { ...mix(PREVIOUS, DISMISS, t), phase: 'dismissing' }
 }
 
 /** Which statement is "current" at `p` for the reduced-motion opacity crossfade. */
@@ -136,24 +219,34 @@ function WhyCollection() {
 
             {STATEMENTS.map((copy, i) => {
               if (reduced) {
+                // Opacity-only: show current + immediate predecessor (dimmed).
                 const isCurrent = i === currentIdx
+                const isPrevious = i === currentIdx - 1
+                const opacity = isCurrent
+                  ? 1
+                  : isPrevious
+                    ? GEO.previousOpacity
+                    : 0
+                const top = isPrevious ? GEO.previousTop : GEO.activeTop
+                const font = isPrevious ? GEO.previousFont : GEO.activeFont
                 return (
                   <p
                     key={i}
                     className={styles.statement}
                     style={{
-                      opacity: isCurrent ? 1 : 0,
-                      transform: 'translateY(0) scale(1)',
+                      opacity,
+                      top: `${top}cqh`,
+                      fontSize: `${(font / 1728) * 100}cqw`,
                       pointerEvents: 'none',
                     }}
-                    aria-hidden={!isCurrent}
+                    aria-hidden={opacity < 0.05}
                   >
                     {copy}
                   </p>
                 )
               }
 
-              const motion = statementMotion(p, WINDOWS[i], false)
+              const motion = statementMotion(p, i, false)
 
               return (
                 <p
@@ -161,10 +254,12 @@ function WhyCollection() {
                   className={styles.statement}
                   style={{
                     opacity: motion.opacity,
-                    transform: `translateY(${motion.y}px) scale(${motion.scale})`,
+                    top: `${motion.top}cqh`,
+                    fontSize: `${(motion.font / 1728) * 100}cqw`,
                     pointerEvents: 'none',
                   }}
                   aria-hidden={motion.opacity < 0.05}
+                  data-phase={motion.phase}
                 >
                   {copy}
                 </p>

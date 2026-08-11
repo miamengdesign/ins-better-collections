@@ -37,24 +37,24 @@
   pointer-events: none;
 }
 
-/* Focus position for narrative statements — left frame margin, vertically centered. */
+/*
+ * Narrative statements — left frame margin; `top` / `font-size` / `opacity` are
+ * set inline from scroll progress so previous + active can share the stage
+ * (matching `02 Why Collections 3/4` geometry).
+ */
 .statement {
   position: absolute;
   z-index: 1;
   left: var(--frame-margin);
-  top: 50%;
-  width: 54cqw;
+  width: 56cqw;
   margin: 0;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: var(--fs-48);
   line-height: var(--lh-auto);
   color: var(--color-white);
   text-align: left;
-  transform-origin: left center;
-  will-change: transform, opacity;
-  /* Offset so the block's vertical center sits near the reference's mid-frame copy. */
-  margin-top: -1.5em;
+  transform-origin: left top;
+  will-change: top, opacity, font-size;
 }
 
 .statement strong {
