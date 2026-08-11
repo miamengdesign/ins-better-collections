@@ -8,6 +8,7 @@ import { useReducedMotion } from '../../hooks/useReducedMotion'
 import {
   clamp,
   easeInOutQuint,
+  lerp,
   rangeProgress,
 } from '../../lib/motion'
 import { exit06to07T } from '../../nav/exit06to07'
@@ -16,17 +17,25 @@ import { useSceneBlend } from '../../nav/useNavigator'
 import styles from './WrapUp.module.css'
 
 /**
- * §07 Wrap Up — cinematic entrance settles on Scene 1 only.
- * Scenes 2–3 remain for a later migration.
+ * §07 Wrap Up — entrance to Scene 1, then Scene 1→2 statement rise.
+ * Scene 3 / Tools / Quick Links / footer remain deferred.
  *
- * Geometry from `07 Wrapup 1` SVG (1728×1117): statement top ≈43.903cqh.
+ * Geometry from references (1728×1117 → cqh), measured from PNG text bands:
+ *  Scene 1 statement top ≈ 43.903cqh
+ *  Scene 2 statement top ≈ 20.850cqh
+ *  Scene 2 “If I had more time…” top ≈ 61.853cqh
  */
 
 const WRAP_1 = SCENE_INDEX['wrap-1']
+const WRAP_2 = SCENE_INDEX['wrap-2']
 const BEHIND_2 = SCENE_INDEX['behind-2']
 
-/** Tops in cqh from SVG path bboxes (Scene 1 resting). */
+/** Tops in cqh from approved Wrapup 1 / Wrapup 2 geometry. */
 const S1_STATEMENT_TOP = 43.903
+const S2_STATEMENT_TOP = 20.85
+const S2_FUTURE_TOP = 61.853
+/** Rise delta — animated via transform, not per-frame `top`. */
+const STATEMENT_RISE_CQH = S2_STATEMENT_TOP - S1_STATEMENT_TOP
 
 const STATEMENT = (
   <>
@@ -37,6 +46,9 @@ const STATEMENT = (
     making saving consistent and collaboration flexible over time.
   </>
 )
+
+const FUTURE_BODY =
+  'I would validate the redesigned flow with users and explore shared notes, smarter collection organization and clearer collaboration permissions.'
 
 const TOOLS = ['Figma', 'Claude Code', 'Cursor', 'ChatGPT Codex', 'Github', 'Vercel']
 
@@ -60,6 +72,37 @@ function enterMotion(presence, reduced) {
   }
 }
 
+/**
+ * wrap-1 → wrap-2 playhead 0→1 (reverse via 1−t).
+ */
+function scene2CoverT(blend) {
+  if (blend.settled) {
+    return blend.sceneIndex >= WRAP_2 ? 1 : 0
+  }
+  if (blend.from === WRAP_1 && blend.to === WRAP_2) return blend.t
+  if (blend.from === WRAP_2 && blend.to === WRAP_1) return 1 - blend.t
+  if (blend.to >= WRAP_2 || blend.from >= WRAP_2) return 1
+  return 0
+}
+
+/**
+ * Scene 1→2 (cover 0→1, reverse via 1−t):
+ *  Phase A  0.00–0.62  statement rises to Wrapup-2 top (transform only) and STOPS
+ *  Phase B  0.55–0.92  “If I had more time…” fades in after rise is substantial
+ */
+function scene2Motion(cover, reduced) {
+  const riseT = reduced
+    ? rangeProgress(cover, 0, 0.62)
+    : easeInOutQuint(rangeProgress(cover, 0, 0.62))
+  const futureT = reduced
+    ? rangeProgress(cover, 0.55, 0.92)
+    : easeInOutQuint(rangeProgress(cover, 0.55, 0.92))
+  return {
+    statementY: lerp(0, STATEMENT_RISE_CQH, riseT),
+    futureOpacity: futureT,
+  }
+}
+
 function WrapUp({ phase1Static = false } = {}) {
   const isMobile = useMediaQuery('(max-width: 767px)')
   const reduced = useReducedMotion()
@@ -71,7 +114,12 @@ function WrapUp({ phase1Static = false } = {}) {
   if (phase1Static) {
     return (
       <Stage className={styles.section} aria-label="Wrap up">
-        <Scene1Chrome bgOpacity={1} textOpacity={1} />
+        <WrapChrome
+          bgOpacity={1}
+          textOpacity={1}
+          statementY={0}
+          futureOpacity={0}
+        />
       </Stage>
     )
   }
@@ -79,7 +127,12 @@ function WrapUp({ phase1Static = false } = {}) {
   return <CinematicWrap reduced={reduced} />
 }
 
-function Scene1Chrome({ bgOpacity, textOpacity }) {
+function WrapChrome({
+  bgOpacity,
+  textOpacity,
+  statementY,
+  futureOpacity,
+}) {
   return (
     <>
       <div className={styles.bgSlot} style={{ opacity: bgOpacity }}>
@@ -88,12 +141,28 @@ function Scene1Chrome({ bgOpacity, textOpacity }) {
 
       <div style={{ opacity: textOpacity }} aria-hidden={textOpacity < 0.05}>
         <h2 className={styles.eyebrow}>Wrap up</h2>
+
         <p
           className={styles.paragraph}
-          style={{ top: `${S1_STATEMENT_TOP}cqh` }}
+          style={{
+            top: `${S1_STATEMENT_TOP}cqh`,
+            transform: `translate3d(0, ${statementY}cqh, 0)`,
+          }}
         >
           {STATEMENT}
         </p>
+
+        <div
+          className={styles.future}
+          style={{
+            top: `${S2_FUTURE_TOP}cqh`,
+            opacity: futureOpacity,
+          }}
+          aria-hidden={futureOpacity < 0.05}
+        >
+          <p className={styles.futureHeading}>If I had more time...</p>
+          <p className={styles.futureBody}>{FUTURE_BODY}</p>
+        </div>
       </div>
     </>
   )
@@ -102,18 +171,27 @@ function Scene1Chrome({ bgOpacity, textOpacity }) {
 function CinematicWrap({ reduced }) {
   const blend = useSceneBlend()
   const presence = exit06to07T(blend)
+  const cover = scene2CoverT(blend)
   const involved =
     presence > 0.001 ||
-    (blend.settled && blend.sceneIndex === WRAP_1) ||
+    cover > 0.001 ||
+    (blend.settled &&
+      blend.sceneIndex >= WRAP_1 &&
+      blend.sceneIndex <= WRAP_2) ||
     (!blend.settled &&
       ((blend.from === BEHIND_2 && blend.to === WRAP_1) ||
-        (blend.from === WRAP_1 && blend.to === BEHIND_2)))
+        (blend.from === WRAP_1 && blend.to === BEHIND_2) ||
+        (blend.from >= WRAP_1 &&
+          blend.from <= WRAP_2 &&
+          blend.to >= WRAP_1 &&
+          blend.to <= WRAP_2)))
 
   if (!involved) {
     return null
   }
 
-  const motion = enterMotion(presence, reduced)
+  const enter = enterMotion(presence, reduced)
+  const scene2 = scene2Motion(cover, reduced)
 
   return (
     <section
@@ -124,16 +202,18 @@ function CinematicWrap({ reduced }) {
       }}
       aria-hidden={presence < 0.05}
     >
-      {/* Scene 1 only — no future copy, tools, quick links, or footer yet. */}
-      <Scene1Chrome
-        bgOpacity={motion.bgOpacity}
-        textOpacity={motion.textOpacity}
+      {/* Background stationary. Scene 3 / lists / footer not mounted. */}
+      <WrapChrome
+        bgOpacity={enter.bgOpacity}
+        textOpacity={enter.textOpacity}
+        statementY={scene2.statementY}
+        futureOpacity={scene2.futureOpacity}
       />
     </section>
   )
 }
 
-/** Mobile keeps the legacy multi-scene pinned stage. */
+/** Mobile keeps a simplified pinned stage. */
 function MobilePinnedWrap({ reduced }) {
   return (
     <PinnedStage
@@ -154,9 +234,16 @@ function MobilePinnedWrap({ reduced }) {
           return <MobileStack />
         }
         const p = clamp(progress, 0, 1)
-        // Simplified mobile: show scene-1 composition for early progress.
-        const textOn = p >= 0.02 ? 1 : 0
-        return <Scene1Chrome bgOpacity={1} textOpacity={textOn} />
+        const cover = rangeProgress(p, 0, 0.45)
+        const scene2 = scene2Motion(cover, reduced)
+        return (
+          <WrapChrome
+            bgOpacity={1}
+            textOpacity={1}
+            statementY={scene2.statementY}
+            futureOpacity={scene2.futureOpacity}
+          />
+        )
       }}
     </PinnedStage>
   )
@@ -170,10 +257,7 @@ function MobileStack() {
       <p className={styles.paragraphStatic}>{STATEMENT}</p>
       <div className={styles.futureStatic}>
         <p className={styles.futureHeading}>If I had more time...</p>
-        <p className={styles.futureBody}>
-          I would validate the redesigned flow with users and explore shared notes,
-          smarter collection organization and clearer collaboration permissions.
-        </p>
+        <p className={styles.futureBody}>{FUTURE_BODY}</p>
       </div>
       <div className={styles.listsStatic}>
         <div>

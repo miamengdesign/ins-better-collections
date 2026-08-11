@@ -33,7 +33,8 @@
 }
 
 /*
- * Closing statement. Tops are scroll-driven (S1 43.9cqh → S2 20.85cqh → exits).
+ * Closing statement. Layout `top` is the Scene 1 resting position; Scene 1→2
+ * rises via transform translateY (cqh delta to Wrapup-2), never per-frame `top`.
  * Explicit <br>s match the reference line breaks; Regular with one Bold clause.
  */
 .paragraph {
@@ -47,7 +48,7 @@
   font-size: var(--fs-48);
   line-height: var(--lh-auto);
   color: var(--color-panel);
-  will-change: top, opacity;
+  will-change: transform;
   pointer-events: none;
 }
 
@@ -55,13 +56,13 @@
   font-weight: 700;
 }
 
-/* State-2 “If I had more time…” block — SVG path bbox y≈690.9, width ≈41.4cqw. */
+/* State-2 “If I had more time…” block — Wrapup 2 PNG/SVG: top ≈61.85cqh, width ≈41.4cqw. */
 .future {
   position: absolute;
   left: var(--frame-margin);
   width: 41.37cqw;
   z-index: 1;
-  will-change: top, opacity;
+  will-change: opacity;
   pointer-events: none;
 }
 

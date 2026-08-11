@@ -99,12 +99,12 @@ function state2CoverT(blend) {
   }
   if (blend.from === BEHIND_1 && blend.to === BEHIND_2) return blend.t
   if (blend.from === BEHIND_2 && blend.to === BEHIND_1) return 1 - blend.t
-  // Keep veil fully on during §06→07 (and reverse into behind-2).
+  // Keep veil fully on during §06→07 and any Wrap scene ownership.
   if (
     blend.to >= BEHIND_2 ||
     blend.from >= BEHIND_2 ||
-    blend.to === WRAP_1 ||
-    blend.from === WRAP_1
+    blend.to >= WRAP_1 ||
+    blend.from >= WRAP_1
   ) {
     return 1
   }
@@ -176,6 +176,8 @@ function CinematicBehind({ reduced }) {
   const enterT = exit05to06T(blend)
   const cover = state2CoverT(blend)
   const exitT = exit06to07T(blend)
+  const wrapInternal =
+    !blend.settled && blend.from >= WRAP_1 && blend.to >= WRAP_1
   const involved =
     (enterT > 0.001 && exitT < 0.999) ||
     cover > 0.001 ||
@@ -189,7 +191,8 @@ function CinematicBehind({ reduced }) {
       blend.sceneIndex >= BEHIND_1 &&
       blend.sceneIndex <= BEHIND_2)
 
-  if (!involved || (exitT >= 0.999 && blend.settled)) {
+  // Stay unmounted on wrap-1/2 (settled or internal); remount for reverse to behind-2.
+  if (!involved || (exitT >= 0.999 && (blend.settled || wrapInternal))) {
     return null
   }
 
