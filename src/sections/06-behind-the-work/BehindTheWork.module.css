@@ -71,13 +71,35 @@
   width: 37.3843cqw;
 }
 
-/* Dark project-gradient overlay — opacity driven by scroll (0 → 0.7). */
-.overlay {
+/*
+ * State 2 overlays — two separate layers (matches `06 Behind 2` SVG):
+ *   1) project multicolor gradient @ 70%
+ *   2) black @ 70% above the gradient
+ * Scroll drives each layer’s opacity 0 → 0.7. Statement sits above both.
+ */
+.overlayGradient,
+.overlayBlack {
   position: absolute;
   inset: 0;
-  z-index: 2;
   pointer-events: none;
   will-change: opacity;
+}
+
+.overlayGradient {
+  z-index: 2;
+  background: linear-gradient(
+    237deg,
+    #7638fa 0%,
+    #d300c5 27.69%,
+    #ff0069 46.35%,
+    #ff7a00 68.97%,
+    #ffd600 96.1%
+  );
+}
+
+.overlayBlack {
+  z-index: 3;
+  background: #000;
 }
 
 /*
@@ -88,7 +110,7 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  z-index: 3;
+  z-index: 4;
   width: 48cqw;
   margin: 0;
   transform: translate(-50%, -50%);

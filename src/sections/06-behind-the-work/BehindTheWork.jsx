@@ -1,4 +1,3 @@
-import GradientStage from '../../components/GradientStage'
 import PinnedStage from '../../components/PinnedStage'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { img } from '../../lib/assets'
@@ -8,15 +7,16 @@ import styles from './BehindTheWork.module.css'
 /**
  * Scroll-driven two-state stage (overrides the older timer-driven §06 note):
  * State 1 stays put underneath; State 2 is only an opacity fade of the dark
- * project-gradient overlay + centered statement. Sketches never move.
+ * project-gradient overlay + black scrim + centered statement. Sketches never move.
  *
- * Overlay end opacity is 0.7 so State 1 remains faintly visible underneath.
+ * Layer order (matches `references/svg/06 Behind 2`):
+ *   collage → multicolor gradient @ 70% → black @ 70% → statement
  */
 
 /** Extra scroll distance after the sticky viewport for the State 1→2 fade. */
 const PIN_TRACK_VH = 120
 
-/** Overlay settles at 70% — never fully opaque. */
+/** Each overlay layer settles at 70% — never fully opaque. */
 const OVERLAY_MAX = 0.7
 
 const STATEMENT =
@@ -41,6 +41,24 @@ function State1Copy() {
       <h2 className={styles.eyebrow}>Behind the Work</h2>
       <p className={styles.paragraph}>The clean flow started on messy pages…</p>
     </div>
+  )
+}
+
+/** Gradient then black — two separate 70% layers, not a single GradientStage. */
+function State2Overlays({ opacity }) {
+  return (
+    <>
+      <div
+        className={styles.overlayGradient}
+        style={{ opacity }}
+        aria-hidden="true"
+      />
+      <div
+        className={styles.overlayBlack}
+        style={{ opacity }}
+        aria-hidden="true"
+      />
+    </>
   )
 }
 
@@ -70,15 +88,7 @@ function BehindTheWork() {
           <>
             <Collage />
             <State1Copy />
-
-            <div
-              className={styles.overlay}
-              style={{ opacity: overlayOpacity }}
-              aria-hidden="true"
-            >
-              <GradientStage />
-            </div>
-
+            <State2Overlays opacity={overlayOpacity} />
             <p
               className={styles.statement}
               style={{ opacity: statementOpacity }}
@@ -98,9 +108,7 @@ function StaticEndState() {
     <>
       <Collage />
       <State1Copy />
-      <div className={styles.overlay} style={{ opacity: OVERLAY_MAX }} aria-hidden="true">
-        <GradientStage />
-      </div>
+      <State2Overlays opacity={OVERLAY_MAX} />
       <p className={styles.statement} style={{ opacity: 1 }}>
         {STATEMENT}
       </p>
