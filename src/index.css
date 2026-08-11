@@ -50,12 +50,29 @@
      Figma size when a section is at frame scale, and all size ratios between
      texts hold at every viewport. Texts sharing a Figma size share a token, so
      they can never drift apart. `cqw` (never a per-axis transform) keeps glyph
-     scaling uniform — text is never stretched. */
+     scaling uniform — text is never stretched.
+
+     The six sizes below are every size sections 02-07 are authored at, measured
+     off the outlined glyphs in `references/svg`:
+       14  footer byline
+       16  section labels, step tracker
+       20  callout copy, quick-link lists, "Back to top"
+       24  section statements, in-panel headings
+       48  full-width closing statements
+       96  the Section 02 opening heading */
+  --fs-14: 0.8102cqw;
   --fs-16: 0.9259cqw;
   --fs-20: 1.1574cqw;
   --fs-24: 1.3889cqw;
-  --fs-32: 1.8519cqw;
-  --fs-60: 3.4722cqw;
+  --fs-48: 2.7778cqw;
+  --fs-96: 5.5556cqw;
+
+  /* Instagram Sans is drawn on a 1000 unit em with a 1000/-300 ascent/descent, so
+     Figma's "Auto" line height resolves to 1.3em — the 62px pitch its 48px
+     statements are set on, and the 31px pitch its 24px copy is set on, both come
+     out at this ratio. `--lh-ui` is the flat 1.2 the 20px callout copy is set on. */
+  --lh-auto: 1.2917;
+  --lh-ui: 1.2;
 
   /* The 80px content margin every Figma frame is laid out against, and the 80px
      corner radius of the light panels. */

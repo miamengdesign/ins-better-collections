@@ -4,12 +4,96 @@
   gap: 0.9cqw;
   color: var(--color-white);
   font-family: var(--font-body);
-  font-size: var(--fs-24); /* set one tier above the footer lines it sits between */
-  font-weight: 500;
-  line-height: 1.2;
+  font-size: var(--fs-20); /* the largest of the footer's three sizes, as in the reference */
+  font-weight: 400;
+  line-height: var(--lh-auto);
+}
+
+/* "Back to top" copy never animates position — only weight on hover. */
+.label {
+  display: inline;
+  font-weight: 400;
+  transition: font-weight 150ms ease-out;
+}
+
+.button:hover .label,
+.button:focus-visible .label {
+  font-weight: 700;
+}
+
+/*
+ * Clipped one-line well. Two arrow glyphs run the same upward conveyor keyframes
+ * with a 50% phase offset so one is always entering from below as the other
+ * exits above — continuous rise, no bounce/pulse/reset pop.
+ */
+.arrowWell {
+  position: relative;
+  display: inline-block;
+  width: 1.1em;
+  height: 1em;
+  overflow: hidden;
+  vertical-align: -0.05em;
+  flex-shrink: 0;
 }
 
 .arrow {
+  position: absolute;
+  left: 50%;
+  top: 0;
   font-size: 1.1em;
   line-height: 1;
+  transform: translate(-50%, 100%);
+  opacity: 0;
+}
+
+.arrowA {
+  animation: arrow-conveyor 1.8s linear infinite;
+}
+
+.arrowB {
+  animation: arrow-conveyor 1.8s linear infinite;
+  animation-delay: -0.9s;
+}
+
+.arrowStatic .arrow {
+  position: static;
+  left: auto;
+  transform: none;
+  opacity: 1;
+  animation: none;
+}
+
+@keyframes arrow-conveyor {
+  0% {
+    transform: translate(-50%, 100%);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  50% {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -100%);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arrowA,
+  .arrowB {
+    animation: none;
+  }
+
+  .arrow {
+    position: static;
+    left: auto;
+    transform: none;
+    opacity: 1;
+  }
 }

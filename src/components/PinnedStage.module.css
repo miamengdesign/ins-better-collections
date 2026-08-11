@@ -1,0 +1,22 @@
+.track {
+  position: relative;
+  width: 100%;
+}
+
+.sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* Same container-query canvas Stage uses, so shared `cqw`/`cqh` type tokens resolve. */
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  container-type: size;
+  overflow: hidden;
+}

@@ -1,9 +1,30 @@
-/* Exactly 100vh (not min-height) + overflow:hidden so this section can never scroll
-   internally and never grows taller than the viewport, per direction. */
-.hero {
+/* Desktop: tall track so the sticky card can translate out over ~60vh of scroll. */
+.track {
+  position: relative;
+  width: 100%;
+  z-index: 2;
+  /* Transparent so Section 02 (pulled under via negative margin) shows through
+     as the card translates upward. */
+  background: transparent;
+}
+
+.card {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  background: #ffffff;
+  overflow: hidden;
+  will-change: transform;
+}
+
+/* Mobile / reduced-mechanism: ordinary full-viewport section in document flow. */
+.heroFlow {
   position: relative;
   width: 100%;
   height: 100vh;
+  height: 100dvh;
   background: #ffffff;
   overflow: hidden;
 }

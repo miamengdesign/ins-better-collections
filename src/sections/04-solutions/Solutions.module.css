@@ -18,21 +18,33 @@
   flex-direction: column;
   color: var(--color-white);
   box-sizing: border-box;
+  z-index: 2;
+}
+
+/* Stacked solution copy — opacity crossfade only (no slide). */
+.copyLayer {
+  position: absolute;
+  inset: 0;
+  padding: inherit;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  pointer-events: none;
 }
 
 .eyebrow {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: var(--fs-24);
-  line-height: 1.2;
+  font-size: var(--fs-16);
+  line-height: var(--lh-auto);
   color: var(--color-step-inactive); /* #DBDBDB — measured from the Figma export, not plain white */
 }
 
 .heading {
   font-family: var(--font-display);
   font-weight: 500;
-  font-size: var(--fs-32);
-  line-height: 1.2;
+  font-size: var(--fs-24);
+  line-height: var(--lh-auto);
   margin-top: 2.4624cqw;
   color: var(--color-panel); /* #F7F9F9 — measured from the Figma export, not pure white */
 }
@@ -44,26 +56,26 @@
   gap: 1.1545cqw;
 }
 
-/* Medium, not Bold: measured against the reference, Bold renders ~7% more ink
-   than the badge carries there. Same weight as .heading, which is what gives the
-   two lines their matching semibold tone. */
+/* Bold: at the reference's own 20px the label's stems measure 2.5 of 20 units,
+   which is Instagram Sans Bold — Medium is visibly lighter than the export. It
+   is the same 20px tier as .explanation below, not the same tier as .heading. */
 .badge {
   font-family: var(--font-display);
-  font-weight: 500;
-  font-size: var(--fs-32);
-  line-height: 1.2;
+  font-weight: 700;
+  font-size: var(--fs-20);
+  line-height: var(--lh-ui);
   color: var(--color-white); /* only the checkmark emoji itself is green, not the label */
 }
 
-/* 451x202 of the frame with a 10px radius. Body copy is Regular and only the
-   emphasised phrases are Bold. The 430px content width is what reproduces the
-   reference's five line breaks. */
+/* 451 of the frame wide with a 10px radius. Body copy is Regular and only the
+   emphasised phrases are Bold. At the reference's 20px the 430px content width
+   sets the copy in the same three lines the export breaks it into. */
 .explanation {
   position: relative;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: var(--fs-32);
-  line-height: 1.19;
+  font-size: var(--fs-20);
+  line-height: var(--lh-ui);
   width: 26.0995cqw;
   padding: 0.4126cqw 0.6076cqw 0.2587cqw;
   border-radius: 0.5787cqw;
@@ -112,6 +124,10 @@
   font-weight: 700;
 }
 
+/*
+ * Light solution panel — geometry stable across states. §03→04 entrance drives
+ * translateX on this element only; the GradientStage behind stays put.
+ */
 .right {
   position: absolute;
   right: 0;
@@ -121,34 +137,61 @@
   background: var(--panel-fill);
   border-top-left-radius: var(--panel-radius);
   border-bottom-left-radius: var(--panel-radius);
+  z-index: 1;
+  will-change: transform;
+  overflow: hidden;
+}
+
+/* Stacked mockups — opacity crossfade only; phone body stays fixed. */
+.mockupLayer {
+  position: absolute;
+  inset: 0;
+  will-change: opacity;
 }
 
 /*
- * The mockup is exactly centred in this panel in the frame (328px of clearance
- * on each side), so it is centred here rather than pinned to an x offset.
+ * Match Section 05’s rendered phone size. Prototype uses
+ *   height: min(50.984cqw, 78.8646cqh)
+ * for a pure-phone PNG (1724×3524). Solution pics bake in a side callout so
+ * they are wider; sizing by that same height keeps the phone itself at the
+ * Prototype’s visual size while `width: auto` preserves each asset’s aspect.
  *
- * Its size is the frame's 431-of-1728 width, but capped by the same footprint
- * expressed against the frame's height. The canvas stretches independently per
- * axis while the mockup has to keep its aspect ratio, so on a viewport wider than
- * the frame a purely width-driven mockup grows taller than its share of the
- * screen — at 1512x832 it would stand 96% of the viewport tall against the
- * frame's 79%. The cap is inert at the frame's own aspect ratio, where both
- * terms resolve to 431px, and only ever makes the mockup smaller.
+ * Centred in the light panel on both axes (Solutions states 1–3 share this).
  */
 .mockup {
   position: absolute;
-  top: 10.5641cqh;
-  left: 0;
-  right: 0;
-  margin-inline: auto;
-  width: min(24.9421cqw, 38.582cqh);
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  height: min(50.984cqw, 78.8646cqh);
+  width: max-content;
+  max-width: 92%;
 }
 
 /* No drop shadow: the frame sits the mockup flat on the panel. Scoped under
-   .mockup so it outranks PhoneMockup's own filter regardless of sheet order.
-   `height: auto` keeps the PNG at its native aspect ratio. */
+   .mockup so it outranks PhoneMockup's own filter regardless of sheet order. */
 .mockup .phone {
-  width: 100%;
-  height: auto;
+  display: block;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
   filter: none;
+}
+
+/* —— Mobile stacked fallback —— */
+
+.stacked {
+  position: relative;
+  width: 100%;
+}
+
+.stackedBlock {
+  position: relative;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.stackedBg {
+  z-index: 0;
 }

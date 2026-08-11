@@ -1,0 +1,53 @@
+.nav {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: auto;
+  width: 2.4cqw;
+  height: 2.4cqw;
+  min-width: 28px;
+  min-height: 28px;
+  border-radius: 999px;
+  background: rgba(12, 16, 20, 0.18);
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 1.5cqw;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  transition:
+    background 160ms ease-out,
+    color 160ms ease-out,
+    opacity 160ms ease-out;
+}
+
+.btn:first-child {
+  left: 1.2cqw;
+}
+
+.btn:last-child {
+  right: 1.2cqw;
+}
+
+.btn:hover:not(:disabled),
+.btn:focus-visible:not(:disabled) {
+  background: rgba(12, 16, 20, 0.32);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.btn:disabled {
+  opacity: 0.22;
+  cursor: default;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn {
+    transition: none;
+  }
+}

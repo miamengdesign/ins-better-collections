@@ -6,19 +6,20 @@
   padding: 0;
   list-style: none;
   font-family: var(--font-display);
-  font-size: var(--fs-24);
-  font-weight: 400;
-  line-height: 1.2;
+  font-size: var(--fs-16);
+  font-weight: 500;
+  line-height: var(--lh-auto);
   text-align: left;
 }
 
 .step {
-  color: var(--color-step-inactive);
+  color: var(--color-white);
+  opacity: 0.5;
   white-space: nowrap;
 }
 
 .step.active {
-  color: var(--color-white);
+  opacity: 1;
 }
 
 /* Line + arrowhead (not a plain rule) between steps. */
@@ -27,6 +28,11 @@
   align-items: center;
   width: 6.7708cqw;
   flex-shrink: 0;
+  opacity: 0.5;
+}
+
+.connector.active {
+  opacity: 1;
 }
 
 .connector::before {
@@ -53,16 +59,17 @@
   border-left-color: var(--color-white);
 }
 
+/* Dotted gap uses white too — inactive emphasis comes from opacity, not grey. */
 .connector.dotted::before {
   background: repeating-linear-gradient(
     to right,
-    var(--color-step-inactive) 0,
-    var(--color-step-inactive) 3px,
+    var(--color-white) 0,
+    var(--color-white) 3px,
     transparent 3px,
     transparent 6px
   );
 }
 
 .connector.dotted::after {
-  border-left-color: var(--color-step-inactive);
+  border-left-color: var(--color-white);
 }

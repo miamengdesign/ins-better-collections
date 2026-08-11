@@ -2,8 +2,16 @@
   position: relative;
 }
 
+/* Owns the GradientStage so opacity can clear during §04→05 without moving it. */
+.gradientSlot {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
 /* The light panel, recreated in CSS (there is no background asset): 1087 of the
-   frame's 1728px wide, with the frame's 80px radius on its right corners only. */
+   frame's 1728px wide, with the frame's 80px radius on its right corners only.
+   §04→05 drives translateX on this panel only — gradient stays put. */
 .panel {
   position: absolute;
   left: 0;
@@ -13,6 +21,8 @@
   background: var(--panel-fill);
   border-top-right-radius: var(--panel-radius);
   border-bottom-right-radius: var(--panel-radius);
+  will-change: transform;
+  z-index: 1;
 }
 
 /*
@@ -28,7 +38,8 @@
  * holds exactly — nothing is ever stretched.
  *
  * The frame centres this mockup vertically (118 units of clearance above and
- * below) but not horizontally, hence the fixed left offset.
+ * below) but not horizontally, hence the fixed left offset. Positioned inside
+ * `.panel` so it rides the §04→05 push entrance.
  */
 .mockup {
   position: absolute;
@@ -44,23 +55,57 @@
   display: block;
   width: 100%;
   height: 100%;
+  cursor: pointer;
+  border-radius: 2cqw;
+  transition:
+    transform 180ms ease-out,
+    box-shadow 180ms ease-out;
+  transform: scale(1);
+  box-shadow: none;
 }
 
-/* No drop shadow: as in Section 04, the frame sits the mockup flat on the panel. */
+.link:hover,
+.link:focus-visible {
+  transform: scale(1.015);
+  box-shadow: 0 1.2cqw 2.8cqw rgba(0, 0, 0, 0.18);
+}
+
+/* Reduced motion: keep pointer/focus affordance, drop the scale. */
+.linkReduced:hover,
+.linkReduced:focus-visible {
+  transform: none;
+  box-shadow: 0 0.6cqw 1.4cqw rgba(0, 0, 0, 0.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .link {
+    transition: box-shadow 180ms ease-out;
+  }
+
+  .link:hover,
+  .link:focus-visible {
+    transform: none;
+    box-shadow: 0 0.6cqw 1.4cqw rgba(0, 0, 0, 0.12);
+  }
+}
+
+/* No drop shadow at rest: as in Section 04, the frame sits the mockup flat. */
 .phone {
   width: 100%;
   height: auto;
   display: block;
+  pointer-events: none;
 }
 
 .eyebrow {
   position: absolute;
   left: 67.5347cqw;
   top: var(--frame-margin);
+  z-index: 2;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: var(--fs-24);
-  line-height: 1.2;
+  font-size: var(--fs-16);
+  line-height: var(--lh-auto);
   color: var(--color-step-inactive);
 }
 
@@ -68,10 +113,11 @@
   position: absolute;
   left: 67.5347cqw;
   top: 60.4128cqh;
+  z-index: 2;
   max-width: 16cqw;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: var(--fs-32);
-  line-height: 1.19;
+  font-size: var(--fs-20);
+  line-height: var(--lh-ui);
   color: var(--color-white);
 }

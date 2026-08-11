@@ -1,64 +1,102 @@
-/* `container-type: inline-size` only so the shared type-scale and frame-margin
-   tokens, which are `cqw`-based, resolve against the same width the Stage
-   sections use. Vertical placement is in `vh`: each block is one screen tall. */
 .section {
-  container-type: inline-size;
+  position: relative;
   color: var(--color-white);
 }
 
-/* Each of the two screens the `07 Wrapup` references show is its own
-   explicit-height (not min-height) block in ordinary document flow — no pinning,
-   no internal scroll containers. Each block carries its own GradientStage rather
-   than one background spanning both, so each resolves against a parent with a
-   definite height. Content is anchored to the top of the block at the reference's
-   own offsets instead of being centred. */
-.block {
-  position: relative;
-  height: 100vh;
-  height: 100dvh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  padding: 5.9248vh var(--frame-margin) 4.66vh;
-  box-sizing: border-box;
-}
-
-.bg {
-  z-index: -1;
-}
-
+/* Fixed across all three Wrapup states — SVG path bbox y≈84.8 / x≈80.3. */
 .eyebrow {
+  position: absolute;
+  left: var(--frame-margin);
+  top: 7.592cqh;
+  z-index: 2;
+  margin: 0;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: var(--fs-24);
-  line-height: 1.2;
+  font-size: var(--fs-16);
+  line-height: var(--lh-auto);
   color: var(--color-step-inactive);
+  pointer-events: none;
 }
 
+/*
+ * Closing statement. Tops are scroll-driven (S1 43.9cqh → S2 20.85cqh → exits).
+ * Explicit <br>s match the reference line breaks; Regular with one Bold clause.
+ */
 .paragraph {
-  margin-top: 15.3867vh;
+  position: absolute;
+  left: var(--frame-margin);
+  right: var(--frame-margin);
+  z-index: 1;
+  margin: 0;
   font-family: var(--font-display);
-  font-weight: 300;
-  font-size: var(--fs-60);
-  line-height: 1.25;
+  font-weight: 400;
+  font-size: var(--fs-48);
+  line-height: var(--lh-auto);
+  color: var(--color-panel);
+  will-change: top, opacity;
+  pointer-events: none;
+}
+
+.paragraph strong {
+  font-weight: 700;
+}
+
+/* State-2 “If I had more time…” block — SVG path bbox y≈690.9, width ≈41.4cqw. */
+.future {
+  position: absolute;
+  left: var(--frame-margin);
+  width: 41.37cqw;
+  z-index: 1;
+  will-change: top, opacity;
+  pointer-events: none;
+}
+
+.futureHeading {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--fs-16);
+  line-height: var(--lh-auto);
   color: var(--color-panel);
 }
 
-/* The lists sit where they do in `07 Wrapup 3`; the footer takes the block's
-   remaining height so it lands on the bottom margin of the same screen. */
-.finalBlock {
-  padding-top: 25.0055vh;
+.futureBody {
+  margin: 1.6cqh 0 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--fs-16);
+  line-height: var(--lh-auto);
+  color: var(--color-panel);
+  opacity: 0.92;
 }
 
+/*
+ * State-3 Tools | Quick Link row. SVG: Tools x≈80 / Quick Link x≈865 (50.07cqw),
+ * shared top ≈42.4cqh.
+ */
 .lists {
+  position: absolute;
+  left: var(--frame-margin);
+  right: var(--frame-margin);
+  z-index: 1;
   display: flex;
-  flex-direction: column;
-  gap: 10.363vh;
+  flex-direction: row;
+  align-items: flex-start;
+  will-change: top;
 }
 
-/* Both lists run on a single 40px-of-1117 baseline pitch, which at this size is
-   exactly a line-height of 2. */
+.toolsCol {
+  flex: 0 0 auto;
+}
+
+.quickCol {
+  position: absolute;
+  left: calc(50.069cqw - var(--frame-margin));
+  top: 0;
+}
+
 .listTitle {
+  margin: 0;
   font-family: var(--font-display);
   font-weight: 500;
   font-size: var(--fs-20);
@@ -69,9 +107,12 @@
 .list {
   display: flex;
   flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
   font-family: var(--font-display);
   font-style: italic;
-  font-weight: 400;
+  font-weight: 300;
   font-size: var(--fs-20);
   line-height: 2;
   color: var(--color-panel);
@@ -88,23 +129,97 @@
   font-weight: 700;
 }
 
-/* Shared baseline across the three items, as in the reference — the centre
-   "Back to top" control is set larger than the two flanking lines. */
+/*
+ * Footer — SVG byline / Back to top / copyright share y≈1015 (90.89cqh).
+ * Space-between keeps Back to top centered between the side labels.
+ */
 .footer {
-  margin-top: auto;
+  position: absolute;
+  left: var(--frame-margin);
+  right: var(--frame-margin);
+  z-index: 2;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 1cqw;
   font-family: var(--font-display);
   font-weight: 300;
+  font-size: var(--fs-14);
+  line-height: var(--lh-auto);
+  color: var(--color-panel);
+  will-change: top;
+}
+
+.copyright {
   font-size: var(--fs-16);
-  line-height: 1.2;
+}
+
+/* —— Mobile stacked reading order (pin off) —— */
+
+.mobile {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 7.592cqh var(--frame-margin) 4.66cqh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 6cqh;
+  color: var(--color-white);
+}
+
+.mobileBg {
+  z-index: -1;
+}
+
+.mobile .eyebrow {
+  position: static;
+}
+
+.paragraphStatic {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--fs-48);
+  line-height: var(--lh-auto);
+  color: var(--color-panel);
+}
+
+.paragraphStatic strong {
+  font-weight: 700;
+}
+
+.futureStatic {
+  width: min(41.37cqw, 100%);
+}
+
+.listsStatic {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8cqw 12cqw;
+}
+
+.footerStatic {
+  margin-top: auto;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1cqw;
+  flex-wrap: wrap;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: var(--fs-14);
+  line-height: var(--lh-auto);
   color: var(--color-panel);
 }
 
 @media (max-width: 640px) {
-  .footer {
+  .listsStatic {
+    flex-direction: column;
+  }
+
+  .footerStatic {
     flex-direction: column;
     align-items: flex-start;
   }
