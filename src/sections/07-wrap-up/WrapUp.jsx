@@ -373,7 +373,7 @@ function MobileStack() {
           </ul>
         </div>
         <div>
-          <p className={styles.listTitle}>Quick Link:</p>
+          <p className={styles.listTitle}>Links:</p>
           <ul className={`${styles.list} ${styles.quickLink}`}>
             <li>
               <a href={PROTOTYPE_URL} target="_blank" rel="noopener noreferrer">
